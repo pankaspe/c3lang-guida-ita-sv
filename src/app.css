@@ -190,6 +190,10 @@ body {
 }
 
 .lesson-prose :where(table) {
+	display: block;
+	width: max-content;
+	max-width: 100%;
+	overflow-x: auto;
 	font-family: var(--font-sans);
 	font-size: 0.925rem;
 }

@@ -8,7 +8,7 @@ minutes: 20
 
 Un **operatore** è un simbolo che combina dei valori per produrne uno nuovo: `+` prende due numeri e ne dà la somma. L'espressione `2 + 3` *vale* 5, e puoi usarla ovunque potresti usare un 5: in un'assegnazione, come argomento di una funzione, dentro un'altra espressione.
 
-```c3 title="conti.c3"
+```c3 title="calc.c3"
 import std::io;
 
 fn void main()
@@ -16,11 +16,11 @@ fn void main()
 	int a = 7;
 	int b = 2;
 
-	io::printn(a + b);   // somma
-	io::printn(a - b);   // sottrazione
-	io::printn(a * b);   // moltiplicazione
-	io::printn(a / b);   // divisione... con sorpresa
-	io::printn(a % b);   // resto della divisione
+	io::printn(a + b);   // sum
+	io::printn(a - b);   // subtraction
+	io::printn(a * b);   // multiplication
+	io::printn(a / b);   // division... with a surprise
+	io::printn(a % b);   // remainder of the division
 }
 ```
 
@@ -68,12 +68,12 @@ Si va da sinistra a destra: `9 / 2` tra interi fa 4 (il .5 sparisce), poi `4 * 2
 L'operatore `%` (si legge "modulo") dà il **resto** della divisione intera. `17 % 5` fa 2, perché 17 = 5 × 3 + 2. Sembra un'operazione da scuola elementare, e invece è tra le più usate in programmazione:
 
 ```c3
-int minuti = 135;
-io::printfn("%d ore e %d minuti", minuti / 60, minuti % 60);
+int minutes = 135;
+io::printfn("%d hours and %d minutes", minutes / 60, minutes % 60);
 ```
 
 ```output
-2 ore e 15 minuti
+2 hours and 15 minutes
 ```
 
 E il classico dei classici: **un numero è pari se il resto della divisione per 2 è zero**.
@@ -152,9 +152,9 @@ Un confronto mette a paragone due valori e produce un `bool`:
 | `>=` | maggiore o uguale | `1 >= 2` | `false` |
 
 ```c3
-int eta = 20;
-bool maggiorenne = eta >= 18;
-io::printn(maggiorenne);
+int age = 20;
+bool is_adult = age >= 18;
+io::printn(is_adult);
 ```
 
 ```output
@@ -178,12 +178,12 @@ Con i **operatori logici** metti insieme più condizioni:
 | `!` | NOT (non) | la condizione è falsa (la inverte) |
 
 ```c3
-int eta = 20;
-bool ha_biglietto = false;
+int age = 20;
+bool has_ticket = false;
 
-io::printn(eta >= 18 && ha_biglietto);   // entra al concerto?
-io::printn(eta >= 18 || ha_biglietto);   // basta una delle due?
-io::printn(!ha_biglietto);               // NON ha il biglietto?
+io::printn(age >= 18 && has_ticket);   // do I get into the concert?
+io::printn(age >= 18 || has_ticket);   // is at least one true?
+io::printn(!has_ticket);               // does NOT have the ticket?
 ```
 
 ```output
@@ -233,25 +233,25 @@ Se vieni dal C, guarda bene i punti 4 e 5: in C3 gli operatori sui bit (`&`, `|`
 
 Mettiamo tutto insieme con un piccolo calcolo utile: quanto costa un viaggio in auto?
 
-```c3 title="viaggio.c3"
+```c3 title="trip.c3"
 import std::io;
 
-const double PREZZO_BENZINA = 1.85;  // euro al litro
+const double FUEL_PRICE = 1.85;  // euros per liter
 
 fn void main()
 {
 	int km = 320;
-	double consumo = 6.5;   // litri ogni 100 km
-	int passeggeri = 4;
+	double consumption = 6.5;   // liters per 100 km
+	int passengers = 4;
 
-	double litri = km / 100.0 * consumo;
-	double costo = litri * PREZZO_BENZINA;
-	double a_testa = costo / passeggeri;
+	double liters = km / 100.0 * consumption;
+	double cost = liters * FUEL_PRICE;
+	double per_person = cost / passengers;
 
-	io::printn(litri);
-	io::printn(costo);
-	io::printn(a_testa);
-	io::printn(a_testa < 10.0);
+	io::printn(liters);
+	io::printn(cost);
+	io::printn(per_person);
+	io::printn(per_person < 10.0);
 }
 ```
 
@@ -262,23 +262,23 @@ fn void main()
 true
 ```
 
-Nota `km / 100.0`: ho scritto `100.0` e non `100` apposta, per evitare la divisione intera (con `100` avrei ottenuto 3, non 3,2). E `costo / passeggeri` è sicuro perché `costo` è già un `double`.
+Nota `km / 100.0`: ho scritto `100.0` e non `100` apposta, per evitare la divisione intera (con `100` avrei ottenuto 3, non 3,2). E `cost / passengers` è sicuro perché `cost` è già un `double`.
 
 <Exercise title="Il resto della spesa" expected={`4
 2
 false
 true`}>
 
-Scrivi un programma `spesa.c3` con:
+Scrivi un programma `shopping.c3` con:
 
 - `int budget = 50;`
-- `int prezzo = 12;`
+- `int price = 12;`
 
 Poi stampa, una per riga con `io::printn`:
 
-1. quanti oggetti da `prezzo` euro puoi comprare con `budget` (divisione intera);
+1. quanti oggetti da `price` euro puoi comprare con `budget` (divisione intera);
 2. quanti euro ti restano dopo averli comprati (il resto);
-3. se ti restano abbastanza soldi per comprarne un altro (`resto >= prezzo`);
+3. se ti restano abbastanza soldi per comprarne un altro (`remainder >= price`);
 4. se il budget è un numero pari.
 
 Puoi usare variabili intermedie o scrivere le espressioni direttamente dentro `printn`. Riporta l'output.
@@ -287,20 +287,20 @@ Puoi usare variabili intermedie o scrivere le espressioni direttamente dentro `p
 
 <Solution>
 
-```c3 title="spesa.c3"
+```c3 title="shopping.c3"
 import std::io;
 
 fn void main()
 {
 	int budget = 50;
-	int prezzo = 12;
+	int price = 12;
 
-	int quanti = budget / prezzo;
-	int resto = budget % prezzo;
+	int quantity = budget / price;
+	int remainder = budget % price;
 
-	io::printn(quanti);
-	io::printn(resto);
-	io::printn(resto >= prezzo);
+	io::printn(quantity);
+	io::printn(remainder);
+	io::printn(remainder >= price);
 	io::printn(budget % 2 == 0);
 }
 ```

@@ -125,7 +125,7 @@ Se il terminale risponde "comando non trovato", il problema è quasi sempre il `
 
 1. Installa `c3c` seguendo le istruzioni per il tuo sistema.
 2. Apri un terminale e lancia `c3c --version`.
-3. Crea una cartella dove metterai tutti gli esercizi di questo corso, per esempio `~/impara-c3`. Ci torneremo continuamente.
+3. Crea una cartella dove metterai tutti gli esercizi di questo corso, per esempio `~/learn-c3`. Ci torneremo continuamente.
 
 Quando vedi il numero di versione, hai finito. Il compilatore è installato e ti aspetta.
 

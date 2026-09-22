@@ -15,14 +15,14 @@ C3 ha una soluzione integrata: il **progetto**. Un progetto è una cartella con 
 Dalla cartella degli esercizi:
 
 ```sh
-c3c init primo_progetto
-cd primo_progetto
+c3c init first_project
+cd first_project
 ```
 
 `c3c init` crea una cartella con dentro tutto questo:
 
 ```output
-primo_progetto/
+first_project/
 ├─ build/          ← qui finiscono gli eseguibili e i file temporanei
 ├─ docs/           ← documentazione
 ├─ lib/            ← librerie C3 esterne (cartelle .c3l)
@@ -40,7 +40,7 @@ Sembra tanto, ma quasi tutte le cartelle sono vuote. Le uniche due cose che cont
 
 <Callout type="fun" title="Un nome per le regole">
 
-Il nome del progetto deve seguire le regole dei **nomi di modulo** in C3: solo lettere minuscole, numeri e trattini bassi. `primo_progetto` va bene; `PrimoProgetto` o `primo-progetto` no. Ci torneremo quando parleremo di moduli: per ora, minuscole e `_`.
+Il nome del progetto deve seguire le regole dei **nomi di modulo** in C3: solo lettere minuscole, numeri e trattini bassi. `first_project` va bene; `FirstProject` o `first-project` no. Ci torneremo quando parleremo di moduli: per ora, minuscole e `_`.
 
 </Callout>
 
@@ -49,7 +49,7 @@ Il nome del progetto deve seguire le regole dei **nomi di modulo** in C3: solo l
 Apri `src/main.c3`. Il compilatore ci ha già messo un Hello World, con una novità:
 
 ```c3 title="src/main.c3"
-module primo_progetto;
+module first_project;
 import std::io;
 
 fn int main(String[] args)
@@ -61,7 +61,7 @@ fn int main(String[] args)
 
 Due cose nuove:
 
-- **`module primo_progetto;`** dichiara che questo file appartiene al modulo `primo_progetto`. In un progetto ogni file dice a quale modulo appartiene; i moduli sono il modo in cui C3 organizza e separa il codice. Ne parleremo a fondo in un modulo dedicato del corso.
+- **`module first_project;`** dichiara che questo file appartiene al modulo `first_project`. In un progetto ogni file dice a quale modulo appartiene; i moduli sono il modo in cui C3 organizza e separa il codice. Ne parleremo a fondo in un modulo dedicato del corso.
 - **`fn int main(String[] args)`** è la versione "completa" di `main`: restituisce un `int` (il codice di uscita, `return 0;` = tutto bene) e riceve `args`, la lista degli argomenti passati da riga di comando. Per ora non li useremo, ma non danno fastidio.
 
 ## Compilare ed eseguire
@@ -73,8 +73,8 @@ c3c run
 ```
 
 ```output
-Program linked to executable 'build/primo_progetto'.
-Launching ./build/primo_progetto
+Program linked to executable 'build/first_project'.
+Launching ./build/first_project
 Hello, World!
 Program completed with exit code 0.
 ```
@@ -85,7 +85,7 @@ Se vuoi solo compilare, senza lanciare:
 
 ```sh
 c3c build
-./build/primo_progetto
+./build/first_project
 ```
 
 E per buttare via tutto ciò che è stato compilato e ripartire da zero:
@@ -94,7 +94,7 @@ E per buttare via tutto ciò che è stato compilato e ripartire da zero:
 c3c clean
 ```
 
-<Quiz question="Sei nella cartella di un progetto e hai modificato `src/main.c3`. Qual è il comando più rapido per vedere il risultato?" options={['`c3c compile src/main.c3`', '`c3c run`', '`c3c compile-run project.json`', '`./build/primo_progetto`']} answer={1}>
+<Quiz question="Sei nella cartella di un progetto e hai modificato `src/main.c3`. Qual è il comando più rapido per vedere il risultato?" options={['`c3c compile src/main.c3`', '`c3c run`', '`c3c compile-run project.json`', '`./build/first_project`']} answer={1}>
 
 `c3c run` legge `project.json`, compila tutto e lancia. `c3c compile src/main.c3` funziona solo finché hai un file solo (e ignora la configurazione del progetto). Lanciare direttamente l'eseguibile in `build/` non ricompila: vedresti la versione *vecchia*.
 
@@ -115,7 +115,7 @@ Non serve capirlo tutto adesso, ma vale la pena sapere che esiste. Aprilo: è un
 	"test-sources": [ "test/**" ],
 	"output": "build",
 	"targets": {
-		"primo_progetto": {
+		"first_project": {
 			"type": "executable"
 		}
 	},
@@ -129,7 +129,7 @@ Le voci interessanti:
 
 - `sources`: dove cercare i file `.c3` (`src/**` = tutto ciò che sta dentro `src`, sottocartelle incluse).
 - `dependencies`: le librerie esterne da usare (vuoto per ora).
-- `targets`: cosa produrre. Qui un eseguibile chiamato `primo_progetto`. Un progetto può avere più target, per esempio una libreria e un programma che la usa.
+- `targets`: cosa produrre. Qui un eseguibile chiamato `first_project`. Un progetto può avere più target, per esempio una libreria e un programma che la usa.
 - `opt`: il livello di ottimizzazione. `O0` = nessuna, comodo mentre sviluppi; `O3` = il massimo, per la versione finale.
 
 <Callout type="tip" title="Quando usare un progetto e quando no">
@@ -140,7 +140,7 @@ Per i piccoli esercizi di questo corso, un file singolo con `c3c compile-run` è
 
 <Exercise title="Il tuo primo progetto">
 
-1. Crea un progetto chiamato `esercizi` con `c3c init esercizi`.
+1. Crea un progetto chiamato `exercises` con `c3c init exercises`.
 2. Entra nella cartella e lancia `c3c run`. Deve stampare `Hello, World!`.
 3. Modifica `src/main.c3` per stampare una frase a tua scelta, e rilancia `c3c run`.
 4. Lancia `c3c build`, poi trova l'eseguibile in `build/` e lancialo a mano.
@@ -151,10 +151,10 @@ Se ogni passo ha funzionato, segna l'esercizio come fatto. Da ora in poi puoi de
 
 ## Ricapitolando
 
-- `c3c init nome` crea un progetto con la struttura standard.
+- `c3c init name` crea un progetto con la struttura standard.
 - Il codice va in `src/`, gli eseguibili finiscono in `build/`.
 - `c3c run` compila e lancia; `c3c build` compila soltanto; `c3c clean` pulisce.
-- `module nome;` in cima a ogni file dice a quale modulo appartiene.
+- `module name;` in cima a ogni file dice a quale modulo appartiene.
 - `fn int main(String[] args)` è la forma completa di `main`.
 
 Bene: sai installare, scrivere, compilare, organizzare. È ora di far *pensare* il programma. Prossima lezione: variabili e tipi.

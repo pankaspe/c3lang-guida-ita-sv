@@ -26,13 +26,13 @@ Questa tabella riassume tutta la sintassi del modulo. Tienila aperta mentre fai 
 | Importare la stampa | `import std::io;` |
 | Punto d'ingresso | `fn void main() { ... }` |
 | Stampare (a capo) | `io::printn(x);` |
-| Stampare formattato | `io::printfn("%s ha %d anni", nome, eta);` |
-| Variabile | `int eta = 34;` |
-| Costante | `const double IVA = 0.22;` |
+| Stampare formattato | `io::printfn("%s is %d years old", name, age);` |
+| Variabile | `int age = 34;` |
+| Costante | `const double VAT = 0.22;` |
 | Interi | `int` (32 bit), `long` (64 bit), `char` (byte, 0–255) |
 | Decimali | `double` (default), `float` |
 | Vero/falso | `bool ok = true;` |
-| Testo | `String s = "ciao";` con `s.len` per la lunghezza |
+| Testo | `String s = "hi";` con `s.len` per la lunghezza |
 | Carattere | `char c = 'A';` (vale 65) |
 | Cast esplicito | `int i = (int)7.9;` |
 | Aritmetica | `+ - * / %`, con `/` che tronca tra interi |
@@ -58,9 +58,9 @@ Tre domande che mescolano tutto. Se le sbagli, non è grave: la spiegazione ti d
 
 </Quiz>
 
-<Quiz question="Quale riga compila senza errori?" options={['`const int limite = 100;`', '`int Limite = 100;`', '`String iniziale = \'L\';`', '`long limite = 100;`']} answer={3}>
+<Quiz question="Quale riga compila senza errori?" options={['`const int limit = 100;`', '`int Limit = 100;`', '`String initial = \'L\';`', '`long limit = 100;`']} answer={3}>
 
-Le costanti vanno in MAIUSCOLO (`limite` no). Le variabili iniziano con la minuscola (`Limite` no). `'L'` è un `char`, non una `String`. L'unica corretta è `long limite = 100;`: un letterale intero entra tranquillamente in un `long`. (Lezione 4.)
+Le costanti vanno in MAIUSCOLO (`limit` no). Le variabili iniziano con la minuscola (`Limit` no). `'L'` è un `char`, non una `String`. L'unica corretta è `long limit = 100;`: un letterale intero entra tranquillamente in un `long`. (Lezione 4.)
 
 </Quiz>
 
@@ -74,69 +74,69 @@ Le costanti vanno in MAIUSCOLO (`limite` no). Le variabili iniziano con la minus
 
 Ora un programma intero, da zero, senza copiare. Usa tutto quello che sai: costanti, variabili, cast, divisione intera e resto, confronti e formattazione.
 
-<Exercise title="Cronaca di una maratona" expected={`Distanza: 42.195 km
-Tempo: 3h 45m 30s (13530 secondi)
-Velocita media: 11.23 km/h
-Passo: 5 min 20 s al km
-Sotto le 4 ore: true`}>
+<Exercise title="Cronaca di una maratona" expected={`Distance: 42.195 km
+Time: 3h 45m 30s (13530 seconds)
+Average speed: 11.23 km/h
+Pace: 5 min 20 s per km
+Under 4 hours: true`}>
 
-Scrivi `maratona.c3`. Un'atleta ha corso una maratona in **3 ore, 45 minuti e 30 secondi**. La distanza della maratona è **42 195 metri**: mettila in una costante `int` chiamata `DISTANZA_M`.
+Scrivi `marathon.c3`. Un'atleta ha corso una maratona in **3 ore, 45 minuti e 30 secondi**. La distanza della maratona è **42 195 metri**: mettila in una costante `int` chiamata `DISTANCE_M`.
 
 Il programma deve calcolare e stampare, in questo ordine:
 
 1. la distanza in chilometri con **3** decimali;
 2. il tempo nel formato `3h 45m 30s`, seguito tra parentesi dal totale in secondi;
 3. la velocità media in km/h con **2** decimali (chilometri diviso ore; le ore sono i secondi totali diviso 3600, **in decimale**);
-4. il passo, cioè quanti secondi servono per un chilometro, espresso come `5 min 20 s al km`: calcola i secondi totali diviso i chilometri, **troncalo a intero** con un cast, poi usa `/ 60` e `% 60`;
+4. il passo, cioè quanti secondi servono per un chilometro, espresso come `5 min 20 s per km`: calcola i secondi totali diviso i chilometri, **troncalo a intero** con un cast, poi usa `/ 60` e `% 60`;
 5. se il tempo è sotto le 4 ore, stampando un `bool`.
 
 L'output atteso, carattere per carattere:
 
 ```output
-Distanza: 42.195 km
-Tempo: 3h 45m 30s (13530 secondi)
-Velocita media: 11.23 km/h
-Passo: 5 min 20 s al km
-Sotto le 4 ore: true
+Distance: 42.195 km
+Time: 3h 45m 30s (13530 seconds)
+Average speed: 11.23 km/h
+Pace: 5 min 20 s per km
+Under 4 hours: true
 ```
 
-Suggerimento: parti dalle variabili `int ore = 3; int minuti = 45; int secondi = 30;` e calcola il totale in secondi come `ore * 3600 + minuti * 60 + secondi`. Ogni riga di output è una `printfn` con i segnaposto giusti.
+Suggerimento: parti dalle variabili `int hours = 3; int minutes = 45; int seconds = 30;` e calcola il totale in secondi come `hours * 3600 + minutes * 60 + seconds`. Ogni riga di output è una `printfn` con i segnaposto giusti.
 
 </Exercise>
 
 <Solution>
 
-```c3 title="maratona.c3"
+```c3 title="marathon.c3"
 import std::io;
 
-const int DISTANZA_M = 42195;
+const int DISTANCE_M = 42195;
 
 fn void main()
 {
-	int ore = 3;
-	int minuti = 45;
-	int secondi = 30;
+	int hours = 3;
+	int minutes = 45;
+	int seconds = 30;
 
-	int tempo_totale = ore * 3600 + minuti * 60 + secondi;
-	double distanza_km = DISTANZA_M / 1000.0;
-	double velocita = distanza_km / (tempo_totale / 3600.0);
-	int passo = (int)(tempo_totale / distanza_km);
+	int total_seconds = hours * 3600 + minutes * 60 + seconds;
+	double distance_km = DISTANCE_M / 1000.0;
+	double speed = distance_km / (total_seconds / 3600.0);
+	int pace = (int)(total_seconds / distance_km);
 
-	io::printfn("Distanza: %.3f km", distanza_km);
-	io::printfn("Tempo: %dh %dm %ds (%d secondi)", ore, minuti, secondi, tempo_totale);
-	io::printfn("Velocita media: %.2f km/h", velocita);
-	io::printfn("Passo: %d min %d s al km", passo / 60, passo % 60);
-	io::printfn("Sotto le 4 ore: %s", tempo_totale < 4 * 3600);
+	io::printfn("Distance: %.3f km", distance_km);
+	io::printfn("Time: %dh %dm %ds (%d seconds)", hours, minutes, seconds, total_seconds);
+	io::printfn("Average speed: %.2f km/h", speed);
+	io::printfn("Pace: %d min %d s per km", pace / 60, pace % 60);
+	io::printfn("Under 4 hours: %s", total_seconds < 4 * 3600);
 }
 ```
 
-I punti delicati: `DISTANZA_M / 1000.0` (e non `/ 1000`, che darebbe 42), `tempo_totale / 3600.0` per le ore decimali, e il cast `(int)` per troncare il passo prima di scomporlo in minuti e secondi.
+I punti delicati: `DISTANCE_M / 1000.0` (e non `/ 1000`, che darebbe 42), `total_seconds / 3600.0` per le ore decimali, e il cast `(int)` per troncare il passo prima di scomporlo in minuti e secondi.
 
 </Solution>
 
 <Callout type="fun" title="Se ci sei riuscito al primo colpo">
 
-Prova a cambiare i dati (un'altra distanza, un altro tempo) e verifica a mano che i risultati abbiano senso. Poi prova a *rompere* il programma: cosa succede se metti `int` al posto di `double` in `velocita`? E se togli il cast? Leggi gli errori: ormai li sai interpretare.
+Prova a cambiare i dati (un'altra distanza, un altro tempo) e verifica a mano che i risultati abbiano senso. Poi prova a *rompere* il programma: cosa succede se metti `int` al posto di `double` in `speed`? E se togli il cast? Leggi gli errori: ormai li sai interpretare.
 
 </Callout>
 

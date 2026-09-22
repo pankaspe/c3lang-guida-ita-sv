@@ -6,7 +6,15 @@ static SvelteKit site. See README.md for the layout and authoring reference.
 ## Hard rules
 
 - **App code in English** (Svelte, TS, identifiers, comments, commit messages).
-- **Course content in Italian** (`src/content/modules/**/*.svx`).
+- **Course content in Italian** (`src/content/modules/**/*.svx`) — but the **embedded C3 code is in
+  English**: variable/constant/function/type/module names, example file/project names, code comments,
+  and printed/output string literals inside `c3`/`output` fences (and matching `Quiz`/`Exercise`/
+  `Solution` code) must all be English, "as is customary, one programs in English" — only the
+  surrounding Italian narrative prose stays Italian (e.g. `int eta = 34;` → `int age = 34;`,
+  `saluto.c3` → `greeting.c3`, printed `"Totale: ... euro"` → `"Total: ... euro"`). Exception: keep an
+  accented Italian word where the lesson's whole point is a UTF-8 byte-vs-character-length gotcha that
+  needs one to demonstrate (module 1: the `"caffè"` `.len` demo and the `tabella.c3` / "Perché «Caffe»
+  senza accento?" callout) — don't translate those into English.
 - Work **one module at a time**: when asked to continue, add the next module's `.svx` files;
   do not rewrite the app shell unless asked.
 - **Verify every C3 example and every `expected` exercise output with the real compiler**

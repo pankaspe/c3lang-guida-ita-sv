@@ -82,11 +82,11 @@ Dove metti la graffa aperta (sulla stessa riga o su quella dopo) è questione di
 ```c3
 fn void main()
 {
-	io::printn("stile Allman");
+	io::printn("Allman style");
 }
 
 fn void other() {
-	io::printn("stile K&R");
+	io::printn("K&R style");
 }
 ```
 
@@ -138,7 +138,7 @@ Il compilatore C3 scrive errori chiari, con il numero di riga e spesso un sugger
 
 Il modo più rapido per capire un compilatore è farlo arrabbiare. Prova a togliere il punto e virgola:
 
-```c3 title="rotto.c3"
+```c3 title="broken.c3"
 import std::io;
 
 fn void main()
@@ -153,16 +153,16 @@ fn void main()
  4: {
  5:     io::printn("Hello, World!")
                                   ^
-rotto.c3:5:29: error: Expected ';'
+broken.c3:5:29: error: Expected ';'
 ```
 
 Il compilatore ti mostra il pezzo di codice incriminato, con un `^` sotto il punto esatto, e poi la riga nel formato `nome file : riga : colonna : messaggio`. Riga 5, colonna 29, "mi aspettavo un `;`". Non serve altro.
 
 Ora prova a togliere `import std::io;`: il compilatore ti dirà che non conosce nessun `io`. Ora prova a scrivere `Io::printn` con la maiuscola. Ogni errore che provochi *adesso* è un errore che riconoscerai al volo *dopo*.
 
-<Quiz question="Quale di queste righe stampa `ciao` e poi `mondo` sulla **stessa** riga?" options={['`io::printn(\"ciao\"); io::printn(\"mondo\");`', '`io::print(\"ciao\"); io::print(\"mondo\");`', '`io::printn(\"ciao\"); io::print(\"mondo\");`', 'Nessuna: in C3 ogni stampa va a capo']} answer={1}>
+<Quiz question="Quale di queste righe stampa `hello` e poi `world` sulla **stessa** riga?" options={['`io::printn(\"hello\"); io::printn(\"world\");`', '`io::print(\"hello\"); io::print(\"world\");`', '`io::printn(\"hello\"); io::print(\"world\");`', 'Nessuna: in C3 ogni stampa va a capo']} answer={1}>
 
-`print` stampa e basta; `printn` stampa **e va a capo**. Due `print` di fila producono `ciaomondo` sulla stessa riga (senza spazio, perché nessuno l'ha chiesto!). La prima opzione stampa due righe; la terza stampa `ciao`, va a capo, e poi `mondo`.
+`print` stampa e basta; `printn` stampa **e va a capo**. Due `print` di fila producono `helloworld` sulla stessa riga (senza spazio, perché nessuno l'ha chiesto!). La prima opzione stampa due righe; la terza stampa `hello`, va a capo, e poi `world`.
 
 </Quiz>
 
@@ -170,50 +170,50 @@ Ora prova a togliere `import std::io;`: il compilatore ti dirà che non conosce 
 
 Puoi mettere quante istruzioni vuoi dentro `main`. Vengono eseguite **in ordine, dall'alto in basso**:
 
-```c3 title="tre_righe.c3"
+```c3 title="three_lines.c3"
 import std::io;
 
 fn void main()
 {
-	io::printn("Prima riga");
-	io::printn("Seconda riga");
-	io::print("Terza");
-	io::print(" riga");
+	io::printn("First line");
+	io::printn("Second line");
+	io::print("Third");
+	io::print(" line");
 	io::printn("");
 }
 ```
 
 ```output
-Prima riga
-Seconda riga
-Terza riga
+First line
+Second line
+Third line
 ```
 
 Nota l'ultima `io::printn("")`: stampa una stringa vuota e va a capo. È un trucco comune per "chiudere" una riga costruita con più `print`.
 
-<Exercise title="Presentati alla macchina" expected={`Ciao, C3!
-Sono pronto.`}>
+<Exercise title="Presentati alla macchina" expected={`Hello, C3!
+I'm ready.`}>
 
-Scrivi un programma `saluto.c3` che stampi esattamente queste due righe:
+Scrivi un programma `greeting.c3` che stampi esattamente queste due righe:
 
 ```output
-Ciao, C3!
-Sono pronto.
+Hello, C3!
+I'm ready.
 ```
 
-Compilalo con `c3c compile-run saluto.c3`, poi copia qui sotto **le righe stampate dal programma** (non quelle del compilatore).
+Compilalo con `c3c compile-run greeting.c3`, poi copia qui sotto **le righe stampate dal programma** (non quelle del compilatore).
 
 </Exercise>
 
 <Solution>
 
-```c3 title="saluto.c3"
+```c3 title="greeting.c3"
 import std::io;
 
 fn void main()
 {
-	io::printn("Ciao, C3!");
-	io::printn("Sono pronto.");
+	io::printn("Hello, C3!");
+	io::printn("I'm ready.");
 }
 ```
 
@@ -224,24 +224,24 @@ fn void main()
 Una cosa che vedrai spesso nel codice sono i **commenti**: testo ignorato dal compilatore, scritto per chi legge. In C3 ci sono tre forme:
 
 ```c3
-// Commento su una riga: tutto dopo le due barre è ignorato.
+// Single-line comment: everything after the double slash is ignored.
 
-/* Commento su più righe.
-   Può andare avanti quanto vuoi.
-   /* E può anche contenere altri commenti, a differenza del C! */
+/* Multi-line comment.
+   It can go on as long as you like.
+   /* And it can even contain other comments, unlike C! */
 */
 
 <*
- Commento di documentazione: descrive la funzione che segue.
- Lo useremo più avanti, perché può contenere "contratti".
+ Documentation comment: describes the function that follows.
+ We'll use it later, because it can contain "contracts".
 *>
 fn void main()
 {
-	io::printn("Hello"); // Anche qui, a fine riga.
+	io::printn("Hello"); // Here too, at the end of the line.
 }
 ```
 
-Usa i commenti per spiegare il *perché*, non il *cosa*. `// stampa Hello` non aiuta nessuno; `// il saluto deve essere in inglese per il test automatico` sì.
+Usa i commenti per spiegare il *perché*, non il *cosa*. `// prints Hello` non aiuta nessuno; `// the greeting must be in English for the automated test` sì.
 
 ## Ricapitolando
 

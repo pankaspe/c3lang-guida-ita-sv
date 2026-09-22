@@ -10,22 +10,22 @@ Finora per stampare "Ada ha 36 anni" avremmo dovuto fare tre stampe separate, e 
 
 La soluzione è `io::printfn`, la versione "formattata" di `printn` (la `f` sta per *format*):
 
-```c3 title="frase.c3"
+```c3 title="sentence.c3"
 import std::io;
 
 fn void main()
 {
-	String nome = "Ada";
-	int eta = 36;
-	io::printfn("Mi chiamo %s e ho %d anni.", nome, eta);
+	String name = "Ada";
+	int age = 36;
+	io::printfn("My name is %s and I am %d years old.", name, age);
 }
 ```
 
 ```output
-Mi chiamo Ada e ho 36 anni.
+My name is Ada and I am 36 years old.
 ```
 
-Il primo argomento è la **stringa di formato**: una frase con dei buchi. I buchi sono i **segnaposto** che iniziano con `%`. Gli argomenti successivi riempiono i buchi, **in ordine**: `%s` prende `nome`, `%d` prende `eta`.
+Il primo argomento è la **stringa di formato**: una frase con dei buchi. I buchi sono i **segnaposto** che iniziano con `%`. Gli argomenti successivi riempiono i buchi, **in ordine**: `%s` prende `name`, `%d` prende `age`.
 
 Ecco la famiglia completa delle funzioni di stampa:
 
@@ -60,19 +60,19 @@ In C il segnaposto deve corrispondere esattamente al tipo (`%d` per int, `%ld` p
 Il segnaposto più importante da padroneggiare è `%.Nf`, perché `1.650000` non è quasi mai quello che vuoi mostrare:
 
 ```c3
-double prezzo = 19.99;
-double sconto = 0.15;
-double finale = prezzo * (1 - sconto);
+double price = 19.99;
+double discount = 0.15;
+double final_price = price * (1 - discount);
 
-io::printfn("Prezzo finale: %f", finale);
-io::printfn("Prezzo finale: %.2f", finale);
-io::printfn("Sconto del %.0f%%", sconto * 100);
+io::printfn("Final price: %f", final_price);
+io::printfn("Final price: %.2f", final_price);
+io::printfn("Discount of %.0f%%", discount * 100);
 ```
 
 ```output
-Prezzo finale: 16.991500
-Prezzo finale: 16.99
-Sconto del 15%
+Final price: 16.991500
+Final price: 16.99
+Discount of 15%
 ```
 
 Il numero dopo il punto è quante cifre decimali vuoi. `%.0f` arrotonda all'intero. E nota `%%` per ottenere un `%` vero, perché un `%` da solo sarebbe letto come l'inizio di un segnaposto.
@@ -155,37 +155,37 @@ io::printfn("%d.", 3);
 Dentro la stringa di formato valgono tutte le sequenze della lezione 4. La più utile con le tabelle è `\t`, la tabulazione, che allinea "a scatti" di 8 caratteri:
 
 ```c3
-io::printfn("Nome:\tAda");
-io::printfn("Eta:\t36");
+io::printfn("Name:\tAda");
+io::printfn("Age:\t36");
 ```
 
 ```output
-Nome:	Ada
-Eta:	36
+Name:	Ada
+Age:	36
 ```
 
 È più grezza della larghezza esplicita (`%-10s`), ma per due righe al volo va benissimo.
 
-<Quiz question="Quale chiamata stampa esattamente `Totale: 6.90 euro` se `double t = 6.9;`?" options={['`io::printfn(\"Totale: %d euro\", t);`', '`io::printfn(\"Totale: %f euro\", t);`', '`io::printfn(\"Totale: %.2f euro\", t);`', '`io::printfn(\"Totale: %s euro\", t);`']} answer={2}>
+<Quiz question="Quale chiamata stampa esattamente `Total: 6.90 euro` se `double t = 6.9;`?" options={['`io::printfn(\"Total: %d euro\", t);`', '`io::printfn(\"Total: %f euro\", t);`', '`io::printfn(\"Total: %.2f euro\", t);`', '`io::printfn(\"Total: %s euro\", t);`']} answer={2}>
 
 `%.2f` forza due cifre decimali, quindi `6.9` diventa `6.90`. `%f` darebbe `6.900000`, `%s` idem (per i decimali usa la stessa forma di `printn`), e `%d` non compila, perché vuole un intero e `t` è un `double`.
 
 </Quiz>
 
-<Exercise title="Lo scontrino" expected={`Caffe x2 = 2.40
-Cornetti x3 = 4.50
-Totale: 6.90 euro
-Pagato con 10 euro, resto: 3.10`}>
+<Exercise title="Lo scontrino" expected={`Coffee x2 = 2.40
+Croissants x3 = 4.50
+Total: 6.90 euro
+Paid with 10 euro, change: 3.10`}>
 
-Scrivi `scontrino.c3`. Dichiara due costanti, `PREZZO_CAFFE = 1.20` e `PREZZO_CORNETTO = 1.50`, entrambe `double`. Poi le quantità: `int caffe = 2;` e `int cornetti = 3;`. Calcola il costo dei caffè, quello dei cornetti, il totale, e il resto se il cliente paga con 10 euro.
+Scrivi `receipt.c3`. Dichiara due costanti, `COFFEE_PRICE = 1.20` e `CROISSANT_PRICE = 1.50`, entrambe `double`. Poi le quantità: `int coffees = 2;` e `int croissants = 3;`. Calcola il costo dei caffè, quello dei cornetti, il totale, e il resto se il cliente paga con 10 euro.
 
 Stampa esattamente queste quattro righe (attenzione a spazi, `x`, `=` e alle due cifre decimali):
 
 ```output
-Caffe x2 = 2.40
-Cornetti x3 = 4.50
-Totale: 6.90 euro
-Pagato con 10 euro, resto: 3.10
+Coffee x2 = 2.40
+Croissants x3 = 4.50
+Total: 6.90 euro
+Paid with 10 euro, change: 3.10
 ```
 
 Le quantità devono venire dalle variabili, non scritte a mano nella stringa. Riporta l'output.
@@ -194,27 +194,27 @@ Le quantità devono venire dalle variabili, non scritte a mano nella stringa. Ri
 
 <Solution>
 
-```c3 title="scontrino.c3"
+```c3 title="receipt.c3"
 import std::io;
 
-const double PREZZO_CAFFE = 1.20;
-const double PREZZO_CORNETTO = 1.50;
+const double COFFEE_PRICE = 1.20;
+const double CROISSANT_PRICE = 1.50;
 
 fn void main()
 {
-	int caffe = 2;
-	int cornetti = 3;
-	int pagato = 10;
+	int coffees = 2;
+	int croissants = 3;
+	int paid = 10;
 
-	double costo_caffe = caffe * PREZZO_CAFFE;
-	double costo_cornetti = cornetti * PREZZO_CORNETTO;
-	double totale = costo_caffe + costo_cornetti;
-	double resto = pagato - totale;
+	double coffee_cost = coffees * COFFEE_PRICE;
+	double croissant_cost = croissants * CROISSANT_PRICE;
+	double total = coffee_cost + croissant_cost;
+	double change = paid - total;
 
-	io::printfn("Caffe x%d = %.2f", caffe, costo_caffe);
-	io::printfn("Cornetti x%d = %.2f", cornetti, costo_cornetti);
-	io::printfn("Totale: %.2f euro", totale);
-	io::printfn("Pagato con %d euro, resto: %.2f", pagato, resto);
+	io::printfn("Coffee x%d = %.2f", coffees, coffee_cost);
+	io::printfn("Croissants x%d = %.2f", croissants, croissant_cost);
+	io::printfn("Total: %.2f euro", total);
+	io::printfn("Paid with %d euro, change: %.2f", paid, change);
 }
 ```
 
