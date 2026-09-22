@@ -1,0 +1,147 @@
+---
+title: Riepilogo e sfida finale
+description: Tutto il modulo in una pagina, un quiz di controllo e un programma completo da scrivere da zero.
+minutes: 15
+---
+
+## Guarda quanta strada
+
+Sette lezioni fa non avevi nemmeno il compilatore. Adesso sai:
+
+- installare `c3c`, compilare un file e organizzare un progetto;
+- leggere un programma C3 riga per riga, sapendo cosa fa ogni parola;
+- creare variabili dei tipi giusti e dar loro nomi che il compilatore accetta;
+- fare calcoli, evitando la trappola della divisione intera;
+- porre domande con i confronti e combinarle con la logica;
+- stampare esattamente quello che vuoi, con le cifre e gli spazi che vuoi.
+
+Non è poco. Sono le fondamenta su cui poggia tutto il resto del corso, e per questo motivo vale la pena consolidarle prima di andare avanti.
+
+## La pagina da tenere accanto
+
+Questa tabella riassume tutta la sintassi del modulo. Tienila aperta mentre fai la sfida, e torna qui ogni volta che ti serve.
+
+| Cosa | Come si scrive |
+|---|---|
+| Importare la stampa | `import std::io;` |
+| Punto d'ingresso | `fn void main() { ... }` |
+| Stampare (a capo) | `io::printn(x);` |
+| Stampare formattato | `io::printfn("%s ha %d anni", nome, eta);` |
+| Variabile | `int eta = 34;` |
+| Costante | `const double IVA = 0.22;` |
+| Interi | `int` (32 bit), `long` (64 bit), `char` (byte, 0–255) |
+| Decimali | `double` (default), `float` |
+| Vero/falso | `bool ok = true;` |
+| Testo | `String s = "ciao";` con `s.len` per la lunghezza |
+| Carattere | `char c = 'A';` (vale 65) |
+| Cast esplicito | `int i = (int)7.9;` |
+| Aritmetica | `+ - * / %`, con `/` che tronca tra interi |
+| Scorciatoie | `x += 5; x++; x--;` |
+| Confronti | `== != < > <= >=` |
+| Logica | `&& \|\| !` |
+| Segnaposto | `%s` tutto, `%d` interi, `%.2f` decimali, `%c` carattere, `%%` |
+| Larghezza | `%5d` a destra, `%-5d` a sinistra, `%05d` con zeri |
+| Commenti | `// riga`, `/* blocco */`, `<* documentazione *>` |
+| Compilare e lanciare | `c3c compile-run file.c3` oppure `c3c run` in un progetto |
+
+## Le regole dei nomi, in una riga
+
+`variabile_o_funzione`, `TipoDefinito`, `COSTANTE`, `modulo_minuscolo`. Se te le ricordi, il compilatore ti lascerà in pace.
+
+## Quiz di controllo
+
+Tre domande che mescolano tutto. Se le sbagli, non è grave: la spiegazione ti dice in quale lezione tornare.
+
+<Quiz question={'Cosa stampa questo frammento? `int a = 10; double b = a / 4; io::printfn("%.1f", b);`'} options={['`2.5`', '`2.0`', '`2`', 'Errore: non si può assegnare un int a un double']} answer={1}>
+
+`a / 4` è una divisione tra **interi** e fa 2. Solo dopo il 2 viene messo nel `double` `b`, che vale 2.0. `%.1f` lo stampa come `2.0`. Per ottenere 2.5 serve `a / 4.0`. (Lezione 5.)
+
+</Quiz>
+
+<Quiz question="Quale riga compila senza errori?" options={['`const int limite = 100;`', '`int Limite = 100;`', '`String iniziale = \'L\';`', '`long limite = 100;`']} answer={3}>
+
+Le costanti vanno in MAIUSCOLO (`limite` no). Le variabili iniziano con la minuscola (`Limite` no). `'L'` è un `char`, non una `String`. L'unica corretta è `long limite = 100;`: un letterale intero entra tranquillamente in un `long`. (Lezione 4.)
+
+</Quiz>
+
+<Quiz question="Con `int x = 5;`, quanto vale `x % 2 == 1 && x > 3 || x == 0`?" options={['`true`', '`false`', 'Errore: servono le parentesi', '`1`']} answer={0}>
+
+`x % 2` fa 1, quindi `1 == 1` è `true`; `x > 3` è `true`; `true && true` è `true`. A quel punto `||` non guarda nemmeno `x == 0` (cortocircuito): il risultato è `true`. Non servono parentesi perché `&&` ha la precedenza su `||`, e i confronti su entrambi. (Lezione 5.)
+
+</Quiz>
+
+## La sfida: cronaca di una maratona
+
+Ora un programma intero, da zero, senza copiare. Usa tutto quello che sai: costanti, variabili, cast, divisione intera e resto, confronti e formattazione.
+
+<Exercise title="Cronaca di una maratona" expected={`Distanza: 42.195 km
+Tempo: 3h 45m 30s (13530 secondi)
+Velocita media: 11.23 km/h
+Passo: 5 min 20 s al km
+Sotto le 4 ore: true`}>
+
+Scrivi `maratona.c3`. Un'atleta ha corso una maratona in **3 ore, 45 minuti e 30 secondi**. La distanza della maratona è **42 195 metri**: mettila in una costante `int` chiamata `DISTANZA_M`.
+
+Il programma deve calcolare e stampare, in questo ordine:
+
+1. la distanza in chilometri con **3** decimali;
+2. il tempo nel formato `3h 45m 30s`, seguito tra parentesi dal totale in secondi;
+3. la velocità media in km/h con **2** decimali (chilometri diviso ore; le ore sono i secondi totali diviso 3600, **in decimale**);
+4. il passo, cioè quanti secondi servono per un chilometro, espresso come `5 min 20 s al km`: calcola i secondi totali diviso i chilometri, **troncalo a intero** con un cast, poi usa `/ 60` e `% 60`;
+5. se il tempo è sotto le 4 ore, stampando un `bool`.
+
+L'output atteso, carattere per carattere:
+
+```output
+Distanza: 42.195 km
+Tempo: 3h 45m 30s (13530 secondi)
+Velocita media: 11.23 km/h
+Passo: 5 min 20 s al km
+Sotto le 4 ore: true
+```
+
+Suggerimento: parti dalle variabili `int ore = 3; int minuti = 45; int secondi = 30;` e calcola il totale in secondi come `ore * 3600 + minuti * 60 + secondi`. Ogni riga di output è una `printfn` con i segnaposto giusti.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="maratona.c3"
+import std::io;
+
+const int DISTANZA_M = 42195;
+
+fn void main()
+{
+	int ore = 3;
+	int minuti = 45;
+	int secondi = 30;
+
+	int tempo_totale = ore * 3600 + minuti * 60 + secondi;
+	double distanza_km = DISTANZA_M / 1000.0;
+	double velocita = distanza_km / (tempo_totale / 3600.0);
+	int passo = (int)(tempo_totale / distanza_km);
+
+	io::printfn("Distanza: %.3f km", distanza_km);
+	io::printfn("Tempo: %dh %dm %ds (%d secondi)", ore, minuti, secondi, tempo_totale);
+	io::printfn("Velocita media: %.2f km/h", velocita);
+	io::printfn("Passo: %d min %d s al km", passo / 60, passo % 60);
+	io::printfn("Sotto le 4 ore: %s", tempo_totale < 4 * 3600);
+}
+```
+
+I punti delicati: `DISTANZA_M / 1000.0` (e non `/ 1000`, che darebbe 42), `tempo_totale / 3600.0` per le ore decimali, e il cast `(int)` per troncare il passo prima di scomporlo in minuti e secondi.
+
+</Solution>
+
+<Callout type="fun" title="Se ci sei riuscito al primo colpo">
+
+Prova a cambiare i dati (un'altra distanza, un altro tempo) e verifica a mano che i risultati abbiano senso. Poi prova a *rompere* il programma: cosa succede se metti `int` al posto di `double` in `velocita`? E se togli il cast? Leggi gli errori: ormai li sai interpretare.
+
+</Callout>
+
+## Cosa succede nel Modulo 2
+
+Finora i tuoi programmi sono stati **una lista di istruzioni eseguite dall'alto in basso**. Il prossimo modulo è quello in cui i programmi cominciano a *pensare*: con `if` prenderanno decisioni, con `for` e `while` ripeteranno le cose, e con le **funzioni** imparerai a dare un nome a un pezzo di lavoro per riusarlo. È il modulo in cui si passa da "scrivere istruzioni" a "programmare".
+
+Prenditi una pausa, ripassa la tabella se serve, e quando sei pronto segna questa lezione come completata. Ci vediamo di là.

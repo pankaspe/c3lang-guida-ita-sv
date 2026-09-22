@@ -1,0 +1,231 @@
+---
+title: Stampare come si deve
+description: printf e i segnaposto: mettere i valori dentro le frasi, scegliere le cifre decimali, allineare le colonne.
+minutes: 18
+---
+
+## Il problema
+
+Finora per stampare "Ada ha 36 anni" avremmo dovuto fare tre stampe separate, e il risultato sarebbe finito su tre righe. Non va bene. Vogliamo **comporre** una frase con dentro dei valori.
+
+La soluzione è `io::printfn`, la versione "formattata" di `printn` (la `f` sta per *format*):
+
+```c3 title="frase.c3"
+import std::io;
+
+fn void main()
+{
+	String nome = "Ada";
+	int eta = 36;
+	io::printfn("Mi chiamo %s e ho %d anni.", nome, eta);
+}
+```
+
+```output
+Mi chiamo Ada e ho 36 anni.
+```
+
+Il primo argomento è la **stringa di formato**: una frase con dei buchi. I buchi sono i **segnaposto** che iniziano con `%`. Gli argomenti successivi riempiono i buchi, **in ordine**: `%s` prende `nome`, `%d` prende `eta`.
+
+Ecco la famiglia completa delle funzioni di stampa:
+
+| Funzione | Formattata? | Va a capo? |
+|---|---|---|
+| `io::print(x)` | no | no |
+| `io::printn(x)` | no | sì |
+| `io::printf("...", a, b)` | sì | no |
+| `io::printfn("...", a, b)` | sì | sì |
+
+## I segnaposto principali
+
+| Segnaposto | Cosa stampa | Esempio | Risultato |
+|---|---|---|---|
+| `%s` | **qualsiasi cosa**, nella sua forma naturale | `%s` con `"ciao"`, `42`, `true` | `ciao`, `42`, `true` |
+| `%d` | un numero intero | `%d` con `42` | `42` |
+| `%f` | un decimale con 6 cifre dopo la virgola | `%f` con `1.65` | `1.650000` |
+| `%.2f` | un decimale con **2** cifre (o quante ne scrivi) | `%.2f` con `1.65` | `1.65` |
+| `%c` | un `char` come carattere | `%c` con `'Z'` | `Z` |
+| `%x` | un intero in esadecimale | `%x` con `255` | `ff` |
+| `%b` | un intero in binario | `%b` con `5` | `101` |
+| `%%` | il simbolo `%` letterale | `"100%%"` | `100%` |
+
+<Callout type="c" title="%s funziona con tutto">
+
+In C il segnaposto deve corrispondere esattamente al tipo (`%d` per int, `%ld` per long, `%u` per unsigned, `%lf` per double...) e sbagliare produce spazzatura o crash. In C3 `%d` va bene per **qualsiasi intero**, di qualsiasi dimensione, e `%s` va bene per **qualsiasi valore**: interi, decimali, booleani, stringhe, e più avanti anche enum e strutture. E se sbagli il numero di argomenti, il **compilatore** te lo dice: *"Too few arguments were provided for the formatting string"*. Niente più sorprese a runtime.
+
+</Callout>
+
+## Il caso dei decimali
+
+Il segnaposto più importante da padroneggiare è `%.Nf`, perché `1.650000` non è quasi mai quello che vuoi mostrare:
+
+```c3
+double prezzo = 19.99;
+double sconto = 0.15;
+double finale = prezzo * (1 - sconto);
+
+io::printfn("Prezzo finale: %f", finale);
+io::printfn("Prezzo finale: %.2f", finale);
+io::printfn("Sconto del %.0f%%", sconto * 100);
+```
+
+```output
+Prezzo finale: 16.991500
+Prezzo finale: 16.99
+Sconto del 15%
+```
+
+Il numero dopo il punto è quante cifre decimali vuoi. `%.0f` arrotonda all'intero. E nota `%%` per ottenere un `%` vero, perché un `%` da solo sarebbe letto come l'inizio di un segnaposto.
+
+<Callout type="warning" title="L'arrotondamento è onesto, i decimali no">
+
+Prova `io::printfn("%.1f", 1.65)`. Ti aspetti `1.7`, ottieni `1.6`. Non è un bug: il numero 1,65 **non esiste** in virgola mobile binaria. Il `double` più vicino è 1,6499999999999999..., e arrotondato a una cifra fa 1,6. Vale per tutti i linguaggi che usano i `double` (cioè quasi tutti). Morale: mai fare i conti dei soldi con i decimali quando conta il centesimo. Ne riparleremo.
+
+</Callout>
+
+<Quiz question={'Cosa stampa `io::printfn("%d%%", 7 / 2);`?'} options={['`3.5%`', '`3%`', '`3%%`', 'Errore: `%d` non accetta divisioni']} answer={1}>
+
+`7 / 2` tra interi fa 3 (la trappola della lezione scorsa non è sparita!). `%d` lo stampa come `3`, e `%%` diventa un singolo `%`. Il risultato è `3%`.
+
+</Quiz>
+
+## Larghezza e allineamento
+
+Tra `%` e la lettera puoi mettere una **larghezza minima**: `%5d` stampa il numero in almeno 5 caratteri, riempiendo di spazi a sinistra. Con un `-` riempie a destra, con uno `0` riempie di zeri. Serve per fare le colonne:
+
+```c3
+io::printfn("[%5d]", 42);
+io::printfn("[%-5d]", 42);
+io::printfn("[%05d]", 42);
+io::printfn("[%8.2f]", 3.14159);
+io::printfn("[%-8s]", "ab");
+```
+
+```output
+[   42]
+[42   ]
+[00042]
+[    3.14]
+[ab      ]
+```
+
+Le parentesi quadre sono nel testo solo per far vedere gli spazi. Con questi strumenti puoi fare una tabella ordinata:
+
+```c3 title="tabella.c3"
+import std::io;
+
+fn void main()
+{
+	io::printfn("%-10s %5s %8s", "Prodotto", "Qta", "Prezzo");
+	io::printfn("%-10s %5d %8.2f", "Caffe", 2, 1.20);
+	io::printfn("%-10s %5d %8.2f", "Cornetto", 3, 1.50);
+	io::printfn("%-10s %5d %8.2f", "Spremuta", 1, 3.00);
+}
+```
+
+```output
+Prodotto     Qta   Prezzo
+Caffe          2     1.20
+Cornetto       3     1.50
+Spremuta       1     3.00
+```
+
+<Callout type="tip" title="Perché «Caffe» senza accento?">
+
+L'allineamento conta i **byte**, non le lettere che vedi. `Caffè` occupa 6 byte (la `è` ne vale due in UTF-8), quindi la colonna verrebbe storta di uno. Per le tabelle in console, usare solo caratteri ASCII evita il problema. Nei testi normali, invece, gli accenti funzionano benissimo: `io::printn("Perché no?")` stampa esattamente quello che ti aspetti.
+
+</Callout>
+
+## Costruire una riga a pezzi
+
+`printf` (senza `n`) non va a capo, e questo permette di costruire una riga in più passaggi, per esempio dentro un ciclo (li vedremo nel Modulo 2):
+
+```c3
+io::printf("%d, ", 1);
+io::printf("%d, ", 2);
+io::printfn("%d.", 3);
+```
+
+```output
+1, 2, 3.
+```
+
+## Le sequenze di escape, di nuovo
+
+Dentro la stringa di formato valgono tutte le sequenze della lezione 4. La più utile con le tabelle è `\t`, la tabulazione, che allinea "a scatti" di 8 caratteri:
+
+```c3
+io::printfn("Nome:\tAda");
+io::printfn("Eta:\t36");
+```
+
+```output
+Nome:	Ada
+Eta:	36
+```
+
+È più grezza della larghezza esplicita (`%-10s`), ma per due righe al volo va benissimo.
+
+<Quiz question="Quale chiamata stampa esattamente `Totale: 6.90 euro` se `double t = 6.9;`?" options={['`io::printfn(\"Totale: %d euro\", t);`', '`io::printfn(\"Totale: %f euro\", t);`', '`io::printfn(\"Totale: %.2f euro\", t);`', '`io::printfn(\"Totale: %s euro\", t);`']} answer={2}>
+
+`%.2f` forza due cifre decimali, quindi `6.9` diventa `6.90`. `%f` darebbe `6.900000`, `%s` idem (per i decimali usa la stessa forma di `printn`), e `%d` non compila, perché vuole un intero e `t` è un `double`.
+
+</Quiz>
+
+<Exercise title="Lo scontrino" expected={`Caffe x2 = 2.40
+Cornetti x3 = 4.50
+Totale: 6.90 euro
+Pagato con 10 euro, resto: 3.10`}>
+
+Scrivi `scontrino.c3`. Dichiara due costanti, `PREZZO_CAFFE = 1.20` e `PREZZO_CORNETTO = 1.50`, entrambe `double`. Poi le quantità: `int caffe = 2;` e `int cornetti = 3;`. Calcola il costo dei caffè, quello dei cornetti, il totale, e il resto se il cliente paga con 10 euro.
+
+Stampa esattamente queste quattro righe (attenzione a spazi, `x`, `=` e alle due cifre decimali):
+
+```output
+Caffe x2 = 2.40
+Cornetti x3 = 4.50
+Totale: 6.90 euro
+Pagato con 10 euro, resto: 3.10
+```
+
+Le quantità devono venire dalle variabili, non scritte a mano nella stringa. Riporta l'output.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="scontrino.c3"
+import std::io;
+
+const double PREZZO_CAFFE = 1.20;
+const double PREZZO_CORNETTO = 1.50;
+
+fn void main()
+{
+	int caffe = 2;
+	int cornetti = 3;
+	int pagato = 10;
+
+	double costo_caffe = caffe * PREZZO_CAFFE;
+	double costo_cornetti = cornetti * PREZZO_CORNETTO;
+	double totale = costo_caffe + costo_cornetti;
+	double resto = pagato - totale;
+
+	io::printfn("Caffe x%d = %.2f", caffe, costo_caffe);
+	io::printfn("Cornetti x%d = %.2f", cornetti, costo_cornetti);
+	io::printfn("Totale: %.2f euro", totale);
+	io::printfn("Pagato con %d euro, resto: %.2f", pagato, resto);
+}
+```
+
+</Solution>
+
+## Ricapitolando
+
+- `io::printfn("frase con %s e %d", a, b)` riempie i segnaposto in ordine.
+- `%s` stampa qualsiasi cosa; `%d` qualsiasi intero; `%.2f` un decimale con 2 cifre; `%c` un carattere; `%%` un `%`.
+- Larghezza: `%5d` allinea a destra, `%-5d` a sinistra, `%05d` riempie di zeri.
+- Il compilatore controlla che argomenti e segnaposto corrispondano.
+- `printf` senza `n` non va a capo: utile per costruire righe a pezzi.
+
+Sei arrivato all'ultima lezione del modulo: un riepilogo, una tabella da tenere a portata di mano e una sfida che mette insieme tutto.

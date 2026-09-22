@@ -1,0 +1,306 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@import '@fontsource-variable/literata';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* Dark mode is class-based (toggled on <html>), not media-query based. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Paper theme tokens. Warm, low-contrast surfaces that are easy on the eyes.
+   --------------------------------------------------------------------------- */
+:root {
+	--paper: #f6f1e7;
+	--surface: #fdfaf3;
+	--surface-2: #efe8da;
+	--ink: #2b2620;
+	--ink-soft: #4d453b;
+	--muted: #7a7062;
+	--line: #e0d7c5;
+	--accent: #b4512b;
+	--accent-ink: #ffffff;
+	--accent-soft: #f3dccd;
+	--link: #2e5f8a;
+	--success: #3d7a4a;
+	--success-soft: #dcebdc;
+	--danger: #a83a3a;
+	--danger-soft: #f2d9d6;
+	--warning: #9a6b12;
+	--warning-soft: #f6e8c4;
+	--info: #2e5f8a;
+	--info-soft: #d9e5ef;
+	--fun: #7a4b9c;
+	--fun-soft: #e8dcf2;
+
+	/* Code block palette (light) */
+	--code-bg: #f1ebdf;
+	--code-ink: #3a342c;
+	--code-comment: #8a8071;
+	--code-keyword: #9a3e6f;
+	--code-type: #2b6f7a;
+	--code-string: #6b7d2b;
+	--code-number: #b05a1a;
+	--code-function: #2e5f8a;
+	--code-constant: #b07a10;
+	--code-attribute: #7a4b9c;
+	--code-operator: #6a6256;
+	--code-format: #b05a1a;
+	--terminal-bg: #2b2620;
+	--terminal-ink: #e8e1d3;
+}
+
+.dark {
+	--paper: #1b1917;
+	--surface: #232019;
+	--surface-2: #2c2822;
+	--ink: #e6dfd2;
+	--ink-soft: #c9c0b1;
+	--muted: #9d9385;
+	--line: #3a352e;
+	--accent: #e08a5c;
+	--accent-ink: #1b1917;
+	--accent-soft: #3f2c22;
+	--link: #8db4d8;
+	--success: #8fc79a;
+	--success-soft: #24352a;
+	--danger: #e08a8a;
+	--danger-soft: #3d2626;
+	--warning: #e0b95a;
+	--warning-soft: #3b3120;
+	--info: #8db4d8;
+	--info-soft: #22303c;
+	--fun: #c9a2e6;
+	--fun-soft: #33283d;
+
+	--code-bg: #1f1c18;
+	--code-ink: #ddd5c6;
+	--code-comment: #857b6c;
+	--code-keyword: #e39ac2;
+	--code-type: #7fc4cf;
+	--code-string: #b8cc6a;
+	--code-number: #f0a56a;
+	--code-function: #8db4d8;
+	--code-constant: #e6c46a;
+	--code-attribute: #c9a2e6;
+	--code-operator: #b3aa9b;
+	--code-format: #f0a56a;
+	--terminal-bg: #12100e;
+	--terminal-ink: #e8e1d3;
+}
+
+@theme inline {
+	--color-paper: var(--paper);
+	--color-surface: var(--surface);
+	--color-surface-2: var(--surface-2);
+	--color-ink: var(--ink);
+	--color-ink-soft: var(--ink-soft);
+	--color-muted: var(--muted);
+	--color-line: var(--line);
+	--color-accent: var(--accent);
+	--color-accent-ink: var(--accent-ink);
+	--color-accent-soft: var(--accent-soft);
+	--color-link: var(--link);
+	--color-success: var(--success);
+	--color-success-soft: var(--success-soft);
+	--color-danger: var(--danger);
+	--color-danger-soft: var(--danger-soft);
+	--color-warning: var(--warning);
+	--color-warning-soft: var(--warning-soft);
+	--color-info: var(--info);
+	--color-info-soft: var(--info-soft);
+	--color-fun: var(--fun);
+	--color-fun-soft: var(--fun-soft);
+
+	--font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-serif: 'Literata Variable', ui-serif, Georgia, serif;
+	--font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+html {
+	background: var(--paper);
+	color: var(--ink);
+	font-family: var(--font-sans);
+	scroll-behavior: smooth;
+	scroll-padding-top: 5rem;
+}
+
+body {
+	background: var(--paper);
+	color: var(--ink);
+	-webkit-font-smoothing: antialiased;
+}
+
+::selection {
+	background: var(--accent-soft);
+}
+
+/* ---------------------------------------------------------------------------
+   Lesson prose (Tailwind typography, re-coloured for the paper palette)
+   --------------------------------------------------------------------------- */
+.lesson-prose {
+	--tw-prose-body: var(--ink-soft);
+	--tw-prose-headings: var(--ink);
+	--tw-prose-lead: var(--ink-soft);
+	--tw-prose-links: var(--link);
+	--tw-prose-bold: var(--ink);
+	--tw-prose-counters: var(--muted);
+	--tw-prose-bullets: var(--line);
+	--tw-prose-hr: var(--line);
+	--tw-prose-quotes: var(--ink);
+	--tw-prose-quote-borders: var(--accent);
+	--tw-prose-captions: var(--muted);
+	--tw-prose-code: var(--accent);
+	--tw-prose-th-borders: var(--line);
+	--tw-prose-td-borders: var(--line);
+	font-family: var(--font-serif);
+	font-size: 1.0625rem;
+	line-height: 1.75;
+}
+
+.lesson-prose :where(h2, h3, h4) {
+	font-family: var(--font-sans);
+	letter-spacing: -0.01em;
+	scroll-margin-top: 5rem;
+}
+
+.lesson-prose :where(h2) {
+	margin-top: 2.75em;
+	padding-top: 1.25em;
+	border-top: 1px solid var(--line);
+}
+
+.lesson-prose :where(code):not(pre code) {
+	font-family: var(--font-mono);
+	font-size: 0.86em;
+	font-weight: 500;
+	background: var(--surface-2);
+	border: 1px solid var(--line);
+	border-radius: 0.35rem;
+	padding: 0.1em 0.4em;
+}
+
+.lesson-prose :where(code):not(pre code)::before,
+.lesson-prose :where(code):not(pre code)::after {
+	content: none;
+}
+
+.lesson-prose :where(table) {
+	font-family: var(--font-sans);
+	font-size: 0.925rem;
+}
+
+.lesson-prose :where(th) {
+	background: var(--surface-2);
+	padding: 0.5rem 0.75rem;
+}
+
+.lesson-prose :where(td) {
+	padding: 0.5rem 0.75rem;
+}
+
+.lesson-prose :where(kbd) {
+	font-family: var(--font-mono);
+	font-size: 0.8em;
+	border: 1px solid var(--line);
+	border-bottom-width: 2px;
+	border-radius: 0.3rem;
+	padding: 0.05em 0.4em;
+	background: var(--surface);
+}
+
+/* ---------------------------------------------------------------------------
+   Code blocks (Prism token colours)
+   --------------------------------------------------------------------------- */
+.code-block pre {
+	margin: 0;
+	padding: 1rem 1.15rem;
+	overflow-x: auto;
+	background: var(--code-bg);
+	color: var(--code-ink);
+	font-family: var(--font-mono);
+	font-size: 0.875rem;
+	line-height: 1.65;
+	tab-size: 4;
+}
+
+.code-block pre code {
+	font-family: inherit;
+	background: none;
+	border: 0;
+	padding: 0;
+	color: inherit;
+	font-weight: 400;
+}
+
+.code-block[data-lang='output'] pre {
+	background: var(--terminal-bg);
+	color: var(--terminal-ink);
+}
+
+.token.comment,
+.token.doc-comment {
+	color: var(--code-comment);
+	font-style: italic;
+}
+.token.keyword,
+.token.ct-keyword {
+	color: var(--code-keyword);
+	font-weight: 500;
+}
+.token.class-name,
+.token.builtin-type {
+	color: var(--code-type);
+}
+.token.string,
+.token.char {
+	color: var(--code-string);
+}
+.token.string .token.escape,
+.token.string .token.format {
+	color: var(--code-format);
+	font-weight: 600;
+}
+.token.number,
+.token.boolean {
+	color: var(--code-number);
+}
+.token.function {
+	color: var(--code-function);
+}
+.token.namespace {
+	color: var(--code-function);
+	opacity: 0.8;
+}
+.token.constant {
+	color: var(--code-constant);
+}
+.token.attribute {
+	color: var(--code-attribute);
+}
+.token.operator,
+.token.punctuation {
+	color: var(--code-operator);
+}
+/* Prism's bash/json tokens reuse the same palette */
+.token.property {
+	color: var(--code-type);
+}
+.token.builtin {
+	color: var(--code-function);
+}
+.token.parameter,
+.token.variable {
+	color: var(--code-constant);
+}
+
+/* Reduce motion for users who ask for it */
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+}

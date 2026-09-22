@@ -1,0 +1,359 @@
+---
+title: Variabili e tipi
+description: Come un programma ricorda le cose. Numeri interi, decimali, vero/falso, testo, e le regole per dare i nomi.
+minutes: 20
+---
+
+## Una scatola con un'etichetta
+
+Un programma che stampa sempre la stessa frase non è molto utile. Per fare qualcosa di interessante deve **ricordare** dei valori e lavorarci sopra. Il posto dove un programma ricorda le cose si chiama **variabile**.
+
+Immagina una scatola con un'etichetta. L'etichetta è il **nome**, dentro c'è il **valore**, e la forma della scatola è il **tipo**: una scatola per numeri interi non può contenere del testo.
+
+```c3
+int eta = 34;
+```
+
+Leggila così: "creo una scatola di tipo `int` (numero intero), la chiamo `eta`, e ci metto dentro 34". Da questo momento, ogni volta che scrivi `eta` nel codice, il programma usa quel valore.
+
+```c3 title="eta.c3"
+import std::io;
+
+fn void main()
+{
+	int eta = 34;
+	io::printn(eta);
+	eta = 35;          // cambio il contenuto della scatola
+	io::printn(eta);
+}
+```
+
+```output
+34
+35
+```
+
+Nota la seconda assegnazione: `eta = 35;` senza `int` davanti. Il tipo si dichiara **una volta sola**, quando la variabile nasce. Dopo, si usa solo il nome. (Scrivere `int eta = 35;` una seconda volta sarebbe un errore: "variabile già dichiarata".)
+
+<Callout type="warning" title="Il segno = non significa «uguale»">
+
+In matematica `x = 5` è un'affermazione. In C3 (e in quasi tutti i linguaggi) `x = 5` è un **ordine**: "metti 5 dentro x". Per questo `x = x + 1` ha perfettamente senso: "prendi il valore di x, aggiungi 1, rimetti il risultato in x". Per chiedere «sono uguali?» si usa `==`, con due segni. Lo vedremo nella prossima lezione.
+
+</Callout>
+
+## Zero di default
+
+Cosa c'è in una variabile appena creata, se non le assegni niente?
+
+```c3
+int contatore;
+io::printn(contatore);
+```
+
+```output
+0
+```
+
+In C3 le variabili nascono **azzerate**. Sempre. Sembra ovvio, ma non lo è affatto: in C una variabile locale non inizializzata contiene *spazzatura* (qualsiasi cosa ci fosse in quella zona di memoria prima), ed è la fonte di una quantità impressionante di bug. C3 ha chiuso la porta a questa categoria di errori.
+
+<Callout type="c">
+
+Se per motivi di prestazioni vuoi davvero saltare l'azzeramento (per esempio per un grande buffer che riempirai subito), puoi chiederlo esplicitamente con l'attributo `@noinit`: `int[1000] buffer @noinit;`. Ma è una scelta consapevole, non un default silenzioso. E il compilatore in modalità "safe" ti avvisa se la leggi prima di scriverla.
+
+</Callout>
+
+## I tipi numerici interi
+
+`int` è il tipo intero "normale": 32 bit, quindi va da circa −2 miliardi a +2 miliardi. Basta quasi sempre. Quando non basta, ci sono i suoi fratelli:
+
+| Tipo | Bit | Intervallo | Quando usarlo |
+|---|---|---|---|
+| `int` | 32 | −2 147 483 648 … 2 147 483 647 | Il default. Contatori, indici, quantità. |
+| `long` | 64 | ±9,2 trilioni | Numeri grandi: timestamp, byte di un disco, popolazione mondiale al quadrato. |
+| `short` | 16 | −32 768 … 32 767 | Raro. Quando la memoria conta davvero. |
+| `ichar` | 8 | −128 … 127 | Raro. Un byte con segno. |
+| `int128` | 128 | Enorme | Crittografia, matematica esotica. |
+
+E per ogni tipo con segno esiste il gemello **senza segno** (solo positivi, ma con il doppio dello spazio in alto): `uint`, `ulong`, `ushort`, `char`, `uint128`.
+
+Sì, hai letto bene: **`char` in C3 è un intero senza segno a 8 bit** (0…255). Si chiama così per tradizione, perché un byte è spesso usato per rappresentare un carattere, ma il compilatore lo tratta come un numero. Ci torniamo tra poco.
+
+<Callout type="note" title="usz e sz: la misura delle cose">
+
+Esistono anche `usz` e `sz`, la cui dimensione dipende dalla macchina (64 bit su un computer moderno). Li incontrerai come tipo delle **lunghezze**: quando chiedi "quanti elementi ha questa lista", la risposta è un `usz`. Per ora ti basta riconoscerli.
+
+</Callout>
+
+### Scrivere i numeri
+
+Un numero scritto nel codice si chiama **letterale**. C3 ne accetta parecchie forme:
+
+```c3
+int decimale = 1_000_000;    // il trattino basso è ignorato: serve agli occhi
+int esadecimale = 0xFF;      // 255, base 16
+int binario = 0b1010;        // 10, base 2
+int ottale = 0o755;          // 493, base 8
+long grande = 3_000_000_000; // non entra in un int, ma in un long sì
+```
+
+I trattini bassi sono un regalo: `1_000_000` si legge al volo, `1000000` no.
+
+<Quiz question="Cosa succede compilando `int x = 3_000_000_000;`?" options={['Funziona: x vale 3 miliardi', 'Errore di compilazione: il valore non entra in un int', 'Funziona, ma x contiene un valore strano per via del trabocco', 'Funziona: C3 allarga automaticamente x a long']} answer={1}>
+
+Un `int` arriva a circa 2,1 miliardi. Il compilatore vede che 3 miliardi non ci stanno e **si rifiuta di compilare**. Questa è una differenza importante rispetto al C, dove in molti casi avresti ottenuto un numero negativo a sorpresa. Se ti serve quel valore, dichiara `long x`.
+
+</Quiz>
+
+## I numeri con la virgola
+
+Per i numeri decimali (con la virgola, che nel codice è un **punto**) ci sono due tipi:
+
+| Tipo | Bit | Precisione | Quando usarlo |
+|---|---|---|---|
+| `double` | 64 | ~15 cifre significative | Il default. Quasi sempre. |
+| `float` | 32 | ~7 cifre significative | Grafica, audio, quando la memoria conta. |
+
+```c3
+double pi = 3.14159;
+double avogadro = 6.022e23;    // notazione scientifica: 6,022 × 10²³
+float peso = 72.5f;            // il suffisso f dice "questo è un float"
+double intero_ma_decimale = 7; // un intero può diventare double senza problemi
+```
+
+<Callout type="warning" title="Il verso della conversione">
+
+Da intero a decimale si passa gratis: `double d = 7;` va benissimo, perché 7 e 7.0 sono lo stesso valore. Il contrario **no**: `int i = 7.9;` è un errore, perché qualcosa andrebbe perso (il .9). Se vuoi davvero troncare, devi dirlo esplicitamente con un **cast**: `int i = (int)7.9;` che dà 7. C3 non prende decisioni distruttive al posto tuo.
+
+</Callout>
+
+## Vero o falso: bool
+
+Il tipo `bool` ha solo due valori possibili: `true` e `false`. Sembra poco, ma è il tipo con cui il programma *decide*: "l'utente ha vinto?", "il file esiste?", "il numero è pari?".
+
+```c3
+bool piove = true;
+bool ho_ombrello = false;
+io::printn(piove);
+```
+
+```output
+true
+```
+
+Vedremo nella prossima lezione che i confronti (`5 > 3`) producono proprio un `bool`, e nel Modulo 2 che `if` lo usa per scegliere quale strada prendere.
+
+## Testo: String
+
+Il testo si tiene in una `String`:
+
+```c3
+String nome = "Ada";
+io::printn(nome);
+io::printn(nome.len);
+```
+
+```output
+Ada
+3
+```
+
+`.len` è la **lunghezza** della stringa, cioè quanti byte contiene. (Per il testo con accenti la faccenda è più sottile: `"caffè"` ha 6 byte, non 5, perché la `è` ne occupa due in UTF-8. Ci torneremo; per ora usa `.len` su testo semplice.)
+
+Dentro le virgolette puoi usare delle **sequenze di escape**, che iniziano con `\`:
+
+| Scrivi | Ottieni |
+|---|---|
+| `\n` | a capo |
+| `\t` | tabulazione |
+| `\"` | una virgoletta doppia |
+| `\\` | una barra rovesciata |
+
+```c3
+io::printn("Riga uno\nRiga due");
+io::printn("Ha detto: \"ciao\"");
+```
+
+```output
+Riga uno
+Riga due
+Ha detto: "ciao"
+```
+
+Se gli escape ti danno fastidio (percorsi Windows, espressioni regolari), esistono le **stringhe grezze** tra apici inversi, dove `\` è solo una barra:
+
+```c3
+String percorso = `C:\Utenti\ada\file.txt`;
+```
+
+<Callout type="fun" title="La S maiuscola non è un caso">
+
+`String` inizia con la maiuscola mentre `int`, `bool`, `double` no. Il motivo è che `String` non è un tipo "primitivo" cablato nel compilatore: è un tipo definito nella libreria standard (in particolare, una *slice* di `char`). E in C3 **tutti i tipi definiti dagli umani iniziano con la maiuscola**. È una regola del linguaggio, non uno stile. Ne parliamo tra un attimo.
+
+</Callout>
+
+## Un singolo carattere: char
+
+Un carattere tra apici singoli, `'A'`, è un letterale di tipo `char`. E come abbiamo detto, `char` è un numero: `'A'` vale 65, secondo la tabella ASCII che assegna un numero a ogni simbolo.
+
+```c3
+char lettera = 'A';
+io::printn(lettera);
+io::printfn("%c", lettera);
+```
+
+```output
+65
+A
+```
+
+La seconda riga usa `printfn` con `%c`, che dice "trattalo come carattere, non come numero". Impareremo `printfn` per bene nella lezione 6; per ora ti basta il concetto: **un `char` è un byte, e come lo stampi dipende da te**.
+
+<Quiz question={'Qual è la differenza tra `\'A\'` e `"A"`?'} options={['Nessuna, sono intercambiabili', '`\'A\'` è un singolo carattere (un numero, tipo `char`); `\"A\"` è una stringa di lunghezza 1', '`\'A\'` è una stringa, `\"A\"` è un carattere', '`\'A\'` è valido solo dentro i commenti']} answer={1}>
+
+Gli apici singoli danno un `char` (un byte, che vale 65). Le virgolette doppie danno una `String`, cioè una sequenza di caratteri, anche se lunga uno. Sono tipi diversi e non puoi assegnare l'uno all'altro.
+
+</Quiz>
+
+## Costanti: valori che non cambiano
+
+Alcuni valori non devono mai cambiare durante l'esecuzione: il numero massimo di giocatori, la velocità della luce, l'IVA. Per questi c'è `const`:
+
+```c3
+const int MAX_GIOCATORI = 4;
+const double IVA = 0.22;
+const NOME_GIOCO = "Briscola"; // il tipo si può omettere: lo deduce dal valore
+```
+
+Le costanti si scrivono in **MAIUSCOLO_CON_TRATTINI**. Non è un vezzo: è una regola del linguaggio, e il compilatore rifiuta `const int max = 4;`. Il vantaggio è che, leggendo il codice, sai a colpo d'occhio cosa è una costante e cosa no.
+
+Provare a modificarla è un errore di compilazione:
+
+```c3
+MAX_GIOCATORI = 5; // errore: non puoi assegnare a una costante
+```
+
+## Le regole dei nomi
+
+C3 è severo sui nomi, e questa severità è un dono: guardando un nome sai cos'è.
+
+| Cosa | Regola | Esempi validi |
+|---|---|---|
+| Variabili, funzioni, parametri | Iniziano con **minuscola** | `eta`, `nome_utente`, `contaPunti` |
+| Tipi (`struct`, `enum`, ...) | Iniziano con **Maiuscola** e contengono almeno una minuscola | `Giocatore`, `String`, `ListaSpesa` |
+| Costanti | Tutto **MAIUSCOLO** | `MAX_VITE`, `PI_GRECO` |
+| Moduli | Tutto **minuscolo**, con `_` | `std::io`, `mio_gioco` |
+
+In tutti i casi: solo lettere `a-z`, `A-Z`, cifre `0-9` e `_`. Niente accenti, niente spazi, e non si può iniziare con una cifra.
+
+Lo **stile** raccomandato (non obbligatorio, ma usato dalla libreria standard) è `snake_case` per variabili e funzioni: `nome_utente`, non `nomeUtente`. In questo corso seguiamo lo stile della libreria standard.
+
+<Callout type="tip" title="Nomi che raccontano">
+
+`int n;` non dice niente. `int numero_tentativi;` dice tutto. Un nome lungo costa un secondo in più a scriverlo e risparmia dieci minuti a chi legge (spesso tu stesso, tra due settimane). Le uniche eccezioni accettate sono i contatori dei cicli, dove `i` è universale.
+
+</Callout>
+
+<Quiz question="Quale di queste dichiarazioni **non** compila?" options={['`int punteggio_max = 100;`', '`const int PUNTEGGIO_MAX = 100;`', '`int PunteggioMax = 100;`', '`int punteggio2 = 100;`']} answer={2}>
+
+Una variabile deve iniziare con la minuscola. `PunteggioMax` sembra il nome di un **tipo** (maiuscola + minuscole), e il compilatore lo rifiuta come nome di variabile. Le altre tre rispettano le regole: minuscola per la variabile, MAIUSCOLO per la costante, e le cifre sono ammesse purché non all'inizio.
+
+</Quiz>
+
+## Una dichiarazione alla volta
+
+Un'ultima differenza dal C, piccola ma che evita malintesi: **ogni variabile ha la sua riga**.
+
+```c3
+int a, b = 4;  // errore in C3: che valore ha a?
+```
+
+```c3
+int a;
+int b = 4;     // così è chiaro
+```
+
+## Mettiamo tutto insieme
+
+```c3 title="scheda.c3"
+import std::io;
+
+const int ANNO_CORRENTE = 2026;
+
+fn void main()
+{
+	String nome = "Ada";
+	int anno_nascita = 1815;
+	double altezza = 1.65;
+	bool programmatrice = true;
+	char iniziale = 'A';
+
+	int eta = ANNO_CORRENTE - anno_nascita;
+
+	io::printn(nome);
+	io::printn(eta);
+	io::printn(altezza);
+	io::printn(programmatrice);
+	io::printfn("%c", iniziale);
+}
+```
+
+```output
+Ada
+211
+1.650000
+true
+A
+```
+
+Hai notato `1.650000`? Quando stampi un `double` con `printn`, C3 usa sei cifre decimali. Nella lezione 6 vedremo come scegliere quante cifre mostrare.
+
+Guarda la riga `int eta = ANNO_CORRENTE - anno_nascita;`: il valore iniziale di una variabile può essere un **calcolo**, non solo un numero scritto a mano. È il ponte verso la prossima lezione.
+
+<Exercise title="La tua scheda" expected={`Cane
+7
+49
+true`}>
+
+Scrivi un programma `scheda.c3` con queste variabili, **esattamente con questi valori e tipi**:
+
+- una `String` `animale` con valore `"Cane"`;
+- un `int` `eta_cane` con valore `7`;
+- un `int` `eta_umana` uguale a `eta_cane` moltiplicato per `7` (l'operatore è `*`);
+- un `bool` `vaccinato` con valore `true`.
+
+Stampa ognuna delle quattro variabili con `io::printn`, una per riga, nell'ordine dato. Riporta qui l'output.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="scheda.c3"
+import std::io;
+
+fn void main()
+{
+	String animale = "Cane";
+	int eta_cane = 7;
+	int eta_umana = eta_cane * 7;
+	bool vaccinato = true;
+
+	io::printn(animale);
+	io::printn(eta_cane);
+	io::printn(eta_umana);
+	io::printn(vaccinato);
+}
+```
+
+</Solution>
+
+## Ricapitolando
+
+- Una variabile è una scatola con un nome, un tipo e un valore: `int eta = 34;`.
+- Le variabili nascono azzerate. Sempre.
+- Interi: `int` (default), `long` (grandi), `char` (un byte senza segno). Decimali: `double` (default), `float`.
+- Da intero a decimale si passa gratis; il contrario richiede un cast `(int)`.
+- `bool` è `true` o `false`. `String` è testo tra virgolette. `'A'` è un `char`, cioè un numero.
+- `const` per i valori fissi, in MAIUSCOLO.
+- Nomi: minuscola per variabili e funzioni, Maiuscola per i tipi, MAIUSCOLO per le costanti.
+
+Prossima lezione: facciamo i conti. Somme, divisioni (con una trappola famosa), confronti e le regole di precedenza che C3 ha cambiato rispetto al C.

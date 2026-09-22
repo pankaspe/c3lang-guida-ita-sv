@@ -1,0 +1,136 @@
+---
+title: Benvenuto a bordo
+description: Cos'è C3, perché vale la pena impararlo e come funziona questo percorso. Poi installiamo il compilatore.
+minutes: 8
+---
+
+## Cosa stai per imparare
+
+Stai per imparare **C3**, un linguaggio di programmazione *di sistema*: serve a scrivere programmi che parlano direttamente con la macchina, veloci e senza intermediari. Videogiochi, strumenti da riga di comando, sistemi operativi, motori grafici: roba così.
+
+C3 nasce come **evoluzione del C**, il linguaggio del 1972 su cui ancora oggi poggia mezzo mondo digitale (il kernel Linux, Python, il tuo microonde). L'idea di C3 è semplice: tenere tutto ciò che del C funziona, e sistemare ciò che da cinquant'anni fa inciampare i programmatori.
+
+<Callout type="fun" title="Perché si chiama C3?">
+
+Dopo il C è venuto il C++ (che è "C più uno"). C3 gioca sulla stessa idea, ma senza pretendere di essere un linguaggio gigantesco: vuole essere *il C fatto bene*, non un C++ nuovo. Il progetto è open source, guidato da Christoffer Lernö, e nel 2026 è arrivato a una maturità che lo rende piacevole da usare ogni giorno.
+
+</Callout>
+
+## Perché proprio C3 (e non un altro linguaggio)?
+
+Ci sono tre motivi per cui questo percorso ha senso, anche se non hai mai programmato:
+
+1. **È piccolo.** Le regole si contano sulle dita. Puoi tenere in testa l'intero linguaggio, cosa impossibile con C++ o Rust.
+2. **È onesto.** Non nasconde cosa succede nella memoria del computer. Imparare C3 significa capire *davvero* come funziona un programma.
+3. **È moderno.** Gestione degli errori integrata, moduli, `defer`, slice, `foreach`: cose che in C devi inventarti a mano, qui sono già nel linguaggio.
+
+E poi c'è un motivo pratico: C3 è **compatibile al 100% con il C**. Ogni libreria C esistente (e sono milioni) si può usare da C3 senza magie.
+
+## Come funziona questo percorso
+
+Questo non è un manuale da consultare: è un **percorso**. Le lezioni vanno lette in ordine, perché ognuna usa quello che hai imparato in quella prima. Dentro ogni lezione troverai:
+
+- **Codice colorato** che puoi copiare con un click (il bottone "Copia" in alto a destra di ogni blocco).
+- **Riquadri** come quello qui sopra: consigli, curiosità, avvertimenti, e i riquadri "Se vieni dal C" per chi già conosce il linguaggio padre.
+- **Quiz** da fare direttamente qui nell'app, con la spiegazione subito dopo.
+- **Esercizi da fare sul tuo computer**: scrivi il programma, lo compili, e torni qui a dire cosa ha stampato. L'app controlla se hai fatto centro.
+
+Niente sandbox nel browser, e non è una mancanza: il compilatore vero, sul tuo computer, è lo strumento con cui lavorerai sempre. Tanto vale fare amicizia subito.
+
+<Callout type="tip" title="Il ritmo giusto">
+
+Una lezione al giorno è un ottimo ritmo. Due se sei in vena. Se una cosa non è chiara, non andare avanti: rileggi, prova il codice, cambia un numero e guarda cosa succede. Rompere le cose è il modo migliore per capirle.
+
+</Callout>
+
+Proviamo subito un quiz, così vedi come funziona:
+
+<Quiz question="Cosa significa che C3 è un linguaggio *compilato*?" options={['Il codice viene tradotto da un programma (il compilatore) in istruzioni per la macchina, prima di essere eseguito', 'Il codice viene letto riga per riga mentre il programma gira', 'Il codice funziona solo dentro un browser', 'Il codice viene compresso per occupare meno spazio']} answer={0}>
+
+Il **compilatore** (`c3c`) legge il tuo file di testo e produce un *eseguibile*: un file che il sistema operativo può lanciare direttamente, senza bisogno di altro. È il contrario dei linguaggi *interpretati* come Python o JavaScript, dove un interprete traduce riga per riga a ogni esecuzione. Compilare = più velocità, e più errori scovati prima ancora di lanciare il programma.
+
+</Quiz>
+
+## Installiamo il compilatore
+
+Il compilatore di C3 si chiama `c3c`. Si installa in cinque minuti.
+
+### Linux
+
+Su **Arch Linux** (e derivate come Manjaro, EndeavourOS) c'è già il pacchetto ufficiale:
+
+```sh
+sudo pacman -S c3c
+```
+
+Su tutte le altre distribuzioni, scarica la **build statica** dalla pagina dei rilasci su GitHub (`github.com/c3lang/c3c/releases`), scompatta l'archivio in una cartella a tua scelta e aggiungi quella cartella al `PATH`. Per esempio, se lo hai messo in `~/c3`:
+
+```sh
+echo 'export PATH="$HOME/c3:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+(Se usi `zsh`, il file è `~/.zshrc`.)
+
+### macOS
+
+Scarica l'archivio per Mac dalla pagina dei rilasci, scompattalo e lancia `./c3c`. Il binario non è firmato da Apple, quindi la prima volta macOS lo blocca. Sbloccalo con:
+
+```sh
+xattr -d com.apple.quarantine c3c
+```
+
+Serve anche **Xcode Command Line Tools** (`xcode-select --install`), perché fornisce il linker.
+
+### Windows
+
+Scarica e lancia l'**installer** dalla pagina dei rilasci: installa il compilatore e lo aggiunge al `PATH` da solo. Poi apri un nuovo terminale (PowerShell va benissimo).
+
+<Callout type="note" title="Problemi con la libreria standard?">
+
+Se compilando vedi un errore tipo `No module named 'std::io' could be found`, il compilatore non trova la sua libreria standard. Imposta la variabile d'ambiente `C3C_LIB` alla cartella `lib` che hai scompattato insieme al compilatore, per esempio `export C3C_LIB=$HOME/c3/lib`.
+
+</Callout>
+
+<Callout type="deep" title="Editor: cosa usare per scrivere il codice">
+
+Qualsiasi editor di testo va bene, ma un po' di colore aiuta. Per **VS Code** esiste l'estensione ufficiale "C3" (cerca `c3` nel marketplace): colora la sintassi e ti segnala gli errori mentre scrivi. Per Neovim, Sublime, Zed e altri ci sono plugin nel repository `c3lang/editor-plugins`.
+
+</Callout>
+
+## Verifica che tutto funzioni
+
+Apri un terminale e scrivi:
+
+```sh
+c3c --version
+```
+
+Dovresti vedere qualcosa del genere (i numeri esatti cambiano da versione a versione):
+
+```output
+C3 Compiler Version:       0.8.4
+Installed directory:       /home/ada/.local/c3
+Git Hash:                  3c446b5a...
+Backends:                  LLVM
+LLVM version:              22.1.8
+LLVM default target:       x86_64-unknown-linux-gnu
+```
+
+Questo corso è aggiornato alla serie **0.8** del compilatore (2026). Se hai una versione più recente va benissimo; se ne hai una più vecchia della 0.7, aggiorna.
+
+Se il terminale risponde "comando non trovato", il problema è quasi sempre il `PATH`: rileggi i passaggi qui sopra e ricorda di **aprire un nuovo terminale** dopo aver modificato la configurazione.
+
+<Exercise title="Il tuo primo comando">
+
+1. Installa `c3c` seguendo le istruzioni per il tuo sistema.
+2. Apri un terminale e lancia `c3c --version`.
+3. Crea una cartella dove metterai tutti gli esercizi di questo corso, per esempio `~/impara-c3`. Ci torneremo continuamente.
+
+Quando vedi il numero di versione, hai finito. Il compilatore è installato e ti aspetta.
+
+</Exercise>
+
+## Cosa succede adesso
+
+Nella prossima lezione scriviamo il primo programma. Sarà piccolo, ma lo smonteremo pezzo per pezzo, e alla fine saprai cosa fa *ogni singola parola* sullo schermo.

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="it">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light dark" />
+		<script>
+			// Apply the saved (or system) theme before first paint to avoid flashing.
+			(function () {
+				try {
+					var saved = localStorage.getItem('c3-course:theme');
+					var dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+					if (dark) document.documentElement.classList.add('dark');
+				} catch (e) {}
+			})();
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

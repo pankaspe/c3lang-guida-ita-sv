@@ -1,0 +1,320 @@
+---
+title: Fare i conti
+description: Somme, divisioni (con una trappola celebre), confronti e logica. E le regole di precedenza che C3 ha riscritto.
+minutes: 20
+---
+
+## Il computer è una calcolatrice molto pignola
+
+Un **operatore** è un simbolo che combina dei valori per produrne uno nuovo: `+` prende due numeri e ne dà la somma. L'espressione `2 + 3` *vale* 5, e puoi usarla ovunque potresti usare un 5: in un'assegnazione, come argomento di una funzione, dentro un'altra espressione.
+
+```c3 title="conti.c3"
+import std::io;
+
+fn void main()
+{
+	int a = 7;
+	int b = 2;
+
+	io::printn(a + b);   // somma
+	io::printn(a - b);   // sottrazione
+	io::printn(a * b);   // moltiplicazione
+	io::printn(a / b);   // divisione... con sorpresa
+	io::printn(a % b);   // resto della divisione
+}
+```
+
+```output
+9
+5
+14
+3
+1
+```
+
+Quattro su cinque sono quelle che ti aspetti. La quarta merita un paragrafo tutto suo.
+
+## La trappola della divisione intera
+
+`7 / 2` fa 3. Non 3,5. Non arrotondato: **troncato**, cioè con la parte decimale semplicemente buttata via. Perché? Perché entrambi i numeri sono `int`, e il risultato di un'operazione tra interi è un intero. Il compilatore non "vede" che avresti voluto un decimale.
+
+Se vuoi 3,5, almeno uno dei due deve essere un decimale:
+
+```c3
+io::printn(7.0 / 2);       // 3.500000: 7.0 è un double
+int a = 7;
+io::printn(a / 2.0);       // 3.500000: 2.0 è un double
+io::printn((double)a / 2); // 3.500000: converto a esplicitamente
+double d = a / 2;
+io::printn(d);             // 3.000000!! la divisione avviene PRIMA, tra interi
+```
+
+L'ultimo caso è il più insidioso: `d` è un `double`, ma `a / 2` viene calcolato tra due `int` (fa 3) e *solo dopo* il 3 viene messo nella scatola `double`. Il danno è già fatto.
+
+<Callout type="tip" title="La regola d'oro">
+
+Chiediti sempre: *di che tipo sono i due operandi?* Se sono entrambi interi, il risultato è intero. Il tipo della variabile a sinistra dell'`=` non c'entra niente con come viene fatto il calcolo.
+
+</Callout>
+
+<Quiz question="Cosa stampa `io::printn(9 / 2 * 2);`?" options={['9', '8', '9.000000', '8.000000']} answer={1}>
+
+Si va da sinistra a destra: `9 / 2` tra interi fa 4 (il .5 sparisce), poi `4 * 2` fa 8. Se avessi scritto `9 / 2.0 * 2` avresti ottenuto `9.000000`, perché `9 / 2.0` fa 4.5.
+
+</Quiz>
+
+## Il resto: %
+
+L'operatore `%` (si legge "modulo") dà il **resto** della divisione intera. `17 % 5` fa 2, perché 17 = 5 × 3 + 2. Sembra un'operazione da scuola elementare, e invece è tra le più usate in programmazione:
+
+```c3
+int minuti = 135;
+io::printfn("%d ore e %d minuti", minuti / 60, minuti % 60);
+```
+
+```output
+2 ore e 15 minuti
+```
+
+E il classico dei classici: **un numero è pari se il resto della divisione per 2 è zero**.
+
+```c3
+int n = 7;
+io::printn(n % 2 == 0);
+```
+
+```output
+false
+```
+
+(Quel `==` è un confronto: ci arriviamo tra un attimo.)
+
+## Modificare una variabile "in posto"
+
+Scrivere `x = x + 5` è così comune che esiste una scorciatoia:
+
+| Forma lunga | Forma corta |
+|---|---|
+| `x = x + 5;` | `x += 5;` |
+| `x = x - 5;` | `x -= 5;` |
+| `x = x * 2;` | `x *= 2;` |
+| `x = x / 2;` | `x /= 2;` |
+| `x = x % 2;` | `x %= 2;` |
+| `x = x + 1;` | `x++;` |
+| `x = x - 1;` | `x--;` |
+
+```c3
+int x = 10;
+x += 5;   // 15
+x++;      // 16
+x *= 2;   // 32
+x--;      // 31
+io::printn(x);
+```
+
+```output
+31
+```
+
+<Callout type="deep" title="x++ e ++x">
+
+Esistono entrambe, e usate da sole fanno la stessa cosa. La differenza appare quando le usi *dentro* un'espressione: `int y = x++;` assegna a `y` il valore **vecchio** di `x` e poi incrementa; `int y = ++x;` prima incrementa e poi assegna il valore **nuovo**. È una fonte classica di confusione. Consiglio: usa `x++` da solo, su una riga, e basta. Il codice chiaro batte il codice furbo.
+
+</Callout>
+
+## Quando i numeri traboccano
+
+Un `int` arriva a 2 147 483 647. Cosa succede se aggiungi 1?
+
+```c3
+int m = 2_147_483_647;
+m++;
+io::printn(m);
+```
+
+```output
+-2147483648
+```
+
+Il numero "gira" e ricomincia dal fondo, come un contachilometri che dopo 999999 torna a 000000. Si chiama **overflow** (trabocco), e in C3 è un comportamento *definito*: succede sempre così, su ogni macchina (in C, per gli interi con segno, è ufficialmente "comportamento indefinito", cioè può succedere qualsiasi cosa). Definito non vuol dire innocuo: se stai contando i soldi di una banca e il conto diventa negativo, hai un problema. Quando i numeri possono crescere molto, usa `long`.
+
+## Confronti: domande con risposta sì o no
+
+Un confronto mette a paragone due valori e produce un `bool`:
+
+| Operatore | Significato | Esempio | Vale |
+|---|---|---|---|
+| `==` | uguale a | `5 == 5` | `true` |
+| `!=` | diverso da | `5 != 5` | `false` |
+| `<` | minore di | `3 < 2` | `false` |
+| `>` | maggiore di | `3 > 2` | `true` |
+| `<=` | minore o uguale | `2 <= 2` | `true` |
+| `>=` | maggiore o uguale | `1 >= 2` | `false` |
+
+```c3
+int eta = 20;
+bool maggiorenne = eta >= 18;
+io::printn(maggiorenne);
+```
+
+```output
+true
+```
+
+<Callout type="warning" title="= e == non sono parenti">
+
+`x = 5` **assegna**. `x == 5` **chiede** se x vale 5. Confonderli è l'errore più antico del mondo, tanto che C3 lo intercetta: se scrivi `if (x = 5)`, il compilatore risponde *"An assignment in a conditional must have an extra parenthesis - did you mean to use '==' instead?"*. Un altro bug storico del C, chiuso.
+
+</Callout>
+
+## Logica: combinare le domande
+
+Con i **operatori logici** metti insieme più condizioni:
+
+| Operatore | Nome | Vale `true` quando... |
+|---|---|---|
+| `&&` | AND (e) | **entrambe** le condizioni sono vere |
+| `\|\|` | OR (o) | **almeno una** è vera |
+| `!` | NOT (non) | la condizione è falsa (la inverte) |
+
+```c3
+int eta = 20;
+bool ha_biglietto = false;
+
+io::printn(eta >= 18 && ha_biglietto);   // entra al concerto?
+io::printn(eta >= 18 || ha_biglietto);   // basta una delle due?
+io::printn(!ha_biglietto);               // NON ha il biglietto?
+```
+
+```output
+false
+true
+true
+```
+
+<Callout type="fun" title="Il cortocircuito">
+
+`&&` e `||` sono pigri: se la risposta è già decisa dopo la prima condizione, la seconda **non viene nemmeno valutata**. Con `false && qualsiasi_cosa` la risposta è `false` a prescindere, quindi C3 non si disturba a calcolare `qualsiasi_cosa`. Sembra un dettaglio, ma nel Modulo 2 lo useremo per evitare errori: `n != 0 && 10 / n > 1` è sicuro, perché se `n` è zero la divisione non viene mai eseguita.
+
+</Callout>
+
+<Quiz question="Con `int a = 5;` e `int b = 10;`, quanto vale `a * 2 == b && b / a == 2`?" options={['`true`', '`false`', 'Errore: mancano le parentesi', '`10`']} answer={0}>
+
+`a * 2` fa 10, e `10 == b` è `true`. `b / a` fa 2, e `2 == 2` è `true`. `true && true` è `true`. Le parentesi non servono perché `*` e `/` vengono prima di `==`, e `==` viene prima di `&&`: è la precedenza, di cui parliamo adesso.
+
+</Quiz>
+
+## Precedenza: chi va per primo
+
+`2 + 3 * 4` fa 14, non 20, perché la moltiplicazione ha la **precedenza** sulla somma, come a scuola. E `10 - 4 - 3` fa 3, perché a parità di precedenza si va da sinistra a destra.
+
+L'ordine in C3, dal più forte al più debole (semplificato ai casi che ti servono ora):
+
+1. `()` parentesi, e le chiamate di funzione
+2. `!`, `-` davanti a un numero (negazione)
+3. `*`, `/`, `%`
+4. `<<`, `>>` (spostamenti di bit)
+5. `&`, `|`, `^` (operazioni sui bit)
+6. `+`, `-`
+7. `==`, `!=`, `<`, `>`, `<=`, `>=`
+8. `&&`
+9. `||`
+10. `=`, `+=`, ecc.
+
+Quando hai un dubbio, **metti le parentesi**. Non costano niente, e chi legge ti ringrazia.
+
+<Callout type="c" title="C3 ha spostato i bit">
+
+Se vieni dal C, guarda bene i punti 4 e 5: in C3 gli operatori sui bit (`&`, `|`, `^`, `<<`, `>>`) hanno la precedenza **più alta** di `+` e `-`, e più alta dei confronti. In C è il contrario, ed è un errore di progettazione riconosciuto perfino da Dennis Ritchie: `a & b == c` in C significa `a & (b == c)`, cosa che non vuole mai nessuno. In C3 significa `(a & b) == c`, come ci si aspetta. In compenso, C3 **ti obbliga** a mettere le parentesi quando mischi operatori di precedenza "ambigua": `a > b == c` non compila, e ti dice *"You need to add explicit parentheses to clarify precedence"*.
+
+</Callout>
+
+## Un programma vero
+
+Mettiamo tutto insieme con un piccolo calcolo utile: quanto costa un viaggio in auto?
+
+```c3 title="viaggio.c3"
+import std::io;
+
+const double PREZZO_BENZINA = 1.85;  // euro al litro
+
+fn void main()
+{
+	int km = 320;
+	double consumo = 6.5;   // litri ogni 100 km
+	int passeggeri = 4;
+
+	double litri = km / 100.0 * consumo;
+	double costo = litri * PREZZO_BENZINA;
+	double a_testa = costo / passeggeri;
+
+	io::printn(litri);
+	io::printn(costo);
+	io::printn(a_testa);
+	io::printn(a_testa < 10.0);
+}
+```
+
+```output
+20.800000
+38.480000
+9.620000
+true
+```
+
+Nota `km / 100.0`: ho scritto `100.0` e non `100` apposta, per evitare la divisione intera (con `100` avrei ottenuto 3, non 3,2). E `costo / passeggeri` è sicuro perché `costo` è già un `double`.
+
+<Exercise title="Il resto della spesa" expected={`4
+2
+false
+true`}>
+
+Scrivi un programma `spesa.c3` con:
+
+- `int budget = 50;`
+- `int prezzo = 12;`
+
+Poi stampa, una per riga con `io::printn`:
+
+1. quanti oggetti da `prezzo` euro puoi comprare con `budget` (divisione intera);
+2. quanti euro ti restano dopo averli comprati (il resto);
+3. se ti restano abbastanza soldi per comprarne un altro (`resto >= prezzo`);
+4. se il budget è un numero pari.
+
+Puoi usare variabili intermedie o scrivere le espressioni direttamente dentro `printn`. Riporta l'output.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="spesa.c3"
+import std::io;
+
+fn void main()
+{
+	int budget = 50;
+	int prezzo = 12;
+
+	int quanti = budget / prezzo;
+	int resto = budget % prezzo;
+
+	io::printn(quanti);
+	io::printn(resto);
+	io::printn(resto >= prezzo);
+	io::printn(budget % 2 == 0);
+}
+```
+
+</Solution>
+
+## Ricapitolando
+
+- `+ - * / %` sui numeri. Tra interi, `/` **tronca** e `%` dà il resto.
+- Per una divisione decimale, almeno un operando deve essere `double`.
+- `+=`, `-=`, `*=`, `++`, `--` modificano la variabile in posto.
+- Gli interi traboccano "girando": per numeri grandi usa `long`.
+- Confronti (`== != < > <= >=`) producono un `bool`; `==` chiede, `=` ordina.
+- `&&`, `||`, `!` combinano i `bool`. `&&` e `||` sono pigri.
+- In C3 gli operatori sui bit vengono prima di `+`/`-`. Nel dubbio: parentesi.
+
+Prossima lezione: finora abbiamo stampato una cosa per riga. È ora di imparare a **formattare** l'output come si deve.
