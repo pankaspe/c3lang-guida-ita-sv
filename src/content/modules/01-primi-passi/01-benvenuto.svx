@@ -32,6 +32,7 @@ Questo non è un manuale da consultare: è un **percorso**. Le lezioni vanno let
 
 - **Codice colorato** che puoi copiare con un click (il bottone "Copia" in alto a destra di ogni blocco).
 - **Riquadri** come quello qui sopra: consigli, curiosità, avvertimenti, e i riquadri "Se vieni dal C" per chi già conosce il linguaggio padre.
+- **Dettagli nerd** 🤓: riquadri chiusi che si aprono con un click e spiegano cosa succede *dentro* il computer (memoria, bit, buffer, compilatore...). Non servono per andare avanti, ma è lì che si capisce davvero come funziona la macchina.
 - **Quiz** da fare direttamente qui nell'app, con la spiegazione subito dopo.
 - **Esercizi da fare sul tuo computer**: scrivi il programma, lo compili, e torni qui a dire cosa ha stampato. L'app controlla se hai fatto centro.
 
@@ -50,6 +51,15 @@ Proviamo subito un quiz, così vedi come funziona:
 Il **compilatore** (`c3c`) legge il tuo file di testo e produce un *eseguibile*: un file che il sistema operativo può lanciare direttamente, senza bisogno di altro. È il contrario dei linguaggi *interpretati* come Python o JavaScript, dove un interprete traduce riga per riga a ogni esecuzione. Compilare = più velocità, e più errori scovati prima ancora di lanciare il programma.
 
 </Quiz>
+
+
+<Callout type="nerd" title="Cosa capisce davvero un processore?">
+
+Il processore (la **CPU**) non sa leggere C3, né nessun altro linguaggio "umano". Capisce solo il **codice macchina**: istruzioni elementari codificate come numeri binari, del tipo "carica il valore che sta a quell'indirizzo di memoria", "somma questi due numeri", "salta all'istruzione tal dei tali". Ogni famiglia di processori ha il suo repertorio (x86-64 nella maggior parte dei PC, ARM negli smartphone e nei Mac recenti), e un eseguibile compilato per l'una non gira sull'altra.
+
+Il lavoro del compilatore è tradurre le tue righe leggibili in migliaia di queste micro-istruzioni. `c3c` lo fa in due tappe: prima analizza il codice e lo controlla, poi lo passa a **LLVM** (il `Backends: LLVM` che vedrai tra poco nell'output di `c3c --version`), lo stesso motore usato da Clang, Rust e Swift, che produce il codice macchina vero e proprio, ottimizzato per il tuo processore.
+
+</Callout>
 
 ## Installiamo il compilatore
 
@@ -71,6 +81,15 @@ source ~/.bashrc
 ```
 
 (Se usi `zsh`, il file è `~/.zshrc`.)
+
+
+<Callout type="nerd" title="Cos'è il PATH?">
+
+Quando scrivi `c3c` nel terminale, la **shell** (il programma che interpreta i tuoi comandi) non cerca in tutto il disco: scorre una lista di cartelle, in ordine, e lancia il primo file eseguibile con quel nome che trova. Quella lista è la **variabile d'ambiente** `PATH`: una stringa di cartelle separate da `:` (su Windows da `;`). Puoi vederla con `echo $PATH`.
+
+Le variabili d'ambiente sono coppie *nome = valore* che ogni programma eredita da chi lo ha lanciato. Ecco perché, dopo aver modificato `~/.bashrc`, serve un terminale nuovo (o il comando `source`): il terminale già aperto ha letto la sua copia della lista all'avvio e non si accorge delle modifiche.
+
+</Callout>
 
 ### macOS
 

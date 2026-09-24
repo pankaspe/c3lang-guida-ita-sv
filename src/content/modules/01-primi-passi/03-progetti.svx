@@ -130,7 +130,16 @@ Le voci interessanti:
 - `sources`: dove cercare i file `.c3` (`src/**` = tutto ciò che sta dentro `src`, sottocartelle incluse).
 - `dependencies`: le librerie esterne da usare (vuoto per ora).
 - `targets`: cosa produrre. Qui un eseguibile chiamato `first_project`. Un progetto può avere più target, per esempio una libreria e un programma che la usa.
-- `opt`: il livello di ottimizzazione. `O0` = nessuna, comodo mentre sviluppi; `O3` = il massimo, per la versione finale.
+- `opt`: il livello di ottimizzazione. `O0` = nessuna ottimizzazione e tutti i controlli di sicurezza attivi, comodo mentre sviluppi; i livelli più alti (fino a `O5`) rendono il programma sempre più veloce, e da `O2` in su spengono alcuni controlli di sicurezza in cambio di velocità.
+
+
+<Callout type="nerd" title="Cosa fa l'ottimizzatore?">
+
+Con l'ottimizzazione attiva, il compilatore riscrive il tuo programma in una versione equivalente ma più veloce: calcola in anticipo le operazioni di cui conosce già il risultato (`60 * 60` diventa direttamente `3600`), elimina il codice che non viene mai eseguito, e tiene i valori usati spesso nei **registri**, le pochissime celle di memoria che stanno *dentro* il processore, molto più veloci della RAM.
+
+Il prezzo: la compilazione è più lenta, e l'eseguibile assomiglia meno al codice che hai scritto, cosa che rende più difficile seguirlo passo passo con un *debugger*. Per questo si sviluppa con `O0` e si ottimizza solo alla fine.
+
+</Callout>
 
 <Callout type="tip" title="Quando usare un progetto e quando no">
 

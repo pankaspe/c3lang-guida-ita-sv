@@ -83,6 +83,13 @@ Prova `io::printfn("%.1f", 1.65)`. Ti aspetti `1.7`, ottieni `1.6`. Non è un bu
 
 </Callout>
 
+
+<Callout type="nerd" title="Perché 1,65 «non esiste»?">
+
+Perché un `double` è una frazione **binaria**: può rappresentare esattamente solo le somme di potenze di 2 (1/2, 1/4, 1/8...). 1,65 non si può scrivere così con un numero finito di cifre, come 1/3 in base 10, e il `double` si ferma alla migliore approssimazione che sta nei suoi 52 bit di mantissa (lo abbiamo visto nella lezione 4 con `0.1`). Per i soldi, la soluzione classica è lavorare in **centesimi** con un intero: `int cents = 165;` è esatto, sempre.
+
+</Callout>
+
 <Quiz question={'Cosa stampa `io::printfn("%d%%", 7 / 2);`?'} options={['`3.5%`', '`3%`', '`3%%`', 'Errore: `%d` non accetta divisioni']} answer={1}>
 
 `7 / 2` tra interi fa 3 (la trappola della lezione scorsa non è sparita!). `%d` lo stampa come `3`, e `%%` diventa un singolo `%`. Il risultato è `3%`.
@@ -165,6 +172,13 @@ Age:	36
 ```
 
 È più grezza della larghezza esplicita (`%-10s`), ma per due righe al volo va benissimo.
+
+
+<Callout type="nerd" title="Perché proprio 8 caratteri?">
+
+È un'eredità delle macchine da scrivere e delle telescriventi: il tasto tabulatore faceva scorrere il carrello fino al fermo successivo, e i terminali hanno adottato fermi fissi ogni 8 colonne. Il carattere `\t` è un singolo byte (il numero 9 nella tabella ASCII) e non contiene nessuno spazio: è il terminale che, ricevendolo, sposta il cursore al fermo successivo. Per questo `Name:` (5 caratteri) e `Age:` (4) fanno partire il valore dalla stessa colonna, la nona. Molti editor invece mostrano la tabulazione larga 4: stesso byte, disegno diverso.
+
+</Callout>
 
 <Quiz question="Quale chiamata stampa esattamente `Total: 6.90 euro` se `double t = 6.9;`?" options={['`io::printfn(\"Total: %d euro\", t);`', '`io::printfn(\"Total: %f euro\", t);`', '`io::printfn(\"Total: %.2f euro\", t);`', '`io::printfn(\"Total: %s euro\", t);`']} answer={2}>
 

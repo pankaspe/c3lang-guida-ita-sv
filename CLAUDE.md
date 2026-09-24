@@ -5,6 +5,9 @@ static SvelteKit site. See README.md for the layout and authoring reference.
 
 ## Hard rules
 
+- **c3-lang.org is the reference.** Always base lesson content on the official docs at
+  https://c3-lang.org (full dump: https://c3-lang.org/all), cross-checked against the real compiler
+  (see below). Don't rely on memory of C3 or on third-party material.
 - **App code in English** (Svelte, TS, identifiers, comments, commit messages).
 - **Course content in Italian** (`src/content/modules/**/*.svx`) — but the **embedded C3 code is in
   English**: variable/constant/function/type/module names, example file/project names, code comments,
@@ -41,24 +44,42 @@ Config lives in `vite.config.ts` (no `svelte.config.js`).
   rewrites `<Callout>` etc. to `Components.Callout` (mdsvex only namespaces hast elements, not raw nodes).
   Keep `LESSON_COMPONENTS` in `components.ts` in sync with the layout exports.
 - `remark-headings.ts` injects `headings` into the lesson `metadata` for the page TOC.
-- Progress and theme: `src/lib/state/*.svelte.ts`, localStorage-backed, loaded in the root layout
-  `$effect` so SSR output is deterministic.
+- Progress, theme and reader settings: `src/lib/state/*.svelte.ts`, localStorage-backed, loaded in
+  the root layout `$effect` so SSR output is deterministic. Theme (`.dark` class) and settings
+  (`data-font="serif|sans"`, `data-text-size="100|125|150"` on `<html>`) are also applied before first
+  paint by the inline script in `src/app.html`: keep it in sync with the stores.
+- Settings page: `src/routes/impostazioni/+page.svelte` (reading font + text size). Text size scales
+  the root `font-size`; the reading font is the `--reading-font` var, used via the `font-reading`
+  utility and `.lesson-prose`. Use `font-reading` (not `font-serif`) for long-form text.
+
+## Theme
+
+Colours are CSS tokens in `src/app.css` (`:root` light, `.dark` dark) exposed to Tailwind via
+`@theme inline`. The brand comes from the C3 logo gradient (`--brand-blue` #2563eb → `--brand-violet`
+#7c3aed); helpers `.bg-brand`, `.text-brand`, `.bg-grid`. Keep the "tech but calm" look: cool neutral
+surfaces, indigo accent, mono for small labels; don't hard-code colours in components, add a token.
 
 ## Authoring conventions (lessons)
 
 - Folder `NN-slug/` with `module.json` (`title, subtitle, emoji, level, goals[]`); lessons `NN-slug.svx`
   with frontmatter `title`, `description`, `minutes`.
 - Fences: `c3` (with optional `title="file.c3"`), `output` (terminal look), `sh`, `json`, `c`.
-- Components: `Callout type="tip|note|warning|fun|c|deep"`, `Quiz question options answer`,
+- Components: `Callout type="tip|note|warning|fun|c|deep|nerd"`, `Quiz question options answer`,
   `Exercise title expected?`, `Solution`. Blank line before/after inner markdown.
 - In a `question="…"` attribute you cannot escape quotes: use `question={'…'}` instead.
 - Tone: fun but clear, short sections, one idea at a time, "Se vieni dal C" callouts for C comparisons,
   a recap list at the end of each lesson, quizzes inline and at least one on-machine exercise per lesson.
+- **"Dettagli nerd"** (`Callout type="nerd" title="<the question it answers>"`): whenever a lesson
+  uses a term about how the computer works (buffer, RAM, byte/bit, registers, stdout, linker, PATH,
+  two's complement, IEEE 754, UTF-8, ...), add a nerd callout explaining it in plain Italian, placed
+  right after the paragraph that introduces the term. It renders collapsed (`<details>`), so it must be
+  skippable: the main text must still make sense without it. Title it as a question
+  ("Cos'è un buffer?"). Don't repeat one already given in an earlier lesson: refer back to it.
 
 ## Status
 
 - Module 1 "Primi passi" done (7 lessons): benvenuto, hello-world, progetti, variabili-e-tipi,
-  operatori, stampare-e-formattare, sfida-finale.
+  operatori, stampare-e-formattare, sfida-finale; nerd callouts added to lessons 1–6.
 - Next: Module 2 — control flow (`if`/`else`, `switch`), loops (`for`, `while`, `foreach`), functions.
   Planned later modules: arrays/slices/strings, structs/enums, optionals & error handling, modules,
   memory & pointers, defer/contracts, generics/macros, C interop.

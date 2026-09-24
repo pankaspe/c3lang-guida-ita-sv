@@ -41,12 +41,12 @@ Quattro su cinque sono quelle che ti aspetti. La quarta merita un paragrafo tutt
 Se vuoi 3,5, almeno uno dei due deve essere un decimale:
 
 ```c3
-io::printn(7.0 / 2);       // 3.500000: 7.0 è un double
+io::printn(7.0 / 2);       // 3.500000: 7.0 is a double
 int a = 7;
-io::printn(a / 2.0);       // 3.500000: 2.0 è un double
-io::printn((double)a / 2); // 3.500000: converto a esplicitamente
+io::printn(a / 2.0);       // 3.500000: 2.0 is a double
+io::printn((double)a / 2); // 3.500000: a is converted explicitly
 double d = a / 2;
-io::printn(d);             // 3.000000!! la divisione avviene PRIMA, tra interi
+io::printn(d);             // 3.000000!! the division happens FIRST, between ints
 ```
 
 L'ultimo caso è il più insidioso: `d` è un `double`, ma `a / 2` viene calcolato tra due `int` (fa 3) e *solo dopo* il 3 viene messo nella scatola `double`. Il danno è già fatto.
@@ -138,6 +138,25 @@ io::printn(m);
 
 Il numero "gira" e ricomincia dal fondo, come un contachilometri che dopo 999999 torna a 000000. Si chiama **overflow** (trabocco), e in C3 è un comportamento *definito*: succede sempre così, su ogni macchina (in C, per gli interi con segno, è ufficialmente "comportamento indefinito", cioè può succedere qualsiasi cosa). Definito non vuol dire innocuo: se stai contando i soldi di una banca e il conto diventa negativo, hai un problema. Quando i numeri possono crescere molto, usa `long`.
 
+
+<Callout type="nerd" title="Cosa succede ai bit durante il trabocco?">
+
+Ricordi il complemento a due della lezione scorsa? Il valore massimo di un `int`, in binario, è uno `0` seguito da 31 `1`:
+
+```output
+01111111111111111111111111111111   (2 147 483 647)
+```
+
+Aggiungendo 1, il riporto si propaga come in una somma in colonna e arriva fino al bit più a sinistra:
+
+```output
+10000000000000000000000000000000   (−2 147 483 648)
+```
+
+Il processore ha fatto una somma perfettamente normale. È che quel bit più a sinistra, in un intero con segno, significa "meno 2³¹". Nessun controllo, nessun allarme: solo bit che girano.
+
+</Callout>
+
 ## Confronti: domande con risposta sì o no
 
 Un confronto mette a paragone due valori e produce un `bool`:
@@ -222,6 +241,15 @@ L'ordine in C3, dal più forte al più debole (semplificato ai casi che ti servo
 10. `=`, `+=`, ecc.
 
 Quando hai un dubbio, **metti le parentesi**. Non costano niente, e chi legge ti ringrazia.
+
+
+<Callout type="nerd" title="Cosa vuol dire operare «sui bit»?">
+
+Gli operatori `&`, `|`, `^`, `<<` e `>>` non guardano il numero nel suo insieme, ma i suoi bit, uno per uno. `&` (AND) tiene acceso un bit solo se è acceso in entrambi i numeri, `|` (OR) se è acceso in almeno uno, `^` (XOR) se è acceso in uno solo dei due. Con `5` (`0b101`) e `3` (`0b011`): `5 & 3` fa 1, `5 | 3` fa 7, `5 ^ 3` fa 6.
+
+`<<` e `>>` fanno scorrere tutti i bit a sinistra o a destra: `1 << 3` sposta l'`1` di tre posti e dà `0b1000`, cioè 8. Spostare di un posto a sinistra equivale a moltiplicare per 2, proprio come in base 10 aggiungere uno zero moltiplica per 10. Servono quando ogni singolo bit ha un significato: permessi dei file, impostazioni on/off, registri dell'hardware, grafica. Li useremo più avanti.
+
+</Callout>
 
 <Callout type="c" title="C3 ha spostato i bit">
 

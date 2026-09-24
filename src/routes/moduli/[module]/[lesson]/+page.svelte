@@ -29,7 +29,7 @@
 				{#each module.lessons as item (item.id)}
 					{@const active = item.id === lesson.id}
 					{@const completed = progress.isCompleted(item.id)}
-					<li>
+					<li class="min-w-0">
 						<a
 							href={lessonPath(item)}
 							aria-current={active ? 'page' : undefined}
@@ -55,13 +55,13 @@
 	<!-- Lesson -->
 	<article class="min-w-0">
 		<header class="mb-8">
-			<p class="font-sans text-xs text-muted">
+			<p class="font-mono text-xs text-muted">
 				Lezione {position} di {module.lessons.length} · {lesson.meta.minutes} min di lettura
 			</p>
 			<h1 class="mt-2 font-sans text-3xl font-bold tracking-tight text-ink sm:text-4xl">
 				{lesson.meta.title}
 			</h1>
-			<p class="mt-3 font-serif text-lg leading-relaxed text-ink-soft">{lesson.meta.description}</p>
+			<p class="mt-3 font-reading text-lg leading-relaxed text-ink-soft">{lesson.meta.description}</p>
 		</header>
 
 		<Content />

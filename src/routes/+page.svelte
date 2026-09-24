@@ -21,28 +21,31 @@
 	/>
 </svelte:head>
 
-<section class="mx-auto max-w-6xl px-4 pt-12 pb-8 sm:px-6">
-	<p class="font-mono text-sm text-accent">import std::io;</p>
-	<h1 class="mt-2 max-w-2xl font-sans text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-		Impara C3, un passo alla volta.
-	</h1>
-	<p class="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-ink-soft">
-		C3 è l'evoluzione del C: stessa filosofia, meno trappole, più strumenti. Questo percorso ti
-		porta da zero a programmatore, con lezioni brevi, quiz nell'app ed esercizi da fare sul tuo
-		computer. Niente sandbox: il compilatore vero è il miglior insegnante.
-	</p>
-	{#if nextLesson}
-		<a
-			href={lessonPath(nextLesson)}
-			class="mt-6 inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 font-sans text-sm font-semibold text-accent-ink shadow-sm transition hover:opacity-90"
-		>
-			{progress.completed.size > 0 ? 'Continua da dove eri' : 'Inizia il percorso'} →
-		</a>
-	{/if}
+<section class="relative isolate">
+	<div class="bg-grid absolute inset-0 -z-10" aria-hidden="true"></div>
+	<div class="mx-auto max-w-6xl px-4 pt-12 pb-8 sm:px-6">
+		<p class="font-mono text-sm text-accent">import std::io;</p>
+		<h1 class="mt-2 max-w-2xl font-sans text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+			Impara <span class="text-brand">C3</span>, un passo alla volta.
+		</h1>
+		<p class="mt-4 max-w-2xl font-reading text-lg leading-relaxed text-ink-soft">
+			C3 è l'evoluzione del C: stessa filosofia, meno trappole, più strumenti. Questo percorso ti
+			porta da zero a programmatore, con lezioni brevi, quiz nell'app ed esercizi da fare sul tuo
+			computer. Niente sandbox: il compilatore vero è il miglior insegnante.
+		</p>
+		{#if nextLesson}
+			<a
+				href={lessonPath(nextLesson)}
+				class="bg-brand mt-6 inline-flex items-center gap-2 rounded-md px-5 py-2.5 font-sans text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+			>
+				{progress.completed.size > 0 ? 'Continua da dove eri' : 'Inizia il percorso'} →
+			</a>
+		{/if}
+	</div>
 </section>
 
 <section class="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-	<h2 class="mb-4 font-sans text-sm font-semibold tracking-wide text-muted uppercase">Moduli</h2>
+	<h2 class="mb-4 font-mono text-sm font-semibold tracking-wide text-muted uppercase">Moduli</h2>
 	<ol class="grid gap-4 sm:grid-cols-2">
 		{#each modules as module (module.slug)}
 			{@const ids = module.lessons.map((lesson) => lesson.id)}
@@ -63,7 +66,7 @@
 						<span class="mr-1.5 font-mono text-sm text-muted">{String(module.order).padStart(2, '0')}</span>
 						{module.meta.title}
 					</h3>
-					<p class="mt-1 flex-1 font-serif text-sm leading-relaxed text-ink-soft">
+					<p class="mt-1 flex-1 font-reading text-sm leading-relaxed text-ink-soft">
 						{module.meta.subtitle}
 					</p>
 					<div class="mt-4">

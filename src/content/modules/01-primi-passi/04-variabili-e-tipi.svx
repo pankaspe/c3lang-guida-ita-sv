@@ -35,6 +35,15 @@ fn void main()
 
 Nota la seconda assegnazione: `age = 35;` senza `int` davanti. Il tipo si dichiara **una volta sola**, quando la variabile nasce. Dopo, si usa solo il nome. (Scrivere `int age = 35;` una seconda volta sarebbe un errore: "variabile già dichiarata".)
 
+
+<Callout type="nerd" title="Dove sta, fisicamente, la scatola?">
+
+Nella **RAM**, la memoria di lavoro del computer. Immaginala come una lunghissima fila di caselle numerate, ognuna grande un **byte**, cioè 8 **bit** (8 cifre binarie, ognuna 0 o 1). Il numero di ogni casella è il suo **indirizzo**. Un `int` occupa 4 byte consecutivi: quando scrivi `int age = 34;`, il compilatore riserva 4 caselle e si annota che `age` è il nome di quelle caselle. Il nome esiste solo nel tuo codice: nell'eseguibile restano soltanto indirizzi e numeri.
+
+La RAM è veloce ma *volatile*: spegni il computer e tutto sparisce. Quello che deve sopravvivere va scritto su disco, in un file.
+
+</Callout>
+
 <Callout type="warning" title="Il segno = non significa «uguale»">
 
 In matematica `x = 5` è un'affermazione. In C3 (e in quasi tutti i linguaggi) `x = 5` è un **ordine**: "metti 5 dentro x". Per questo `x = x + 1` ha perfettamente senso: "prendi il valore di x, aggiungi 1, rimetti il risultato in x". Per chiedere «sono uguali?» si usa `==`, con due segni. Lo vedremo nella prossima lezione.
@@ -62,6 +71,15 @@ Se per motivi di prestazioni vuoi davvero saltare l'azzeramento (per esempio per
 
 </Callout>
 
+
+<Callout type="nerd" title="Cos'è un buffer?">
+
+Un **buffer** è una zona di memoria riservata per parcheggiare temporaneamente dei dati mentre passano da un posto a un altro: i byte letti da un file prima di elaborarli, il testo da stampare prima di spedirlo al terminale, i campioni audio prima di mandarli alle casse. `int[1000] buffer` qui sopra è proprio questo: 1000 interi uno dopo l'altro (4000 byte), pronti a essere riempiti.
+
+Il nome viene dall'inglese *buffer*, "cuscinetto": fa da ammortizzatore tra chi produce i dati e chi li consuma, che raramente vanno alla stessa velocità. Il video in streaming che "carica" qualche secondo in anticipo? Sta riempiendo un buffer. E azzerare 4000 byte costa poco, ma non zero: se stai per sovrascriverli tutti comunque, `@noinit` ti risparmia un lavoro inutile.
+
+</Callout>
+
 ## I tipi numerici interi
 
 `int` è il tipo intero "normale": 32 bit, quindi va da circa −2 miliardi a +2 miliardi. Basta quasi sempre. Quando non basta, ci sono i suoi fratelli:
@@ -75,6 +93,15 @@ Se per motivi di prestazioni vuoi davvero saltare l'azzeramento (per esempio per
 | `int128` | 128 | Enorme | Crittografia, matematica esotica. |
 
 E per ogni tipo con segno esiste il gemello **senza segno** (solo positivi, ma con il doppio dello spazio in alto): `uint`, `ulong`, `ushort`, `char`, `uint128`.
+
+
+<Callout type="nerd" title="Perché proprio −2 147 483 648?">
+
+Con 32 bit si possono formare 2³² combinazioni diverse di 0 e 1, cioè 4 294 967 296 valori. Un `uint` le usa tutte per i numeri da 0 a 4 294 967 295. Un `int` deve fare posto anche ai negativi e le divide a metà: 2³¹ valori negativi (da −2 147 483 648 a −1) e 2³¹ valori da zero in su (da 0 a 2 147 483 647). Ecco perché il lato negativo ha un numero in più: lo zero "ruba" un posto ai positivi.
+
+Il trucco con cui i processori rappresentano i negativi si chiama **complemento a due**: il bit più a sinistra non vale "più 2³¹" ma "meno 2³¹". Il vantaggio è enorme: somma e sottrazione usano lo stesso circuito, senza distinguere tra positivi e negativi. Lo rivedremo nella prossima lezione, quando un numero "traboccherà".
+
+</Callout>
 
 Sì, hai letto bene: **`char` in C3 è un intero senza segno a 8 bit** (0…255). Si chiama così per tradizione, perché un byte è spesso usato per rappresentare un carattere, ma il compilatore lo tratta come un numero. Ci torniamo tra poco.
 
@@ -98,6 +125,15 @@ long big = 3_000_000_000;  // doesn't fit in an int, but does in a long
 
 I trattini bassi sono un regalo: `1_000_000` si legge al volo, `1000000` no.
 
+
+<Callout type="nerd" title="Perché i programmatori amano l'esadecimale?">
+
+Il computer ragiona in binario, ma `0b11111111` è faticoso da leggere. L'esadecimale (base 16, con le cifre `0-9` e `a-f`) è il compromesso perfetto: **una cifra esadecimale corrisponde esattamente a 4 bit**, quindi un byte si scrive sempre con due cifre. `0xFF` = `0b1111_1111` = 255, il valore più alto che sta in un byte.
+
+Per questo lo vedrai ovunque si parli di memoria: indirizzi, contenuti dei file, colori delle pagine web. `#2563eb`, il blu del logo di C3, sono tre byte: rosso `25`, verde `63`, blu `eb`.
+
+</Callout>
+
 <Quiz question="Cosa succede compilando `int x = 3_000_000_000;`?" options={['Funziona: x vale 3 miliardi', 'Errore di compilazione: il valore non entra in un int', 'Funziona, ma x contiene un valore strano per via del trabocco', 'Funziona: C3 allarga automaticamente x a long']} answer={1}>
 
 Un `int` arriva a circa 2,1 miliardi. Il compilatore vede che 3 miliardi non ci stanno e **si rifiuta di compilare**. Questa è una differenza importante rispetto al C, dove in molti casi avresti ottenuto un numero negativo a sorpresa. Se ti serve quel valore, dichiara `long x`.
@@ -119,6 +155,15 @@ double avogadro = 6.022e23;   // scientific notation: 6.022 × 10²³
 float weight = 72.5f;         // the f suffix says "this is a float"
 double int_as_double = 7;     // an int can become a double with no problem
 ```
+
+
+<Callout type="nerd" title="Come si scrive 3,14 con solo 0 e 1?">
+
+Con una specie di notazione scientifica in base 2, definita da uno standard chiamato **IEEE 754** che usano praticamente tutti i processori. Un `double` divide i suoi 64 bit in tre parti: 1 bit per il segno, 11 per l'esponente (di quanto spostare la virgola) e 52 per la mantissa (le cifre significative). È come scrivere 6,022 × 10²³, ma con le potenze di 2.
+
+La conseguenza: molti numeri "tondi" in base 10 in base 2 hanno infinite cifre, esattamente come 1/3 = 0,333... in base 10. `0.1` è uno di questi, e il `double` ne conserva la migliore approssimazione possibile: stampato con 20 decimali, è `0.10000000000000000555`. Nella lezione 6 vedremo quando questo ti morde.
+
+</Callout>
 
 <Callout type="warning" title="Il verso della conversione">
 
@@ -158,6 +203,15 @@ Ada
 ```
 
 `.len` è la **lunghezza** della stringa, cioè quanti byte contiene. (Per il testo con accenti la faccenda è più sottile: `"caffè"` ha 6 byte, non 5, perché la `è` ne occupa due in UTF-8. Ci torneremo; per ora usa `.len` su testo semplice.)
+
+
+<Callout type="nerd" title="Byte, caratteri e UTF-8">
+
+Un computer non conosce le lettere, solo i numeri. Una **codifica** è la tabella che dice quale numero corrisponde a quale carattere. La più antica ancora in uso, l'**ASCII** (1963), assegna i numeri da 0 a 127 alle lettere inglesi, alle cifre e alla punteggiatura: `A` è 65, `a` è 97, lo spazio è 32. Un byte per carattere, e tutto torna.
+
+Ma l'ASCII non ha la `è`, né il `€`, né gli ideogrammi, né le emoji. **UTF-8**, la codifica usata oggi dal web e da C3, risolve con un'idea furba: i caratteri ASCII restano identici, un byte ciascuno, mentre tutti gli altri usano da 2 a 4 byte. La `è` diventa i due byte `c3 a8` in esadecimale (e no, quel `c3` è solo una coincidenza). Ecco perché `"caffè".len` fa 6.
+
+</Callout>
 
 Dentro le virgolette puoi usare delle **sequenze di escape**, che iniziano con `\`:
 
@@ -264,12 +318,12 @@ Una variabile deve iniziare con la minuscola. `MaxScore` sembra il nome di un **
 Un'ultima differenza dal C, piccola ma che evita malintesi: **ogni variabile ha la sua riga**.
 
 ```c3
-int a, b = 4;  // errore in C3: che valore ha a?
+int a, b = 4;  // error in C3: what value does a have?
 ```
 
 ```c3
 int a;
-int b = 4;     // così è chiaro
+int b = 4;     // now it's clear
 ```
 
 ## Mettiamo tutto insieme

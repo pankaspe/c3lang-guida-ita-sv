@@ -9,85 +9,109 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------------
-   Paper theme tokens. Warm, low-contrast surfaces that are easy on the eyes.
+   Theme tokens. Brand colours come from the C3 logo gradient
+   (blue #2563eb → violet #7c3aed); surfaces are cool, slightly blue-tinted
+   neutrals for a clean "tech" feel that stays easy on the eyes.
    --------------------------------------------------------------------------- */
 :root {
-	--paper: #f6f1e7;
-	--surface: #fdfaf3;
-	--surface-2: #efe8da;
-	--ink: #2b2620;
-	--ink-soft: #4d453b;
-	--muted: #7a7062;
-	--line: #e0d7c5;
-	--accent: #b4512b;
+	--brand-blue: #2563eb;
+	--brand-violet: #7c3aed;
+	--brand-gradient: linear-gradient(90deg, var(--brand-blue), var(--brand-violet));
+
+	--paper: #f6f7fb;
+	--surface: #ffffff;
+	--surface-2: #eceef6;
+	--ink: #151a2d;
+	--ink-soft: #383f5c;
+	--muted: #666d8c;
+	--line: #dde0ec;
+	--accent: #4f46e5;
 	--accent-ink: #ffffff;
-	--accent-soft: #f3dccd;
-	--link: #2e5f8a;
-	--success: #3d7a4a;
-	--success-soft: #dcebdc;
-	--danger: #a83a3a;
-	--danger-soft: #f2d9d6;
-	--warning: #9a6b12;
-	--warning-soft: #f6e8c4;
-	--info: #2e5f8a;
-	--info-soft: #d9e5ef;
-	--fun: #7a4b9c;
-	--fun-soft: #e8dcf2;
+	--accent-soft: #e6e6fb;
+	--link: #2563eb;
+	--success: #15803d;
+	--success-soft: #dcf2e3;
+	--danger: #c0293b;
+	--danger-soft: #fbe1e4;
+	--warning: #a16207;
+	--warning-soft: #fbefcf;
+	--info: #2563eb;
+	--info-soft: #e0eafd;
+	--fun: #7c3aed;
+	--fun-soft: #eee5fd;
+	--nerd: #0e7490;
+	--nerd-soft: #ddf2f6;
+
+	/* Reading font and text size, overridden from the settings page. */
+	--reading-font: 'Literata Variable', ui-serif, Georgia, serif;
 
 	/* Code block palette (light) */
-	--code-bg: #f1ebdf;
-	--code-ink: #3a342c;
-	--code-comment: #8a8071;
-	--code-keyword: #9a3e6f;
-	--code-type: #2b6f7a;
-	--code-string: #6b7d2b;
-	--code-number: #b05a1a;
-	--code-function: #2e5f8a;
-	--code-constant: #b07a10;
-	--code-attribute: #7a4b9c;
-	--code-operator: #6a6256;
-	--code-format: #b05a1a;
-	--terminal-bg: #2b2620;
-	--terminal-ink: #e8e1d3;
+	--code-bg: #f3f4f9;
+	--code-ink: #252b45;
+	--code-comment: #7c829e;
+	--code-keyword: #7c3aed;
+	--code-type: #0e7490;
+	--code-string: #15803d;
+	--code-number: #c2410c;
+	--code-function: #2563eb;
+	--code-constant: #a16207;
+	--code-attribute: #a21caf;
+	--code-operator: #5b6180;
+	--code-format: #c2410c;
+	--terminal-bg: #10142a;
+	--terminal-ink: #dfe3f5;
 }
 
 .dark {
-	--paper: #1b1917;
-	--surface: #232019;
-	--surface-2: #2c2822;
-	--ink: #e6dfd2;
-	--ink-soft: #c9c0b1;
-	--muted: #9d9385;
-	--line: #3a352e;
-	--accent: #e08a5c;
-	--accent-ink: #1b1917;
-	--accent-soft: #3f2c22;
-	--link: #8db4d8;
-	--success: #8fc79a;
-	--success-soft: #24352a;
-	--danger: #e08a8a;
-	--danger-soft: #3d2626;
-	--warning: #e0b95a;
-	--warning-soft: #3b3120;
-	--info: #8db4d8;
-	--info-soft: #22303c;
-	--fun: #c9a2e6;
-	--fun-soft: #33283d;
+	--paper: #0b0e1a;
+	--surface: #121629;
+	--surface-2: #1a1f36;
+	--ink: #e4e7f5;
+	--ink-soft: #b6bbd6;
+	--muted: #858ba9;
+	--line: #262c47;
+	--accent: #8b8ff9;
+	--accent-ink: #0b0e1a;
+	--accent-soft: #232650;
+	--link: #7da9ff;
+	--success: #6fd394;
+	--success-soft: #15301f;
+	--danger: #ff8a97;
+	--danger-soft: #3a1b22;
+	--warning: #f1c35f;
+	--warning-soft: #342a13;
+	--info: #7da9ff;
+	--info-soft: #17234a;
+	--fun: #c09bff;
+	--fun-soft: #2a1e4a;
+	--nerd: #5fd0e0;
+	--nerd-soft: #0f2c35;
 
-	--code-bg: #1f1c18;
-	--code-ink: #ddd5c6;
-	--code-comment: #857b6c;
-	--code-keyword: #e39ac2;
-	--code-type: #7fc4cf;
-	--code-string: #b8cc6a;
-	--code-number: #f0a56a;
-	--code-function: #8db4d8;
-	--code-constant: #e6c46a;
-	--code-attribute: #c9a2e6;
-	--code-operator: #b3aa9b;
-	--code-format: #f0a56a;
-	--terminal-bg: #12100e;
-	--terminal-ink: #e8e1d3;
+	--code-bg: #0e1222;
+	--code-ink: #d7dbef;
+	--code-comment: #6c7394;
+	--code-keyword: #c4a4ff;
+	--code-type: #5fd0e0;
+	--code-string: #9edc8c;
+	--code-number: #ffab70;
+	--code-function: #7da9ff;
+	--code-constant: #f1c35f;
+	--code-attribute: #f0a0f5;
+	--code-operator: #a2a8c6;
+	--code-format: #ffab70;
+	--terminal-bg: #070912;
+	--terminal-ink: #dfe3f5;
+}
+
+/* Reader settings (see src/lib/state/settings.svelte.ts). */
+:root[data-font='sans'] {
+	--reading-font: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+}
+:root[data-text-size='125'] {
+	font-size: 125%;
+}
+:root[data-text-size='150'] {
+	font-size: 150%;
 }
 
 @theme inline {
@@ -112,9 +136,14 @@
 	--color-info-soft: var(--info-soft);
 	--color-fun: var(--fun);
 	--color-fun-soft: var(--fun-soft);
+	--color-nerd: var(--nerd);
+	--color-nerd-soft: var(--nerd-soft);
+	--color-brand-blue: var(--brand-blue);
+	--color-brand-violet: var(--brand-violet);
 
 	--font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 	--font-serif: 'Literata Variable', ui-serif, Georgia, serif;
+	--font-reading: var(--reading-font);
 	--font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
@@ -135,12 +164,42 @@ body {
 	-webkit-font-smoothing: antialiased;
 }
 
+.dark {
+	color-scheme: dark;
+}
+
 ::selection {
 	background: var(--accent-soft);
 }
 
 /* ---------------------------------------------------------------------------
-   Lesson prose (Tailwind typography, re-coloured for the paper palette)
+   Brand helpers: the logo gradient and a faint blueprint grid.
+   --------------------------------------------------------------------------- */
+.bg-brand {
+	background-image: var(--brand-gradient);
+}
+
+.text-brand {
+	background-image: var(--brand-gradient);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.dark .text-brand {
+	background-image: linear-gradient(90deg, #6f9bff, #b18cff);
+}
+
+.bg-grid {
+	background-image:
+		linear-gradient(to right, color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px),
+		linear-gradient(to bottom, color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px);
+	background-size: 28px 28px;
+	mask-image: radial-gradient(ellipse at top left, #000 30%, transparent 75%);
+}
+
+/* ---------------------------------------------------------------------------
+   Lesson prose (Tailwind typography, re-coloured for the theme palette)
    --------------------------------------------------------------------------- */
 .lesson-prose {
 	--tw-prose-body: var(--ink-soft);
@@ -157,7 +216,7 @@ body {
 	--tw-prose-code: var(--accent);
 	--tw-prose-th-borders: var(--line);
 	--tw-prose-td-borders: var(--line);
-	font-family: var(--font-serif);
+	font-family: var(--reading-font);
 	font-size: 1.0625rem;
 	line-height: 1.75;
 }

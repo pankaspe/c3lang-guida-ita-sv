@@ -4,6 +4,7 @@
 	import SiteHeader from '$lib/components/ui/SiteHeader.svelte';
 	import { progress } from '$lib/state/progress.svelte';
 	import { theme } from '$lib/state/theme.svelte';
+	import { settings } from '$lib/state/settings.svelte';
 
 	let { children } = $props();
 
@@ -11,6 +12,7 @@
 	$effect(() => {
 		progress.load();
 		theme.sync();
+		settings.sync();
 	});
 </script>
 
@@ -26,6 +28,7 @@
 	<footer class="border-t border-line py-6 text-center font-sans text-xs text-muted">
 		Corso non ufficiale · basato sulla documentazione di
 		<a href="https://c3-lang.org" class="underline underline-offset-2 hover:text-ink">c3-lang.org</a>
-		· aggiornato al 2026
+		· aggiornato al 2026 ·
+		<a href="/impostazioni" class="underline underline-offset-2 hover:text-ink">impostazioni</a>
 	</footer>
 </div>

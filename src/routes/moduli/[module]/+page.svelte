@@ -30,7 +30,7 @@
 				{module.meta.title}
 			</h1>
 		</div>
-		<p class="mt-3 font-serif text-lg leading-relaxed text-ink-soft">{module.meta.subtitle}</p>
+		<p class="mt-3 font-reading text-lg leading-relaxed text-ink-soft">{module.meta.subtitle}</p>
 		<p class="mt-2 font-sans text-xs text-muted">
 			{module.lessons.length} lezioni · circa {totalMinutes} minuti di lettura · livello {module.meta.level.toLowerCase()}
 		</p>
@@ -44,7 +44,7 @@
 			<h2 class="font-sans text-sm font-semibold tracking-wide text-muted uppercase">
 				Alla fine saprai
 			</h2>
-			<ul class="mt-2 grid gap-1.5 font-serif text-[0.95rem] text-ink-soft">
+			<ul class="mt-2 grid gap-1.5 font-reading text-[0.95rem] text-ink-soft">
 				{#each module.meta.goals as goal (goal)}
 					<li class="flex gap-2"><span class="text-success" aria-hidden="true">✓</span>{goal}</li>
 				{/each}
@@ -52,13 +52,13 @@
 		</section>
 	{/if}
 
-	<ol class="grid gap-2">
+	<ol class="grid grid-cols-1 gap-2">
 		{#each module.lessons as lesson (lesson.id)}
 			{@const done = progress.isCompleted(lesson.id)}
-			<li>
+			<li class="min-w-0">
 				<a
 					href={lessonPath(lesson)}
-					class="flex items-center gap-4 rounded-lg border border-line bg-surface px-4 py-3 transition hover:border-accent hover:bg-accent-soft/40"
+					class="flex items-start gap-3 rounded-lg border border-line bg-surface px-3 py-3 transition hover:border-accent hover:bg-accent-soft/40 sm:items-center sm:gap-4 sm:px-4"
 				>
 					<span
 						class={[
@@ -69,10 +69,15 @@
 						{done ? '✓' : lesson.order}
 					</span>
 					<span class="min-w-0 flex-1">
-						<span class="block font-sans font-semibold text-ink">{lesson.meta.title}</span>
-						<span class="block truncate font-serif text-sm text-muted">{lesson.meta.description}</span>
+						<span class="flex items-baseline justify-between gap-3">
+							<span class="font-sans font-semibold text-ink">{lesson.meta.title}</span>
+							<span class="shrink-0 font-mono text-xs text-muted sm:hidden">{lesson.meta.minutes} min</span>
+						</span>
+						<span class="mt-0.5 line-clamp-2 block font-reading text-sm text-muted sm:line-clamp-1"
+							>{lesson.meta.description}</span
+						>
 					</span>
-					<span class="shrink-0 font-sans text-xs text-muted">{lesson.meta.minutes} min</span>
+					<span class="hidden shrink-0 font-mono text-xs text-muted sm:inline">{lesson.meta.minutes} min</span>
 				</a>
 			</li>
 		{/each}

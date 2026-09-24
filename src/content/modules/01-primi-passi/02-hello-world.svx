@@ -73,6 +73,13 @@ Puoi scrivere `fn int main()` e terminare con `return 0;`. Quel numero è il *co
 
 </Callout>
 
+
+<Callout type="nerd" title="Dove va a finire il codice di uscita?">
+
+Al sistema operativo, che lo consegna a chi ha lanciato il programma: di solito la shell. Puoi leggerlo subito dopo l'esecuzione con `echo $?` (su Linux e macOS; in PowerShell è `$LASTEXITCODE`). Script e strumenti automatici lo usano per capire se un passaggio è andato bene: `c3c compile hello.c3 && ./hello` lancia il programma **solo se** la compilazione è terminata con 0. Anche `c3c` stesso, infatti, è un programma con il suo codice di uscita: 0 se compila, 1 se trova errori.
+
+</Callout>
+
 ## Righe 4 e 6: le graffe `{` e `}`
 
 Le parentesi graffe delimitano il **corpo** della funzione: tutto ciò che sta in mezzo viene eseguito quando la funzione viene chiamata. In C3 le graffe sono obbligatorie, anche per una sola riga.
@@ -102,6 +109,15 @@ Questa è una **chiamata di funzione**: chiediamo alla funzione `printn` del mod
 
 Il testo tra virgolette, `"Hello, World!"`, è una **stringa** (una sequenza di caratteri) e viene passato alla funzione come **argomento**. `printn` la stampa e poi va a capo (la `n` finale sta per *newline*). Esiste anche `io::print`, identica ma senza andare a capo.
 
+
+<Callout type="nerd" title="Dove scrive printn, esattamente? (e cos'è un buffer)">
+
+Ogni programma nasce con tre "canali" già aperti dal sistema operativo: lo **standard input** (da cui legge, di solito la tastiera), lo **standard output** (dove scrive, di solito il terminale) e lo **standard error** (riservato ai messaggi di errore). `io::printn` scrive sullo standard output.
+
+Scrivere davvero sul terminale significa fare una *chiamata di sistema*, cioè chiedere un servizio al sistema operativo: un'operazione relativamente lenta. Per questo l'output passa spesso da un **buffer**: una zona di memoria usata come sala d'attesa, dove i caratteri si accumulano per essere spediti tutti insieme (per esempio quando il buffer è pieno o quando il programma finisce). È come aspettare di avere la lavatrice piena prima di avviarla: stesso risultato, molta meno fatica.
+
+</Callout>
+
 Il punto e virgola `;` chiude l'istruzione. In C3 ogni istruzione finisce con `;`. Dimenticarlo è l'errore numero uno dei principianti: il compilatore te lo farà notare con gentilezza teutonica.
 
 Il rientro della riga (la tabulazione all'inizio) è solo per gli occhi umani: al compilatore non interessa. Ma ai tuoi occhi sì, quindi rientra sempre il codice dentro le graffe.
@@ -111,6 +127,7 @@ Il rientro della riga (la tabulazione all'inizio) è solo per gli occhi umani: a
 Il sistema ha bisogno di sapere da dove partire, e quel posto si chiama `main` per contratto. Senza `main`, il linker (la fase finale della compilazione) si lamenta che non trova il punto d'ingresso. Puoi avere quante funzioni vuoi con qualsiasi nome, ma una deve chiamarsi `main`.
 
 </Quiz>
+
 
 ## Compilare: cosa succede davvero
 
@@ -127,6 +144,17 @@ c3c compile hello.c3   # crea l'eseguibile
 ```
 
 L'eseguibile è un file indipendente: puoi copiarlo su un altro computer con lo stesso sistema operativo e funzionerà anche senza `c3c` installato. È questo il bello dei linguaggi compilati.
+
+<Callout type="nerd" title="Compilatore e linker: chi fa cosa?">
+
+Dietro a `c3c compile` ci sono due lavori distinti:
+
+1. **Compilazione**: ogni file `.c3` viene tradotto in un **file oggetto** (`.o` su Linux e macOS, `.obj` su Windows). È già codice macchina, ma "a pezzi": al posto delle funzioni definite altrove ci sono dei buchi. Il tuo `hello.c3` chiama `printn`, che però vive nella libreria standard.
+2. **Collegamento** (*linking*): il **linker** prende tutti i file oggetto e le librerie, riempie i buchi collegando ogni chiamata alla funzione giusta e cuce il tutto in un unico eseguibile, pronto a partire da `main`.
+
+Per questo il compilatore dice *"Program linked to executable"*: l'ultima cosa fatta è stata il collegamento. E per questo su macOS servono gli Xcode Command Line Tools: forniscono il linker di sistema.
+
+</Callout>
 
 <Callout type="tip" title="Il tuo miglior amico è il messaggio di errore">
 

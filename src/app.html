@@ -5,12 +5,21 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="color-scheme" content="light dark" />
 		<script>
-			// Apply the saved (or system) theme before first paint to avoid flashing.
+			// Apply the saved (or system) theme and reader settings before first
+			// paint to avoid flashing. Keep in sync with src/lib/state/*.svelte.ts.
 			(function () {
+				var root = document.documentElement;
 				try {
 					var saved = localStorage.getItem('c3-course:theme');
 					var dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-					if (dark) document.documentElement.classList.add('dark');
+					if (dark) root.classList.add('dark');
+				} catch (e) {}
+				try {
+					var settings = JSON.parse(localStorage.getItem('c3-course:settings') || '{}');
+					if (settings.font === 'sans') root.dataset.font = 'sans';
+					if (settings.textSize === 125 || settings.textSize === 150) {
+						root.dataset.textSize = String(settings.textSize);
+					}
 				} catch (e) {}
 			})();
 		</script>
