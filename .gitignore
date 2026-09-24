@@ -21,3 +21,18 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Course content: only lessons and module metadata. Keeps compiled C3 test
+# programs (extensionless executables) out of the repo.
+/src/content/modules/**
+!/src/content/modules/**/
+!/src/content/modules/**/*.svx
+!/src/content/modules/**/*.json
+
+# C3 / C build artefacts
+*.o
+*.obj
+*.exe
+*.a
+*.so
+*.dll
