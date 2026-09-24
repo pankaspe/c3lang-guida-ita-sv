@@ -1,0 +1,254 @@
+---
+title: Il ciclo for
+description: Contare in modo compatto. Le tre parti del for, i passi diversi da uno, i cicli annidati e come uscire da due cicli insieme.
+minutes: 17
+---
+
+## Tre ingredienti, una riga
+
+Guarda un tipico ciclo `while` che conta da 1 a 5:
+
+```c3
+int i = 1;             // 1. where to start
+while (i <= 5)         // 2. when to stop
+{
+	io::printf("%d ", i);
+	i++;               // 3. what changes each round
+}
+```
+
+Sono le tre domande della lezione scorsa, sparse su quattro righe diverse. Il ciclo `for` le mette **tutte in fila**, tra le stesse parentesi:
+
+```c3
+for (int i = 1; i <= 5; i++)
+{
+	io::printf("%d ", i);
+}
+io::printn();
+```
+
+```output
+1 2 3 4 5
+```
+
+Le tre parti sono separate da **punti e virgola**:
+
+| Parte | Esempio | Quando viene eseguita |
+|---|---|---|
+| Inizializzazione | `int i = 1` | Una volta sola, prima di tutto |
+| Condizione | `i <= 5` | Prima di ogni giro: se è falsa, il ciclo finisce |
+| Aggiornamento | `i++` | Alla fine di ogni giro |
+
+Il comportamento è identico al `while` di sopra, ma chi legge capisce tutto il ciclo guardando **una riga sola**. Quando sai quante volte ripetere, o stai contando, il `for` è la scelta naturale. Quando ripeti "finché succede qualcosa", resta il `while`.
+
+<Callout type="tip" title="Perché proprio i?">
+
+`i` sta per *index* (indice), ed è una convenzione antichissima, che risale al FORTRAN degli anni '50. È l'unico caso in cui un nome di una lettera è considerato buono stile. Per i cicli annidati si continua con `j` e `k`.
+
+</Callout>
+
+## Contare in tutti i modi
+
+Nessuno ti obbliga a partire da 0 o da 1, né ad andare avanti di uno:
+
+```c3
+for (int i = 10; i > 0; i -= 3) io::printf("%d ", i);   // backwards, by 3
+io::printn();
+for (int i = 0; i <= 10; i += 2) io::printf("%d ", i);  // even numbers
+io::printn();
+```
+
+```output
+10 7 4 1
+0 2 4 6 8 10
+```
+
+(Anche il `for`, come l'`if`, accetta una sola istruzione sulla stessa riga senza graffe.)
+
+<Quiz question={'Quante volte gira `for (int i = 0; i < 10; i += 3) { ... }`?'} options={['3', '4', '10', '9']} answer={1}>
+
+`i` vale 0, 3, 6 e 9: quattro giri. Poi diventa 12, `12 < 10` è falso e il ciclo finisce. Quando hai un dubbio, scrivi i valori a mano uno per uno: è quello che fanno anche i programmatori esperti.
+
+</Quiz>
+
+## La variabile del for vive solo lì
+
+La `i` dichiarata nel `for` appartiene al ciclo: esiste durante i giri e sparisce appena il ciclo finisce.
+
+```c3
+for (int i = 0; i < 3; i++) {}
+io::printn(i);   // error: 'i' could not be found, did you spell it right?
+```
+
+È una buona notizia: puoi riusare `i` nel ciclo successivo senza conflitti, e nessuno può usare per sbaglio il valore rimasto dopo il ciclo. Se quel valore ti serve davvero, dichiara la variabile **prima** del `for`.
+
+<Callout type="c" title="Una dichiarazione sola">
+
+In C puoi scrivere `for (int i = 0, j = 10; ...)`. In C3 no: vale la regola del modulo 1, "una dichiarazione per riga". Il compilatore capisce `int i = 0` e poi si lamenta che `j` non esiste. Soluzione: dichiara `j` prima del ciclo. L'aggiornamento invece può fare più cose, separate da virgola:
+
+```c3
+int j = 4;
+for (int i = 0; i < j; i++, j--)
+{
+	io::printfn("%d-%d", i, j);
+}
+```
+
+```output
+0-4
+1-3
+```
+
+</Callout>
+
+## Accumulare: la somma di Gauss
+
+Uno schema che userai sempre: una variabile **accumulatore** dichiarata prima del ciclo e aggiornata a ogni giro.
+
+```c3 title="gauss.c3"
+import std::io;
+
+fn void main()
+{
+	int sum = 0;
+	for (int i = 1; i <= 100; i++)
+	{
+		sum += i;
+	}
+	io::printfn("1 + 2 + ... + 100 = %d", sum);
+}
+```
+
+```output
+1 + 2 + ... + 100 = 5050
+```
+
+<Callout type="fun" title="Il bambino che batté il ciclo for">
+
+La leggenda racconta che un maestro, per tenere occupata la classe, chiese di sommare i numeri da 1 a 100. Il piccolo Carl Friedrich Gauss, sette anni, rispose dopo pochi secondi: 5050. Aveva notato che 1 + 100, 2 + 99, 3 + 98... fanno sempre 101, e che le coppie sono 50: 50 × 101 = 5050. Morale per programmatori: a volte il ciclo migliore è quello che non scrivi. `n * (n + 1) / 2` fa lo stesso lavoro in un'operazione sola.
+
+</Callout>
+
+## Cicli dentro cicli
+
+Il blocco di un `for` può contenere qualsiasi cosa, compreso un altro `for`. Per ogni giro del ciclo **esterno**, quello **interno** fa tutti i suoi giri. Ecco la tavola pitagorica, 5 per 5:
+
+```c3 title="table.c3"
+import std::io;
+
+fn void main()
+{
+	for (int row = 1; row <= 5; row++)
+	{
+		for (int col = 1; col <= 5; col++)
+		{
+			io::printf("%4d", row * col);
+		}
+		io::printn();
+	}
+}
+```
+
+```output
+   1   2   3   4   5
+   2   4   6   8  10
+   3   6   9  12  15
+   4   8  12  16  20
+   5  10  15  20  25
+```
+
+Il ciclo interno scrive una riga intera (cinque numeri, ognuno largo 4 caratteri grazie a `%4d`), poi `io::printn()` va a capo, e il ciclo esterno passa alla riga successiva. In tutto, `printf` viene chiamata 5 × 5 = 25 volte.
+
+<Callout type="nerd" title="Quanto costa un ciclo dentro un ciclo?">
+
+Con due cicli annidati da `n` giri ciascuno, il lavoro è `n × n`. Per `n = 5` sono 25 operazioni, niente. Per `n = 1000` sono un milione: ancora pochi millisecondi. Per `n = 100 000` sono dieci miliardi, e il programma comincia a metterci secondi o minuti. I programmatori dicono che un algoritmo così è "O di n al quadrato", scritto *O(n²)*: raddoppi i dati, il tempo quadruplica. Tenerlo a mente è la differenza tra un programma che scala e uno che si pianta con dati veri.
+
+</Callout>
+
+## Uscire da due cicli insieme
+
+`break` esce dal ciclo in cui si trova, cioè da quello **più interno**. Ma se stai cercando qualcosa in una tabella e l'hai trovato, vuoi uscire da **entrambi**. C3 permette di dare un'**etichetta** a un ciclo e di dire a `break` (o a `continue`) quale ciclo intendi:
+
+```c3 title="search.c3"
+import std::io;
+
+fn void main()
+{
+	for OUTER: (int i = 1; i <= 9; i++)
+	{
+		for (int j = 1; j <= 9; j++)
+		{
+			if (i * j == 42)
+			{
+				io::printfn("%d x %d = 42", i, j);
+				break OUTER;
+			}
+		}
+	}
+	io::printn("Search over.");
+}
+```
+
+```output
+6 x 7 = 42
+Search over.
+```
+
+L'etichetta si scrive in MAIUSCOLO, subito dopo `for` e seguita da due punti. Senza `break OUTER`, il ciclo esterno continuerebbe e troverebbe anche `7 x 6`.
+
+<Callout type="c" title="Il goto che non serve">
+
+In C, per uscire da due cicli insieme si usa spesso `goto` o una variabile "trovato" da controllare a ogni livello. C3 non ha `goto` e non ne ha bisogno: le etichette funzionano con `for`, `while`, `do`, `switch` e perfino `if`.
+
+</Callout>
+
+<Exercise title="Il triangolo" expected={`*
+**
+***
+****
+Total: 10 stars`}>
+
+Scrivi `triangle.c3` con `int height = 4;`. Usando due `for` annidati, disegna un triangolo di asterischi: la riga 1 ha un asterisco, la riga 2 ne ha due, e così via fino a `height`. Usa `io::print("*")` per ogni asterisco e `io::printn()` per andare a capo.
+
+Conta anche gli asterischi stampati in una variabile `total`, e alla fine stampa `Total: ` seguito dal numero e da ` stars`.
+
+Riporta l'output. Poi prova `height = 10`: quanti asterischi prevedi, prima di lanciarlo? (Suggerimento: Gauss.)
+
+</Exercise>
+
+<Solution>
+
+```c3 title="triangle.c3"
+import std::io;
+
+fn void main()
+{
+	int height = 4;
+	int total = 0;
+
+	for (int row = 1; row <= height; row++)
+	{
+		for (int star = 1; star <= row; star++)
+		{
+			io::print("*");
+			total++;
+		}
+		io::printn();
+	}
+	io::printfn("Total: %d stars", total);
+}
+```
+
+Il trucco è la condizione del ciclo interno, `star <= row`: il numero di giri interni dipende dalla riga del ciclo esterno.
+
+</Solution>
+
+## Ricapitolando
+
+- `for (inizio; condizione; aggiornamento) { ... }` raccoglie un ciclo che conta in una riga sola.
+- Si può contare all'indietro o a passi diversi da uno: `i -= 3`, `i += 2`.
+- La variabile dichiarata nel `for` vive solo nel ciclo, e se ne può dichiarare una sola.
+- I cicli annidati moltiplicano i giri: `n × n`.
+- `break ETICHETTA` e `continue ETICHETTA` agiscono su un ciclo esterno con nome.
+
+Finora abbiamo contato numeri. Ma spesso si vuole scorrere una **collezione** di cose: dei voti, delle parole, delle lettere. Per questo C3 ha un ciclo apposito: `foreach`.

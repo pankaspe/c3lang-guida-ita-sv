@@ -83,7 +83,12 @@ surfaces, indigo accent, mono for small labels; don't hard-code colours in compo
 - Fences: `c3` (with optional `title="file.c3"`), `output` (terminal look), `sh`, `json`, `c`.
 - Components: `Callout type="tip|note|warning|fun|c|deep|nerd"`, `Quiz question options answer`,
   `Exercise title expected?`, `Solution`. Blank line before/after inner markdown.
-- In a `question="…"` attribute you cannot escape quotes: use `question={'…'}` instead.
+- In a `question="…"` attribute you cannot escape quotes: use `question={'…'}` instead. The same
+  applies to **any attribute containing `{` or `}`** (e.g. C3 code with braces in a quiz question):
+  inside `"…"` Svelte reads braces as an expression and the build fails.
+- **Braces in prose must be inside inline code**: a bare `{ }` in markdown text (even in italics)
+  is parsed as a Svelte expression. Quote compiler messages as inline code, e.g. `` `use '{ }'` ``.
+- Never put an `##` heading inside a lesson component (see "Lesson sections" above).
 - Tone: fun but clear, short sections, one idea at a time, "Se vieni dal C" callouts for C comparisons,
   a recap list at the end of each lesson, quizzes inline and at least one on-machine exercise per lesson.
 - **"Dettagli nerd"** (`Callout type="nerd" title="<the question it answers>"`): whenever a lesson
@@ -97,6 +102,9 @@ surfaces, indigo accent, mono for small labels; don't hard-code colours in compo
 
 - Module 1 "Primi passi" done (7 lessons): benvenuto, hello-world, progetti, variabili-e-tipi,
   operatori, stampare-e-formattare, sfida-finale; nerd callouts added to lessons 1–6.
-- Next: Module 2 — control flow (`if`/`else`, `switch`), loops (`for`, `while`, `foreach`), functions.
-  Planned later modules: arrays/slices/strings, structs/enums, optionals & error handling, modules,
-  memory & pointers, defer/contracts, generics/macros, C interop.
+- Module 2 "Decisioni, cicli e funzioni" done (7 lessons): if-else, switch, while, for, foreach
+  (with a first taste of fixed arrays), funzioni, sfida-finale.
+- Next: Module 3 — arrays, slices and strings (lesson 2.5 only introduced `int[*]`, `.len`, indexing,
+  bounds errors and `foreach (&x : a)` as a teaser; pointers were promised a module of their own).
+  Planned later modules: structs/enums, optionals & error handling, modules, memory & pointers,
+  defer/contracts, generics/macros, C interop.

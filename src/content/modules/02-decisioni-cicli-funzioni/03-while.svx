@@ -1,0 +1,234 @@
+---
+title: Ripetere con while e do
+description: Il primo ciclo. Ripetere finché una condizione è vera, fermarsi con break, saltare un giro con continue, e come uscire da un ciclo infinito.
+minutes: 16
+---
+
+## Il superpotere della ripetizione
+
+Un computer non è più intelligente di te, ma ha una qualità che nessun umano ha: **non si stanca mai**. Fargli ripetere un'operazione un milione di volte costa pochi millisecondi. Tutto quello che serve è dirgli *cosa* ripetere e *fino a quando*.
+
+Il ciclo più semplice è `while` ("finché"):
+
+```c3 title="countdown.c3"
+import std::io;
+
+fn void main()
+{
+	int seconds = 5;
+
+	while (seconds > 0)
+	{
+		io::printfn("%d...", seconds);
+		seconds--;
+	}
+	io::printn("Liftoff!");
+}
+```
+
+```output
+5...
+4...
+3...
+2...
+1...
+Liftoff!
+```
+
+Assomiglia a un `if`, con una differenza fondamentale: arrivato alla graffa chiusa, il programma **torna su** e ricontrolla la condizione. Finché è vera, esegue il blocco di nuovo. Quando diventa falsa, prosegue dopo il ciclo.
+
+Ogni ripetizione del blocco si chiama **iterazione** (o, più alla buona, "giro"). Qui ce ne sono cinque: `seconds` parte da 5 e a ogni giro `seconds--` lo abbassa di uno. Al sesto controllo vale 0, `0 > 0` è falso, e il ciclo finisce.
+
+<Callout type="nerd" title="Un ciclo, per il processore, è un salto all'indietro">
+
+Nella lezione sull'`if` abbiamo visto che il processore sa **saltare** a un'altra istruzione. Un `if` salta *in avanti*, per scavalcare un blocco. Un `while` aggiunge un salto *all'indietro*: in fondo al blocco c'è un "torna al controllo della condizione". Tutto qui: ogni ciclo, in qualsiasi linguaggio, si riduce a un confronto e a due salti.
+
+</Callout>
+
+## Il ciclo infinito (e come uscirne)
+
+Cosa succede se dimentichi di far cambiare la variabile?
+
+```c3
+int i = 0;
+while (i < 3)
+{
+	io::printn(i);   // i is never incremented...
+}
+```
+
+`i` resta 0 per sempre, la condizione resta vera per sempre, e il programma stampa `0` all'infinito. È un **ciclo infinito**, e prima o poi lo scriverai anche tu (lo fanno tutti). Niente panico: nel terminale premi <kbd>Ctrl</kbd>+<kbd>C</kbd> e il programma si ferma.
+
+<Callout type="nerd" title="Cosa fa davvero Ctrl+C?">
+
+Quando premi <kbd>Ctrl</kbd>+<kbd>C</kbd>, il terminale non "uccide" il programma direttamente: chiede al sistema operativo di mandargli un **segnale**, una specie di messaggio urgente. Quello di <kbd>Ctrl</kbd>+<kbd>C</kbd> si chiama `SIGINT` (*interrupt*). Un programma può decidere di intercettarlo, per esempio per salvare il lavoro prima di chiudersi; se non lo fa, come i nostri, il sistema operativo lo termina.
+
+</Callout>
+
+Il ciclo infinito, però, non è sempre un errore. A volte è proprio quello che vuoi: un videogioco ripete "leggi i tasti, aggiorna, disegna" finché il giocatore non esce. Si scrive `while (true)`, e si esce da dentro con `break`, che vediamo tra un attimo.
+
+## do: prima fai, poi controlla
+
+Il `while` controlla la condizione **prima** di ogni giro. Se è falsa fin dall'inizio, il blocco non viene eseguito nemmeno una volta. A volte invece serve il contrario: fare il lavoro **almeno una volta**, e poi decidere se ripetere. Per questo c'è `do ... while`:
+
+```c3
+int k = 10;
+
+while (k < 5)
+{
+	io::printfn("while: k = %d", k);
+	k++;
+}
+
+do
+{
+	io::printfn("do: k = %d", k);
+	k++;
+} while (k < 5);
+```
+
+```output
+do: k = 10
+```
+
+La condizione `k < 5` è falsa fin da subito. Il `while` non entra mai; il `do` esegue il blocco una volta e **solo dopo** controlla, trovando la condizione falsa. Nota il punto e virgola dopo `while (k < 5)`: nel `do` ci vuole.
+
+Il caso tipico è chiedere qualcosa all'utente: la domanda va fatta almeno una volta, e ripetuta finché la risposta non è valida. Lo faremo quando impareremo a leggere dalla tastiera.
+
+<Quiz question={'Con `int x = 5;`, quante volte viene stampato `hi` da `while (x < 3) { io::printn("hi"); x++; }` e quante da `do { io::printn("hi"); x++; } while (x < 3);`?'} options={['0 e 0', '0 e 1', '1 e 1', '3 e 3']} answer={1}>
+
+Il `while` controlla prima: `5 < 3` è falso, zero giri. Il `do` esegue prima e controlla dopo: un giro garantito, poi `6 < 3` è falso e si ferma. È tutta qui la differenza tra i due.
+
+</Quiz>
+
+## break e continue
+
+Dentro un ciclo hai due comandi per cambiare il percorso:
+
+- **`break`** esce subito dal ciclo, qualunque cosa dica la condizione.
+- **`continue`** salta il resto del giro corrente e passa al prossimo controllo della condizione.
+
+Con `break` il `while (true)` diventa utile: "cerca finché non trovi".
+
+```c3
+int n = 51;
+while (true)
+{
+	if (n % 7 == 0) break;
+	n++;
+}
+io::printfn("First multiple of 7 after 50: %d", n);
+```
+
+```output
+First multiple of 7 after 50: 56
+```
+
+E con `continue` puoi scartare alcuni giri. Qui stampiamo i numeri da 1 a 10 saltando i multipli di 3:
+
+```c3
+int i = 0;
+while (i < 10)
+{
+	i++;
+	if (i % 3 == 0) continue;
+	io::printf("%d ", i);
+}
+io::printn();
+```
+
+```output
+1 2 4 5 7 8 10
+```
+
+Attenzione all'ordine: `i++` sta **prima** del `continue`. Se fosse dopo, al primo multiplo di 3 il `continue` salterebbe l'incremento, `i` resterebbe 3 per sempre... e avresti un ciclo infinito. (`io::printn()` senza argomenti, alla fine, va solo a capo.)
+
+## Un classico: smontare un numero cifra per cifra
+
+Il `while` brilla quando **non sai in anticipo** quanti giri serviranno. Per esempio: quante cifre ha un numero, e quanto fa la loro somma?
+
+```c3 title="digits.c3"
+import std::io;
+
+fn void main()
+{
+	int number = 2026;
+	int sum = 0;
+	int digits = 0;
+
+	while (number > 0)
+	{
+		sum += number % 10;   // take the last digit
+		number /= 10;         // and drop it
+		digits++;
+	}
+	io::printfn("%d digits, sum %d", digits, sum);
+}
+```
+
+```output
+4 digits, sum 10
+```
+
+Il trucco usa i due operatori della trappola del modulo 1, che qui diventano alleati: `% 10` dà l'ultima cifra (2026 → 6), `/ 10` tra interi la toglie (2026 → 202). Si ripete finché resta qualcosa: 6, poi 2, poi 0, poi 2. Somma 10, quattro giri.
+
+<Callout type="tip" title="Tre domande per ogni ciclo">
+
+Prima di scrivere un ciclo, rispondi a tre domande: **da dove parto?** (le variabili prima del ciclo), **quando mi fermo?** (la condizione), **cosa cambia a ogni giro?** (qualcosa deve avvicinarti alla fine). Se non sai rispondere alla terza, hai appena progettato un ciclo infinito.
+
+</Callout>
+
+<Exercise title="La congettura di Collatz" expected={`6 3 10 5 16 8 4 2 1
+Steps: 8`}>
+
+Prendi un numero intero positivo. Se è pari, dividilo per 2; se è dispari, moltiplicalo per 3 e aggiungi 1. Ripeti. La **congettura di Collatz** dice che, qualunque numero tu scelga, prima o poi arriverai a 1. Nessuno è mai riuscito a dimostrarlo, ma nessuno ha mai trovato un numero per cui non funzioni.
+
+Scrivi `collatz.c3` partendo da `int n = 6;`:
+
+1. finché `n` non vale 1, stampa `n` seguito da uno spazio (con `io::printf`), poi applica la regola;
+2. conta i passi in una variabile `steps`;
+3. alla fine stampa l'1 finale con `io::printn(n)` e poi la riga `Steps: ` seguita dal numero di passi.
+
+Riporta l'output. Poi prova con `int n = 27;`: sembra innocuo, ma servono 111 passi e si arriva fino a 9232.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="collatz.c3"
+import std::io;
+
+fn void main()
+{
+	int n = 6;
+	int steps = 0;
+
+	while (n != 1)
+	{
+		io::printf("%d ", n);
+		if (n % 2 == 0)
+		{
+			n /= 2;
+		}
+		else
+		{
+			n = n * 3 + 1;
+		}
+		steps++;
+	}
+	io::printn(n);
+	io::printfn("Steps: %d", steps);
+}
+```
+
+</Solution>
+
+## Ricapitolando
+
+- `while (condizione) { ... }` ripete il blocco finché la condizione è vera; controlla **prima** di ogni giro.
+- `do { ... } while (condizione);` esegue **almeno una volta** e controlla dopo.
+- `break` esce dal ciclo, `continue` salta al giro successivo.
+- `while (true)` più un `break` è il modo di dire "ripeti finché non succede qualcosa".
+- Un ciclo infinito si ferma con <kbd>Ctrl</kbd>+<kbd>C</kbd>. Per evitarlo, qualcosa deve cambiare a ogni giro.
+
+Il `while` è perfetto quando non sai quanti giri serviranno. Quando invece lo sai ("fallo 10 volte", "per ogni numero da 1 a 100") c'è uno strumento più compatto: il `for`.

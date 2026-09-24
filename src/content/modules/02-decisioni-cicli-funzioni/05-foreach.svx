@@ -1,0 +1,254 @@
+---
+title: foreach, un elemento alla volta
+description: Un primo assaggio di array, e il ciclo pensato per scorrerli. Indici, stringhe lettera per lettera, cicli al contrario e gli errori di "fuori dai limiti".
+minutes: 18
+---
+
+## Tante variabili in una: l'array
+
+Supponi di dover gestire i voti di quattro esami. Con quello che sai finora scriveresti `int score1`, `int score2`, `int score3`, `int score4`. E con cento esami? Serve un modo per tenere **tanti valori dello stesso tipo sotto un solo nome**. È l'**array**.
+
+```c3
+int[*] scores = { 18, 25, 30, 27 };
+```
+
+Leggila così: "`scores` è un array di `int`, e il compilatore conta da solo quanti sono (`[*]`)". I valori stanno tra graffe, separati da virgole. Potevi anche scrivere il numero esplicitamente: `int[4] scores = { 18, 25, 30, 27 };`.
+
+Per usare un singolo elemento si scrive il suo **indice** tra quadre, e si parte a contare da **zero**:
+
+```c3
+io::printn(scores.len);   // how many elements
+io::printn(scores[0]);    // the first one
+io::printn(scores[3]);    // the fourth (and last)
+scores[1] = 28;           // change the second one
+io::printn(scores);       // the whole array
+```
+
+```output
+4
+18
+27
+[18, 28, 30, 27]
+```
+
+`.len` è la lunghezza, come per le stringhe. E sì, `printn` sa stampare un array intero.
+
+Agli array dedicheremo un modulo intero (con le *slice*, le liste che crescono e molto altro). Per ora ci basta questo: una fila di valori, numerati da 0.
+
+<Callout type="nerd" title="Perché si comincia a contare da zero?">
+
+Un array è una fila di caselle **una attaccata all'altra** in memoria. Un `int` occupa 4 byte, quindi `scores` sono 16 byte consecutivi. Per trovare un elemento, il computer fa un solo calcolo: *indirizzo dell'inizio + indice × 4*. Il primo elemento sta esattamente all'inizio, cioè a distanza **zero**: da qui `scores[0]`. L'indice, in realtà, è uno *spostamento* (*offset*) rispetto all'inizio.
+
+Questo calcolo è anche il motivo per cui leggere `scores[500]` è istantaneo come leggere `scores[0]`: nessuna ricerca, solo una moltiplicazione e una somma.
+
+</Callout>
+
+## Fuori dai limiti
+
+Cosa succede se chiedi un elemento che non esiste? Se l'indice è un numero scritto nel codice, il compilatore se ne accorge subito:
+
+```c3
+io::printn(scores[4]);
+// error: An index of '4' is out of range, a value between 0 and 3 was expected.
+```
+
+Ma se l'indice viene calcolato mentre il programma gira, lo si scopre solo allora. Questo ciclo ha il classico errore del `<=` al posto del `<`:
+
+```c3
+for (int i = 0; i <= 4; i++)
+{
+	io::printn(scores[i]);
+}
+```
+
+```output
+18
+25
+30
+27
+
+ERROR: 'Array index out of bounds (array had size 4, index was 4)'
+  in bounds.main (bounds.c3:7) [bounds] [inline]
+```
+
+Il programma si ferma con un messaggio chiarissimo: l'array aveva 4 elementi e tu hai chiesto quello di indice 4, cioè il quinto. Ti dice anche il file e la riga.
+
+<Callout type="c" title="Niente più letture a caso">
+
+In C, `scores[4]` su un array di 4 elementi non dà nessun errore: legge silenziosamente quello che c'è in memoria subito dopo, qualunque cosa sia. È il famigerato *buffer overflow*, all'origine di una quantità enorme di falle di sicurezza. C3 controlla gli indici, almeno in modalità di sviluppo: il controllo si può togliere nelle build ottimizzate per la massima velocità, ma mentre impari c'è sempre.
+
+</Callout>
+
+## foreach: per ogni elemento...
+
+Scorrere un array con un `for` si può fare, ma bisogna gestire l'indice, il limite, il `<` giusto. Scorrere una collezione dall'inizio alla fine è così comune che C3 ha un ciclo apposta, `foreach` ("per ogni"):
+
+```c3
+int[*] scores = { 18, 25, 30, 27 };
+
+foreach (score : scores)
+{
+	io::printf("%d ", score);
+}
+io::printn();
+```
+
+```output
+18 25 30 27
+```
+
+Leggilo così: "**per ogni** `score` **in** `scores`". A ogni giro, `score` contiene il prossimo elemento. Niente indici, niente limiti da calcolare: impossibile sbagliare il `<`. Il tipo di `score` lo deduce il compilatore; se vuoi, puoi scriverlo: `foreach (int score : scores)`.
+
+### Anche con l'indice
+
+Se oltre al valore ti serve la sua posizione, metti due nomi: il primo è l'indice, il secondo il valore.
+
+```c3
+foreach (i, score : scores)
+{
+	io::printfn("Exam %d: %d", i + 1, score);
+}
+```
+
+```output
+Exam 1: 18
+Exam 2: 25
+Exam 3: 30
+Exam 4: 27
+```
+
+L'indice parte da 0, per questo stampiamo `i + 1`: gli umani contano da 1.
+
+<Callout type="note" title="Di che tipo è l'indice?">
+
+L'indice di un `foreach` è di tipo `sz`, il tipo "grande quanto la macchina" che abbiamo intravisto nel modulo 1 (64 bit su un computer moderno). Per stamparlo va benissimo così; ma se vuoi metterlo in un `int`, il compilatore ti chiede un cast esplicito, perché un numero a 64 bit potrebbe non starci: `int position = (int)i + 1;`.
+
+</Callout>
+
+### Al contrario: foreach_r
+
+Per scorrere dall'ultimo al primo c'è `foreach_r` (*r* sta per *reverse*):
+
+```c3
+foreach_r (score : scores) io::printf("%d ", score);
+io::printn();
+```
+
+```output
+27 30 25 18
+```
+
+## Una stringa, lettera per lettera
+
+Ricordi che una `String` è una fila di `char`? Allora si può scorrere con `foreach`:
+
+```c3
+String word = "hello";
+foreach (c : word) io::printf("%c-", c);
+io::printn();
+```
+
+```output
+h-e-l-l-o-
+```
+
+(Attenzione con le lettere accentate: come abbiamo visto, in UTF-8 una `è` occupa **due** byte, quindi `foreach` la vedrebbe come due `char` separati. Per il testo semplice, nessun problema.)
+
+<Quiz question={'Cosa stampa `foreach (score : scores) score = 0;` seguito da `io::printn(scores[0]);`, se `scores` vale `{ 18, 25, 30, 27 }`?'} options={['`0`', '`18`', 'Errore: non si può assegnare a `score`', '`[0, 0, 0, 0]`']} answer={1}>
+
+`score` è una **copia** dell'elemento, non l'elemento stesso: metterci 0 cambia la copia e basta. L'array resta intatto, e `scores[0]` vale ancora 18. Per modificare gli elementi dentro un `foreach` c'è una sintassi apposta, che vedi nel riquadro qui sotto.
+
+</Quiz>
+
+<Callout type="deep" title="Modificare gli elementi: foreach (&score : scores)">
+
+Se metti una `&` davanti al nome, `score` non è più una copia ma un **riferimento** all'elemento vero (tecnicamente, un *puntatore*). Per leggere o scrivere il valore a cui punta si usa `*score`:
+
+```c3
+foreach (&score : scores) *score += 1;   // one bonus point each
+io::printn(scores);
+```
+
+```output
+[19, 26, 31, 28]
+```
+
+I puntatori sono uno degli argomenti più importanti (e temuti) di C e C3: avranno un modulo tutto loro. Per ora ti basta sapere che questa forma esiste.
+
+</Callout>
+
+## Lo schema del "cerca e accumula"
+
+Con `foreach` e un paio di variabili prima del ciclo puoi rispondere a quasi tutte le domande su una collezione: il massimo, il minimo, la somma, quanti elementi rispettano una condizione. Lo schema è sempre lo stesso:
+
+1. prima del ciclo, prepara le variabili (una somma a 0, un massimo uguale al primo elemento...);
+2. dentro il ciclo, aggiornale guardando un elemento alla volta;
+3. dopo il ciclo, usa il risultato.
+
+Lo metti in pratica nell'esercizio.
+
+<Exercise title="La settimana del meteo" expected={`Max: 24
+Min: 17
+Average: 20.1
+Days above 20: 3`}>
+
+Scrivi `temps.c3` con le temperature massime di una settimana:
+
+```c3
+int[*] temps = { 18, 21, 19, 24, 22, 17, 20 };
+```
+
+Con un **solo** `foreach`, calcola la temperatura massima, la minima, la somma e quanti giorni hanno superato i 20 gradi (20 escluso). Poi stampa:
+
+1. `Max: ` e il massimo;
+2. `Min: ` e il minimo;
+3. `Average: ` e la media con **una** cifra decimale (attenzione alla divisione intera!);
+4. `Days above 20: ` e il conteggio.
+
+Suggerimento: inizializza massimo e minimo con `temps[0]`, non con 0. Riporta l'output.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="temps.c3"
+import std::io;
+
+fn void main()
+{
+	int[*] temps = { 18, 21, 19, 24, 22, 17, 20 };
+
+	int max = temps[0];
+	int min = temps[0];
+	int sum = 0;
+	int warm_days = 0;
+
+	foreach (t : temps)
+	{
+		if (t > max) max = t;
+		if (t < min) min = t;
+		sum += t;
+		if (t > 20) warm_days++;
+	}
+
+	io::printfn("Max: %d", max);
+	io::printfn("Min: %d", min);
+	io::printfn("Average: %.1f", (double)sum / temps.len);
+	io::printfn("Days above 20: %d", warm_days);
+}
+```
+
+Perché `temps[0]` e non 0? Se tutte le temperature fossero negative (un inverno siberiano), un massimo partito da 0 resterebbe 0, un valore che nell'array non c'è nemmeno. Partire dal primo elemento funziona sempre.
+
+</Solution>
+
+## Ricapitolando
+
+- Un array tiene tanti valori dello stesso tipo: `int[*] scores = { 18, 25, 30 };`.
+- Gli elementi si leggono con `scores[i]`, partendo da **0**; `.len` dà la lunghezza.
+- Uscire dai limiti è un errore: al momento della compilazione se possibile, altrimenti mentre il programma gira.
+- `foreach (x : array)` scorre gli elementi; `foreach (i, x : array)` dà anche l'indice (di tipo `sz`).
+- `foreach_r` scorre al contrario; `foreach` funziona anche sulle stringhe.
+- La variabile del `foreach` è una **copia**: modificarla non cambia l'array.
+
+Sai scegliere, ripetere e scorrere. Manca l'ultimo grande strumento del modulo: dare un **nome** a un pezzo di codice, per usarlo quando vuoi. Le funzioni.

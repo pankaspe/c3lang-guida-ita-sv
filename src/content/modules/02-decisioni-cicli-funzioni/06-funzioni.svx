@@ -1,0 +1,307 @@
+---
+title: Funzioni, dare un nome alle cose
+description: Scrivere le proprie funzioni. Parametri, valori di ritorno, return anticipato, argomenti predefiniti e con nome, e lo stack delle chiamate.
+minutes: 22
+---
+
+## Il problema del copia e incolla
+
+Immagina di voler stampare una cornice attorno a un titolo, in tre punti diversi del programma. Copi e incolli le tre righe tre volte. Poi decidi di cambiare il simbolo della cornice: devi ricordarti di cambiarlo in tre posti. E se te ne scordi uno? Bug.
+
+La soluzione è scrivere quelle righe **una volta sola**, dargli un nome, e usare il nome ogni volta che serve. Questo è una **funzione**. La usi dalla prima lezione, `main`, e ne chiami altre di continuo, come `io::printn`. Adesso impari a scriverne di tue.
+
+```c3 title="banner.c3"
+import std::io;
+
+fn void print_banner(String title)
+{
+	io::printn("==========");
+	io::printfn("  %s", title);
+	io::printn("==========");
+}
+
+fn void main()
+{
+	print_banner("Welcome");
+	print_banner("Game over");
+}
+```
+
+```output
+==========
+  Welcome
+==========
+==========
+  Game over
+==========
+```
+
+`print_banner` si dichiara esattamente come `main`: `fn`, il tipo di ritorno (`void`, "niente"), il nome, e tra parentesi i **parametri**. Qui ce n'è uno, `String title`: una variabile che la funzione riceve da chi la chiama. Quando `main` scrive `print_banner("Welcome")`, il valore `"Welcome"` (l'**argomento**) finisce in `title`, e il corpo della funzione viene eseguito. Poi il programma torna in `main`, alla riga successiva.
+
+Ora la cornice vive in un posto solo. Cambiala lì, e cambia ovunque.
+
+<Callout type="tip" title="Parametro o argomento?">
+
+Due parole che si confondono sempre. Il **parametro** è la variabile nella definizione (`String title`); l'**argomento** è il valore concreto che passi nella chiamata (`"Welcome"`). Il parametro è la scatola, l'argomento è quello che ci metti dentro.
+
+</Callout>
+
+## Restituire un valore: return
+
+Molte funzioni non si limitano a *fare* qualcosa: **calcolano** un risultato e lo restituiscono a chi le ha chiamate. Il tipo del risultato va al posto di `void`, e il valore si restituisce con `return`:
+
+```c3 title="square.c3"
+import std::io;
+
+fn int square(int x)
+{
+	return x * x;
+}
+
+fn void main()
+{
+	int side = 7;
+	io::printn(square(side));
+	io::printn(square(3) + square(4));
+	int area = square(square(2));
+	io::printn(area);
+}
+```
+
+```output
+49
+25
+16
+```
+
+Una chiamata a `square(...)` **vale** il numero restituito, proprio come `2 + 3` vale 5. Per questo puoi metterla ovunque andrebbe un `int`: in una stampa, in una somma, perfino come argomento di un'altra chiamata. `square(square(2))` calcola prima `square(2)`, che fa 4, e poi `square(4)`, che fa 16.
+
+Una funzione può avere quanti parametri vuoi, separati da virgole: `fn int max(int a, int b)`.
+
+## I parametri sono copie
+
+Cosa succede se una funzione modifica un suo parametro?
+
+```c3
+fn int twice(int x)
+{
+	x = x * 2;
+	return x;
+}
+
+fn void main()
+{
+	int a = 5;
+	int b = twice(a);
+	io::printfn("a = %d, b = %d", a, b);
+}
+```
+
+```output
+a = 5, b = 10
+```
+
+`a` è rimasta 5. Quando chiami `twice(a)`, la funzione riceve una **copia** del valore di `a`, e `x` è una variabile tutta sua. Qualunque cosa faccia `x`, `a` non lo saprà mai. Si chiama **passaggio per valore**, ed è una garanzia preziosa: puoi chiamare una funzione sapendo che non ti cambierà le variabili alle spalle.
+
+(Esiste un modo per permettere a una funzione di modificare una variabile di chi la chiama, ed è sempre lui: il *puntatore*. Arriverà.)
+
+<Quiz question={'Con `fn void reset(int n) { n = 0; }`, cosa stampa `int score = 42; reset(score); io::printn(score);`?'} options={['`0`', '`42`', 'Errore: non si può modificare un parametro', 'Niente: `reset` non restituisce un valore']} answer={1}>
+
+`reset` riceve una **copia** di `score` e azzera la copia. `score` resta 42. Modificare un parametro è permesso (è una variabile locale come le altre), ma l'effetto resta dentro la funzione.
+
+</Quiz>
+
+## Uscire prima: return anticipato
+
+`return` non deve stare per forza in fondo: appena viene eseguito, la funzione **finisce lì**. Questo permette di gestire subito i casi particolari e tenere il resto del codice pulito:
+
+```c3
+fn int abs_value(int x)
+{
+	if (x < 0) return -x;
+	return x;
+}
+
+fn void check_age(int age)
+{
+	if (age < 0)
+	{
+		io::printn("Invalid age");
+		return;              // stop here: nothing more to do
+	}
+	io::printfn("Age %d is fine", age);
+}
+```
+
+In una funzione `void`, `return;` da solo significa "ho finito". In una funzione che restituisce un valore, invece, **ogni strada** deve arrivare a un `return`. Se dimentichi un caso, il compilatore se ne accorge:
+
+```c3
+fn int sign(int x)
+{
+	if (x > 0) return 1;
+	if (x < 0) return -1;
+	// and if x is 0?
+}
+// error: Missing return statement at the end of the function.
+```
+
+Hai dimenticato lo zero, e il compilatore te lo dice prima ancora di lanciare il programma.
+
+## Funzioni in una riga
+
+Per le funzioni brevissime, fatte solo di `return` e un'espressione, C3 ha una forma corta con la freccia `=>`:
+
+```c3
+fn bool is_even(int n) => n % 2 == 0;
+fn int cube(int x) => x * x * x;
+```
+
+È esattamente come scrivere `{ return n % 2 == 0; }`, solo più compatto. Una funzione che restituisce un `bool` si legge benissimo dentro un `if`: `if (is_even(n)) ...`. Per questo si dà loro un nome che suona come una domanda: `is_even`, `has_ticket`, `can_vote`.
+
+## Argomenti predefiniti e con nome
+
+Un parametro può avere un **valore predefinito**: se chi chiama non lo passa, si usa quello. E ogni argomento può essere passato **per nome**, scrivendo `nome: valore`:
+
+```c3 title="greet.c3"
+import std::io;
+
+fn void greet(String name, String greeting = "Hello", int times = 1)
+{
+	for (int i = 0; i < times; i++)
+	{
+		io::printfn("%s, %s!", greeting, name);
+	}
+}
+
+fn void main()
+{
+	greet("Ada");
+	greet("Linus", "Hi");
+	greet("Grace", times: 2);
+	greet(name: "Dennis", greeting: "Ciao");
+}
+```
+
+```output
+Hello, Ada!
+Hi, Linus!
+Hello, Grace!
+Hello, Grace!
+Ciao, Dennis!
+```
+
+Guarda la terza chiamata: volevamo cambiare solo `times`, lasciando il saluto predefinito. Per nome si può saltare direttamente al parametro che interessa. E `greet("Grace", 2)` sarebbe stato un errore, perché il secondo parametro è una `String`.
+
+Gli argomenti per nome rendono leggibili anche le chiamate con tanti numeri: `draw_rect(x: 10, y: 20, width: 100, height: 50)` si capisce al volo, `draw_rect(10, 20, 100, 50)` no. L'unica regola: prima gli argomenti "per posizione", poi quelli per nome. Al contrario il compilatore protesta: `Named arguments must be placed after positional arguments.`
+
+<Callout type="c" title="Niente prototipi, niente header">
+
+Negli esempi di questo corso, `main` sta a volte in fondo e a volte in cima, e funziona sempre. In C una funzione va dichiarata **prima** di essere usata, e per questo esistono i *prototipi* e i file header `.h`. In C3 il compilatore legge tutto il file (anzi, tutto il progetto) prima di controllare le chiamate: l'ordine non conta. Metti le funzioni nell'ordine che rende il codice più facile da leggere.
+
+</Callout>
+
+<Callout type="nerd" title="Lo stack delle chiamate">
+
+Nella lezione sull'`if` abbiamo incontrato lo **stack**, la pila dove vivono le variabili locali. Le funzioni sono il motivo per cui si chiama così. Ogni volta che chiami una funzione, in cima alla pila viene appoggiato un **frame**: lo spazio per i suoi parametri e le sue variabili, più l'indirizzo a cui tornare quando avrà finito. Quando la funzione fa `return`, il frame viene tolto e il programma torna esattamente dov'era.
+
+Se `main` chiama `a`, che chiama `b`, la pila ha tre frame uno sopra l'altro. È questa pila che vedi quando un programma va in errore e stampa l'elenco delle funzioni attraversate: si chiama *stack trace*. E ogni chiamata ha le sue variabili, separate da quelle di tutte le altre: ecco perché i parametri sono copie.
+
+</Callout>
+
+<Callout type="deep" title="Una funzione che chiama se stessa">
+
+Una funzione può chiamare **se stessa**. Si chiama **ricorsione**, ed è elegantissima per i problemi che si definiscono in termini di una versione più piccola di sé. Il fattoriale, per esempio: 5! = 5 × 4!, e 4! = 4 × 3!, e così via fino a 1! = 1.
+
+```c3
+fn long factorial(int n)
+{
+	if (n <= 1) return 1;          // the base case: stop here
+	return n * factorial(n - 1);   // the recursive step
+}
+```
+
+`factorial(5)` restituisce `120`. Il **caso base** è fondamentale: senza, la funzione si chiamerebbe all'infinito. Ogni chiamata aggiunge un frame allo stack, e lo stack non è infinito (di solito pochi megabyte). Quando finisce, il programma si ferma con `ERROR: 'Out of bounds memory access.'`. È lo **stack overflow**, lo stesso nome del sito dove i programmatori di tutto il mondo cercano risposte.
+
+</Callout>
+
+<Exercise title="Il calendario" expected={`2024 is leap: true
+2026 is leap: false
+February 2024: 29 days
+April 2026: 30 days
+Days in 2024: 366`}>
+
+Scrivi `calendar.c3` con due funzioni.
+
+1. `fn bool is_leap(int year)`: un anno è **bisestile** se è divisibile per 4, **ma** non per 100, **a meno che** non sia divisibile anche per 400. (Il 2024 sì, il 1900 no, il 2000 sì.)
+2. `fn int days_in_month(int month, int year)`: con uno `switch` su `month`, restituisce 30 per aprile, giugno, settembre e novembre (4, 6, 9, 11), per febbraio 29 o 28 a seconda che l'anno sia bisestile, e 31 per tutti gli altri.
+
+Nel `main`, stampa esattamente:
+
+```output
+2024 is leap: true
+2026 is leap: false
+February 2024: 29 days
+April 2026: 30 days
+Days in 2024: 366
+```
+
+L'ultima riga va **calcolata**, con un ciclo che somma `days_in_month` per i dodici mesi del 2024. Riporta l'output.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="calendar.c3"
+import std::io;
+
+fn bool is_leap(int year)
+{
+	return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+fn int days_in_month(int month, int year)
+{
+	switch (month)
+	{
+		case 2:
+			return is_leap(year) ? 29 : 28;
+		case 4:
+		case 6:
+		case 9:
+		case 11:
+			return 30;
+		default:
+			return 31;
+	}
+}
+
+fn void main()
+{
+	io::printfn("2024 is leap: %s", is_leap(2024));
+	io::printfn("2026 is leap: %s", is_leap(2026));
+	io::printfn("February 2024: %d days", days_in_month(2, 2024));
+	io::printfn("April 2026: %d days", days_in_month(4, 2026));
+
+	int total = 0;
+	for (int month = 1; month <= 12; month++)
+	{
+		total += days_in_month(month, 2024);
+	}
+	io::printfn("Days in 2024: %d", total);
+}
+```
+
+Nota come `days_in_month` usa `is_leap`: le funzioni si costruiscono una sull'altra, come mattoncini. E il `return` dentro lo `switch` esce direttamente dalla funzione.
+
+</Solution>
+
+## Ricapitolando
+
+- `fn tipo nome(parametri) { ... }` definisce una funzione; `void` se non restituisce niente.
+- `return valore;` restituisce un risultato e **termina** la funzione; ogni strada deve arrivarci.
+- I parametri sono **copie**: modificarli non tocca le variabili di chi chiama.
+- `fn int cube(int x) => x * x * x;` è la forma corta.
+- I parametri possono avere valori predefiniti; gli argomenti si possono passare per nome (`times: 2`), dopo quelli per posizione.
+- Ogni chiamata ha il suo frame sullo stack; l'ordine delle funzioni nel file non conta.
+
+Hai tutti gli attrezzi del modulo. Nell'ultima lezione li mettiamo insieme in una sfida vera.

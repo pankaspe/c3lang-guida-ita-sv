@@ -1,0 +1,266 @@
+---
+title: switch, il bivio a più strade
+description: Un valore, tante strade possibili. Il break automatico, i casi raggruppati, gli intervalli, le stringhe e nextcase.
+minutes: 16
+---
+
+## Quando gli else if non finiscono più
+
+Immagina di dover stampare il nome del giorno a partire dal suo numero. Con `if` verrebbe una catena di sette `else if`, tutti uguali: `if (day == 1) ... else if (day == 2) ...`. Funziona, ma è ripetitivo, e stai confrontando sempre **la stessa variabile** con valori diversi.
+
+Per questo caso esiste `switch`:
+
+```c3 title="day.c3"
+import std::io;
+
+fn void main()
+{
+	int day = 3;
+
+	switch (day)
+	{
+		case 1:
+			io::printn("Monday");
+		case 2:
+			io::printn("Tuesday");
+		case 3:
+			io::printn("Wednesday");
+		default:
+			io::printn("Another day");
+	}
+}
+```
+
+```output
+Wednesday
+```
+
+`switch (day)` dice "guarda il valore di `day`". Ogni `case` è una possibile strada: il programma salta direttamente a quella col valore giusto ed esegue le istruzioni che seguono. `default` è la strada di riserva, presa quando nessun `case` corrisponde (è facoltativo, come l'`else`).
+
+Nota una cosa: dopo `Wednesday` il programma **non** ha stampato anche `Another day`. Ogni `case` finisce da solo, dove comincia il successivo.
+
+<Callout type="c" title="Il break non serve più">
+
+In C, un `case` senza `break` "cade" in quello successivo (*fallthrough*), e dimenticare un `break` è uno degli errori più comuni della storia. C3 ribalta la regola: ogni `case` **esce automaticamente** alla fine. Se vuoi davvero proseguire nel successivo, lo devi chiedere con `nextcase`, che vediamo tra poco. L'errore facile diventa impossibile, e il comportamento raro diventa esplicito.
+
+</Callout>
+
+## Più valori, stessa strada
+
+A volte più valori vanno trattati allo stesso modo. Basta mettere i `case` uno sotto l'altro, lasciando vuoti quelli sopra:
+
+```c3
+int day = 7;
+
+switch (day)
+{
+	case 6:
+	case 7:
+		io::printn("Weekend!");
+	default:
+		io::printn("Work day");
+}
+```
+
+```output
+Weekend!
+```
+
+Un `case` **completamente vuoto** prosegue nel successivo: `case 6:` non ha istruzioni, quindi 6 finisce nello stesso blocco di 7. È l'unica eccezione alla regola del "finisce da solo", e ha senso: un `case` vuoto non avrebbe altro da fare.
+
+(Se vieni da altri linguaggi potresti provare `case 6, 7:` con la virgola: in C3 non esiste, e il compilatore risponde `Missing ':' after case`.)
+
+## Intervalli: case 13..17
+
+Quando i valori sono tanti e consecutivi, elencarli uno a uno sarebbe assurdo. C3 permette gli **intervalli**, con due punti tra gli estremi:
+
+```c3
+int age = 17;
+
+switch (age)
+{
+	case 0..12:
+		io::printn("Child");
+	case 13..17:
+		io::printn("Teenager");
+	default:
+		io::printn("Adult");
+}
+```
+
+```output
+Teenager
+```
+
+Gli estremi sono **inclusi**: `0..12` comprende sia 0 che 12. E se due `case` si sovrappongono o si ripetono, il compilatore se ne accorge: `The same case value appears more than once.`
+
+## Non solo numeri: switch sulle stringhe
+
+Un `switch` funziona anche con le `String`, e diventa perfetto per interpretare dei comandi:
+
+```c3
+String command = "save";
+
+switch (command)
+{
+	case "open":
+		io::printn("Opening...");
+	case "save":
+		io::printn("Saving...");
+	case "quit":
+		io::printn("Bye!");
+	default:
+		io::printfn("Unknown command: %s", command);
+}
+```
+
+```output
+Saving...
+```
+
+E naturalmente funziona con i `char`: `case '+':`, `case 'q':` e così via. Lo userai nell'esercizio.
+
+<Quiz question={'Cosa stampa questo codice con `int n = 2;`? `switch (n) { case 1: io::printn("one"); case 2: io::printn("two"); case 3: io::printn("three"); }`'} options={['`two`', '`two` e poi `three`', '`one`, `two` e `three`', 'Niente: manca il `default`']} answer={0}>
+
+Il programma salta a `case 2`, stampa `two` e **si ferma lì**: in C3 ogni `case` esce da solo. In C, senza `break`, avrebbe stampato anche `three`. Il `default` è facoltativo: se manca e nessun valore corrisponde, semplicemente non succede niente.
+
+</Quiz>
+
+## nextcase: proseguire di proposito
+
+E se invece vuoi proprio che un caso prosegua nel successivo? Lo dici esplicitamente con `nextcase`. Un esempio: in un videogioco, raggiungere un livello sblocca anche tutti i luoghi dei livelli precedenti.
+
+```c3
+int level = 2;
+
+switch (level)
+{
+	case 3:
+		io::printn("Unlocked: dragon");
+		nextcase;
+	case 2:
+		io::printn("Unlocked: castle");
+		nextcase;
+	case 1:
+		io::printn("Unlocked: village");
+}
+```
+
+```output
+Unlocked: castle
+Unlocked: village
+```
+
+Si entra in `case 2`, si stampa il castello, e `nextcase` fa proseguire in `case 1`. Chi legge vede subito che è voluto. `nextcase` può anche saltare a un caso preciso, per esempio `nextcase 1;`, ma è raro averne bisogno.
+
+<Callout type="note" title="Ogni case ha il suo spazio">
+
+Ogni `case` è un blocco a sé: una variabile dichiarata dentro un `case` vive solo lì. Puoi quindi dichiarare `int bonus = 10;` in un caso e `int bonus = 20;` in un altro senza conflitti.
+
+</Callout>
+
+## switch senza niente tra parentesi
+
+Ultima variante, sorprendentemente comoda: uno `switch` **senza espressione**. Ogni `case` contiene allora una condizione, e vince la prima vera, come in una catena di `else if`:
+
+```c3
+double bmi = 22.4;
+
+switch
+{
+	case bmi < 18.5:
+		io::printn("Underweight");
+	case bmi < 25.0:
+		io::printn("Normal");
+	default:
+		io::printn("Overweight");
+}
+```
+
+```output
+Normal
+```
+
+È una questione di gusto: alcuni la trovano più ordinata di una fila di `else if`, soprattutto quando le condizioni sono tante.
+
+<Callout type="nerd" title="Perché uno switch può essere più veloce di tanti if?">
+
+Una catena di `if` fa i confronti **uno dopo l'altro**: con 50 casi, per arrivare all'ultimo servono 50 confronti. Quando i `case` sono numeri vicini tra loro, invece, il compilatore può costruire una **tabella dei salti** (*jump table*): un elenco in memoria con l'indirizzo del codice di ogni caso. Il valore di `day` diventa direttamente la posizione nella tabella: un calcolo, un salto, fatto. Che i casi siano 5 o 500, il tempo è lo stesso.
+
+Non devi fare niente per ottenerlo: il compilatore sceglie da solo la strategia migliore. Ma è un bel motivo per preferire `switch` quando confronti un valore con tante costanti.
+
+</Callout>
+
+<Exercise title="Calcolatrice e pagella" expected={`12 * 4 = 48
+Grade: B`}>
+
+Scrivi `calculator.c3` con queste variabili:
+
+```c3
+int a = 12;
+int b = 4;
+char op = '*';
+int score = 83;
+```
+
+1. Con uno `switch` su `op`, gestisci i quattro operatori `'+'`, `'-'`, `'*'`, `'/'`: per ognuno stampa l'operazione e il risultato nel formato `12 * 4 = 48`. Nel `default` stampa `Unknown operator: ` seguito dal carattere.
+2. Con un secondo `switch` su `score`, usando gli **intervalli**, stampa `Grade: A` per 90–100, `Grade: B` per 80–89, `Grade: C` per 70–79, `Grade: D` per 60–69, e `Grade: F` per tutto il resto.
+
+Riporta l'output. Poi prova `op = '/'`, `op = '%'` e altri voti.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="calculator.c3"
+import std::io;
+
+fn void main()
+{
+	int a = 12;
+	int b = 4;
+	char op = '*';
+	int score = 83;
+
+	switch (op)
+	{
+		case '+':
+			io::printfn("%d + %d = %d", a, b, a + b);
+		case '-':
+			io::printfn("%d - %d = %d", a, b, a - b);
+		case '*':
+			io::printfn("%d * %d = %d", a, b, a * b);
+		case '/':
+			io::printfn("%d / %d = %d", a, b, a / b);
+		default:
+			io::printfn("Unknown operator: %c", op);
+	}
+
+	switch (score)
+	{
+		case 90..100:
+			io::printn("Grade: A");
+		case 80..89:
+			io::printn("Grade: B");
+		case 70..79:
+			io::printn("Grade: C");
+		case 60..69:
+			io::printn("Grade: D");
+		default:
+			io::printn("Grade: F");
+	}
+}
+```
+
+</Solution>
+
+## Ricapitolando
+
+- `switch (valore)` salta al `case` corrispondente; `default` raccoglie il resto.
+- Ogni `case` **esce da solo** alla fine: niente `break` da dimenticare.
+- I `case` vuoti proseguono nel successivo: così si raggruppano più valori.
+- `case 13..17:` copre un intervallo, estremi inclusi.
+- Si può fare `switch` su interi, `char` e `String`; senza espressione, ogni `case` è una condizione.
+- `nextcase` fa proseguire di proposito nel caso successivo.
+
+Ora il programma sa scegliere. Prossimo superpotere: **ripetere**. Cominciamo con il ciclo più semplice, `while`.

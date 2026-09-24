@@ -1,0 +1,191 @@
+---
+title: Riepilogo e sfida finale
+description: Tutto il modulo in una tabella, tre quiz di controllo e una sfida con FizzBuzz, numeri primi e primi gemelli.
+minutes: 20
+---
+
+## Da lista a programma
+
+All'inizio del modulo i tuoi programmi erano liste di istruzioni, eseguite tutte, in fila. Adesso sai:
+
+- far **scegliere** il programma con `if`, `else` e `switch`;
+- far **ripetere** il lavoro con `while`, `do`, `for` e `foreach`;
+- **fermare** o saltare un ciclo con `break` e `continue`, anche su cicli esterni con un'etichetta;
+- tenere tanti valori in un **array** e scorrerli;
+- scrivere **funzioni** tue, con parametri, valori di ritorno e argomenti per nome.
+
+Con queste cose, ed è la parte sorprendente, puoi già scrivere **qualsiasi** algoritmo. Decidere e ripetere è tutto ciò che serve a una macchina per calcolare: il resto del corso ti darà strumenti per farlo meglio, più in sicurezza e più comodamente, ma i mattoni fondamentali ce li hai.
+
+<Callout type="fun" title="Turing lo aveva dimostrato">
+
+Nel 1936 Alan Turing descrisse una macchina immaginaria, capace soltanto di leggere e scrivere simboli su un nastro, scegliere cosa fare in base a quello che legge, e ripetere. Dimostrò che quella macchina elementare può calcolare tutto ciò che è calcolabile. Un linguaggio con decisioni e cicli (e memoria a sufficienza) è equivalente a quella macchina: si dice che è **Turing-completo**. Anche tu, da questa lezione, lo sei.
+
+</Callout>
+
+## La pagina da tenere accanto
+
+| Cosa | Come si scrive |
+|---|---|
+| Decisione | `if (cond) { ... } else if (cond) { ... } else { ... }` |
+| If su una riga | `if (n < 0) n = -n;` (senza `else`, sulla stessa riga) |
+| Ternario | `String s = n > 0 ? "pos" : "neg";` |
+| Valore di riserva | `int v = choice ?: 50;` |
+| Switch | `switch (x) { case 1: ... case 2..5: ... default: ... }` |
+| Più valori, un caso | `case 6:` vuoto seguito da `case 7:` |
+| Proseguire nel caso dopo | `nextcase;` |
+| Switch di condizioni | `switch { case x < 0: ... case x < 10: ... }` |
+| Ciclo con condizione | `while (cond) { ... }` |
+| Almeno una volta | `do { ... } while (cond);` |
+| Ciclo che conta | `for (int i = 0; i < n; i++) { ... }` |
+| Uscire / saltare un giro | `break;` / `continue;` |
+| Uscire da un ciclo esterno | `for OUTER: (...) { ... break OUTER; }` |
+| Array | `int[*] a = { 1, 2, 3 };` con `a[0]` e `a.len` |
+| Scorrere | `foreach (x : a)`, `foreach (i, x : a)`, `foreach_r (x : a)` |
+| Funzione | `fn int square(int x) { return x * x; }` |
+| Funzione corta | `fn bool is_even(int n) => n % 2 == 0;` |
+| Predefiniti e per nome | `fn void f(int a, int b = 1)` chiamata come `f(5, b: 2)` |
+
+## Cinque errori che ormai riconosci
+
+Il compilatore di C3 ti ha protetto spesso, in questo modulo. Ecco i messaggi più comuni, e cosa significano:
+
+| Messaggio | Cosa hai fatto |
+|---|---|
+| `if-statements with an 'else' must use '{ }'...` | Un `if` con `else` senza graffe |
+| `'x' would shadow a previous declaration.` | Hai dichiarato una variabile con un nome già in uso |
+| `'i' could not be found...` | Stai usando una variabile fuori dal suo blocco (o dopo il suo `for`) |
+| `Missing return statement at the end of the function.` | Una strada della funzione non arriva a un `return` |
+| `The same case value appears more than once.` | Due `case` con lo stesso valore, o intervalli sovrapposti |
+
+## Quiz di controllo
+
+<Quiz question={'Cosa stampa questo ciclo? `for (int i = 0; i < 5; i++) { if (i == 3) break; io::printf("%d", i); }`'} options={['`01234`', '`012`', '`0123`', '`0124`']} answer={1}>
+
+Quando `i` vale 3 il `break` esce dal ciclo **prima** della stampa: vengono stampati solo 0, 1 e 2. Con `continue` al posto di `break` avresti ottenuto `0124`: salta solo il 3. (Lezioni 3 e 4.)
+
+</Quiz>
+
+<Quiz question={'Quanto vale `n` alla fine? `int n = 1; while (n < 100) n *= 3;`'} options={['`81`', '`99`', '`243`', '`100`']} answer={2}>
+
+`n` passa per 1, 3, 9, 27, 81. A 81 la condizione `81 < 100` è ancora vera, quindi c'è un altro giro: 243. Ora `243 < 100` è falsa e il ciclo si ferma. Un ciclo controlla la condizione **prima** di ogni giro, non dopo. (Lezione 3.)
+
+</Quiz>
+
+<Quiz question={'Con `int x = 4;`, cosa stampa? `switch (x) { case 1..3: io::print("low "); case 4..6: io::print("mid "); nextcase; case 7..9: io::print("high "); default: io::print("out "); }`'} options={['`mid`', '`mid high`', '`mid high out`', '`low mid high out`']} answer={1}>
+
+4 cade nell'intervallo `4..6`: stampa `mid`. Il `nextcase` fa proseguire nel caso successivo, `7..9`, che stampa `high`, e lì il caso finisce da solo. Il `default` non viene raggiunto. (Lezione 2.)
+
+</Quiz>
+
+## La sfida: numeri con carattere
+
+Un programma intero, da zero. Usa funzioni, `switch`, cicli, `continue` e una costante.
+
+<Exercise title="Numeri con carattere" expected={`1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz
+Primes: 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47
+Count: 15, sum: 328
+Twin pairs: 6`}>
+
+Scrivi `numbers.c3` con una costante `const int LIMIT = 50;` e due funzioni.
+
+**1. FizzBuzz.** È il più famoso esercizio dei colloqui di lavoro per programmatori. Scrivi `fn void fizzbuzz(int n)` che stampa, **senza andare a capo**: `FizzBuzz` se `n` è divisibile per 15, `Fizz` se è divisibile per 3, `Buzz` se è divisibile per 5, altrimenti il numero stesso. Usa uno `switch` senza espressione (attenzione all'ordine dei `case`!). Nel `main`, chiamala per i numeri da 1 a 15, separandoli con uno spazio ma **senza** spazio finale.
+
+**2. Numeri primi.** Un numero è **primo** se è maggiore di 1 ed è divisibile solo per 1 e per se stesso. Scrivi `fn bool is_prime(int n)`: prova a dividere `n` per ogni `d` da 2 in su, finché `d * d <= n`; se una divisione ha resto zero, non è primo.
+
+Poi, nel `main`:
+- stampa `Primes:` seguito da tutti i primi da 2 a `LIMIT`, ognuno preceduto da uno spazio (usa `continue` per saltare quelli non primi);
+- stampa `Count: ` con quanti sono, e `, sum: ` con la loro somma;
+- conta le coppie di **primi gemelli**: primi che differiscono di 2, come 11 e 13, con entrambi ≤ `LIMIT`. Stampa `Twin pairs: ` e il conteggio.
+
+L'output atteso, carattere per carattere:
+
+```output
+1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz
+Primes: 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47
+Count: 15, sum: 328
+Twin pairs: 6
+```
+
+</Exercise>
+
+<Solution>
+
+```c3 title="numbers.c3"
+import std::io;
+
+const int LIMIT = 50;
+
+fn void fizzbuzz(int n)
+{
+	switch
+	{
+		case n % 15 == 0:
+			io::print("FizzBuzz");
+		case n % 3 == 0:
+			io::print("Fizz");
+		case n % 5 == 0:
+			io::print("Buzz");
+		default:
+			io::printf("%d", n);
+	}
+}
+
+fn bool is_prime(int n)
+{
+	if (n < 2) return false;
+	for (int d = 2; d * d <= n; d++)
+	{
+		if (n % d == 0) return false;
+	}
+	return true;
+}
+
+fn void main()
+{
+	for (int i = 1; i <= 15; i++)
+	{
+		if (i > 1) io::print(" ");
+		fizzbuzz(i);
+	}
+	io::printn();
+
+	io::print("Primes:");
+	int count = 0;
+	int sum = 0;
+	for (int n = 2; n <= LIMIT; n++)
+	{
+		if (!is_prime(n)) continue;
+		io::printf(" %d", n);
+		count++;
+		sum += n;
+	}
+	io::printn();
+	io::printfn("Count: %d, sum: %d", count, sum);
+
+	int twins = 0;
+	for (int p = 2; p + 2 <= LIMIT; p++)
+	{
+		if (is_prime(p) && is_prime(p + 2)) twins++;
+	}
+	io::printfn("Twin pairs: %d", twins);
+}
+```
+
+I punti delicati:
+- **L'ordine dei case in FizzBuzz:** il 15 va controllato **per primo**, altrimenti vincerebbe `n % 3 == 0` e non stamperesti mai `FizzBuzz`.
+- **`d * d <= n` in `is_prime`:** se `n` ha un divisore più grande della sua radice quadrata, ne ha per forza anche uno più piccolo, già provato. Per `n = 47` bastano 5 tentativi invece di 45.
+- **Lo spazio senza spazio finale:** lo spazio si stampa **prima** di ogni numero tranne il primo.
+
+</Solution>
+
+<Callout type="fun" title="Se ci sei riuscito">
+
+Porta `LIMIT` a 1000 e guarda come cambiano i numeri (i primi sotto 1000 sono 168). Poi prova a togliere la condizione `d * d <= n` e a usare `d < n`: il risultato è identico, ma il programma fa molto più lavoro. Con `LIMIT` a 100 000 la differenza si sente davvero. Hai appena toccato con mano cosa significa *ottimizzare un algoritmo*.
+
+</Callout>
+
+## Cosa succede nel Modulo 3
+
+In questo modulo hai visto gli array solo di sfuggita, e le stringhe solo come testo da stampare. Il prossimo modulo è dedicato proprio a loro: **array, slice e stringhe**. Imparerai a tagliare un array a pezzi senza copiarlo, a passare collezioni alle funzioni, a costruire e trasformare testo, e scoprirai finalmente come funzionano davvero le stringhe in memoria.
+
+Segna questa lezione come completata e prenditi un meritato caffè (con l'accento: ormai sai che sono due byte).

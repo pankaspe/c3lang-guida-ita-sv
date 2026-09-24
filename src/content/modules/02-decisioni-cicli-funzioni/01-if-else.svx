@@ -1,0 +1,289 @@
+---
+title: Prendere decisioni
+description: if, else ed else if. Le graffe che C3 pretende, le variabili che vivono in un blocco e l'operatore ternario.
+minutes: 18
+---
+
+## Da una lista a un bivio
+
+Finora i nostri programmi erano una **lista**: il computer eseguiva le istruzioni dall'alto in basso, tutte, sempre. Utile, ma rigido. Un programma vero deve poter dire "se succede questo, fai quello". È il primo passo per farlo *pensare*.
+
+Lo strumento è l'istruzione `if` ("se"), e ricordi il tipo `bool` del modulo 1? Eccolo al lavoro:
+
+```c3 title="thermostat.c3"
+import std::io;
+
+fn void main()
+{
+	int temperature = 17;
+
+	if (temperature < 19)
+	{
+		io::printn("Turning the heating on.");
+	}
+	io::printn("Done.");
+}
+```
+
+```output
+Turning the heating on.
+Done.
+```
+
+Leggila così: "**se** la temperatura è minore di 19, esegui quello che c'è tra le graffe". La condizione tra parentesi, `temperature < 19`, è un confronto: produce un `bool`, cioè `true` o `false`. Se è `true` il blocco viene eseguito; se è `false` viene saltato e il programma riprende subito dopo la graffa chiusa.
+
+Prova a cambiare `17` in `22`: il programma stampa solo `Done.`.
+
+<Callout type="nerd" title="Come fa il processore a «scegliere»?">
+
+Il processore non sa cosa sia un `if`. Sa fare due cose molto più semplici: **confrontare** due numeri, e **saltare** a un'altra istruzione del programma, invece di passare alla successiva. Un `if` diventa proprio questo: "confronta `temperature` con 19; se *non* è minore, salta oltre il blocco". Si chiama *salto condizionato*.
+
+I processori moderni sono così veloci che non aspettano di sapere l'esito del confronto: **scommettono** su quale strada verrà presa e intanto cominciano a eseguirla. È la *branch prediction* (previsione dei salti). Se indovinano, tempo risparmiato; se sbagliano, buttano via il lavoro fatto e ripartono, perdendo qualche decina di cicli di clock. Per questo un `if` che va quasi sempre dalla stessa parte costa pochissimo.
+
+</Callout>
+
+## Altrimenti: else
+
+Spesso vuoi fare una cosa **oppure** un'altra. Per il ramo "altrimenti" c'è `else`:
+
+```c3
+int age = 15;
+
+if (age >= 18)
+{
+	io::printn("You can vote.");
+}
+else
+{
+	io::printn("Not yet: wait a few years.");
+}
+```
+
+```output
+Not yet: wait a few years.
+```
+
+Esattamente uno dei due blocchi viene eseguito, mai entrambi, mai nessuno.
+
+## Più strade: else if
+
+E quando le strade sono più di due? Si mettono in fila con `else if`:
+
+```c3 title="grade.c3"
+import std::io;
+
+fn void main()
+{
+	int score = 72;
+
+	if (score >= 90)
+	{
+		io::printn("Excellent");
+	}
+	else if (score >= 70)
+	{
+		io::printn("Good");
+	}
+	else if (score >= 50)
+	{
+		io::printn("Sufficient");
+	}
+	else
+	{
+		io::printn("Insufficient");
+	}
+}
+```
+
+```output
+Good
+```
+
+Le condizioni vengono controllate **dall'alto in basso**, e vince **la prima vera**: le altre non vengono nemmeno guardate. Con 72, `score >= 90` è falsa, `score >= 70` è vera: stampa `Good` e ha finito. Anche se `score >= 50` sarebbe vera pure lei, non ci arriva mai. L'`else` finale raccoglie tutto quello che non è stato preso prima.
+
+<Quiz question={'In questa versione le condizioni sono in un altro ordine. Cosa stampa con `int score = 95;`? `if (score >= 50) { io::printn("Sufficient"); } else if (score >= 90) { io::printn("Excellent"); }`'} options={['`Excellent`', '`Sufficient`', 'Entrambe le parole', 'Niente']} answer={1}>
+
+95 è maggiore o uguale a 50, quindi la **prima** condizione è vera: stampa `Sufficient` e salta tutto il resto. `Excellent` è irraggiungibile, perché ogni numero ≥ 90 è anche ≥ 50. Morale: in una catena di `else if`, metti **prima i casi più specifici**.
+
+</Quiz>
+
+## Le graffe: quando C3 le pretende
+
+Se il blocco contiene una sola istruzione, puoi scrivere l'`if` tutto su una riga, senza graffe:
+
+```c3
+if (n < 0) n = -n;   // if n is negative, make it positive
+```
+
+Ma C3 mette due paletti, e il compilatore li fa rispettare:
+
+1. **L'istruzione deve stare sulla stessa riga dell'`if`.** Se vai a capo senza graffe, l'errore è: `The 'then' part of a single line if-statement must start on the same line as the 'if' or use '{ }'`.
+2. **Se c'è un `else`, le graffe sono obbligatorie**, anche per una sola istruzione: `if-statements with an 'else' must use '{ }' even around a single statement.`
+
+<Callout type="c" title="Addio al goto fail">
+
+In C puoi scrivere un `if` senza graffe su più righe, ed è la causa di bug celebri. Il più famoso è il "goto fail" di Apple (2014): una riga duplicata sotto un `if` senza graffe veniva eseguita **sempre**, disattivando un controllo di sicurezza nelle connessioni HTTPS di milioni di dispositivi. In C3 quel codice semplicemente non compila.
+
+</Callout>
+
+<Callout type="tip" title="Nel dubbio, graffe">
+
+La forma su una riga va bene per cose brevissime come `if (n < 0) n = -n;`. Per tutto il resto usa le graffe: costano due caratteri e rendono impossibile sbagliare quando, fra un mese, aggiungerai una seconda riga al blocco.
+
+</Callout>
+
+## Condizioni composte
+
+Nel modulo 1 abbiamo visto `&&`, `||` e `!`. Dentro un `if` danno il meglio:
+
+```c3
+int hour = 14;
+bool is_weekend = false;
+
+if (hour >= 9 && hour < 18 && !is_weekend)
+{
+	io::printn("The shop is open.");
+}
+```
+
+```output
+The shop is open.
+```
+
+"Se sono le 9 o più, **e** prima delle 18, **e** non è weekend." Ricorda il cortocircuito: appena una condizione di un `&&` è falsa, le successive non vengono valutate.
+
+<Callout type="c">
+
+Come in C, anche un **intero** può fare da condizione: `if (n)` significa "se `n` è diverso da zero". Funziona, ma `if (n != 0)` dice la stessa cosa in modo esplicito, e chi legge non deve fermarsi a pensarci. In questo corso scriveremo sempre il confronto per intero.
+
+</Callout>
+
+## Le variabili vivono nel loro blocco
+
+Una variabile dichiarata **dentro** le graffe esiste solo lì dentro. Quando il blocco finisce, sparisce:
+
+```c3
+int price = 120;
+if (price > 100)
+{
+	int discount = 20;
+	price -= discount;
+}
+io::printn(price);
+io::printn(discount);   // error!
+```
+
+La prima stampa va benissimo (`price` è dichiarata fuori), la seconda no: fuori dal blocco `discount` non esiste più, e il compilatore risponde *"'discount' could not be found, did you spell it right?"*. Questa "zona di vita" di una variabile si chiama **scope** (visibilità).
+
+E c'è una regola in più, tutta di C3: dentro un blocco **non puoi** dichiarare una variabile con lo stesso nome di una già visibile fuori.
+
+```c3
+int x = 1;
+{
+	int x = 2;   // error: 'x' would shadow a previous declaration.
+}
+```
+
+In molti linguaggi è permesso (si chiama *shadowing*, "mettere in ombra") ed è una fonte classica di confusione: due `x` diverse a poche righe di distanza. C3 lo vieta, così `x` è sempre e solo una.
+
+<Callout type="nerd" title="Dove finisce una variabile quando il blocco si chiude?">
+
+Le variabili locali vivono in una zona di memoria chiamata **stack** (pila). Immagina una pila di piatti: quando entri in un blocco il programma "appoggia" sopra la pila lo spazio per le sue variabili, quando esci lo toglie. Non viene cancellato niente: semplicemente quello spazio torna libero, pronto per il prossimo blocco. È velocissimo, perché basta spostare un numero (il *puntatore dello stack*) su o giù.
+
+Ecco perché `discount` non esiste più fuori dalle graffe: il suo posto nella pila è già stato restituito. Rivedremo lo stack quando parleremo di funzioni.
+
+</Callout>
+
+## L'operatore ternario
+
+Capita spesso di voler scegliere tra **due valori**, non tra due blocchi di codice. Per questo esiste l'operatore ternario `condizione ? se_vero : se_falso`:
+
+```c3
+int n = 7;
+String parity = n % 2 == 0 ? "even" : "odd";
+io::printn(parity);
+
+int count = 1;
+io::printfn("%d %s", count, count == 1 ? "item" : "items");
+```
+
+```output
+odd
+1 item
+```
+
+Si chiama "ternario" perché ha tre pezzi. È un'**espressione**: produce un valore, quindi puoi metterlo dove metteresti un valore, come dentro una `printfn`. Il secondo esempio risolve un problema eterno: "1 items" è brutto, e così il plurale si sistema da solo.
+
+<Callout type="deep" title="La scorciatoia ?:">
+
+C3 ha anche una versione corta, `a ?: b`, che vale `a` se `a` è "vero" (per un numero: diverso da zero), altrimenti `b`. Serve per i valori di riserva:
+
+```c3
+int user_choice = 0;                // 0 = "no choice"
+int volume = user_choice ?: 50;     // 50
+```
+
+Si chiama *operatore Elvis*, perché `?:` girato di lato ricorda il ciuffo del cantante. Giuro.
+
+</Callout>
+
+<Quiz question="Quale di queste righe **non** compila in C3?" options={['`if (x > 0) io::printn(\"positive\");`', '`if (x > 0) { io::printn(\"positive\"); } else { io::printn(\"other\"); }`', '`if (x > 0) io::printn(\"positive\"); else io::printn(\"other\");`', '`String s = x > 0 ? \"positive\" : \"other\";`']} answer={2}>
+
+Con un `else`, C3 vuole le graffe attorno a **entrambi** i rami, anche se ognuno contiene una sola istruzione. La prima riga va bene (un solo ramo, tutto sulla stessa riga), la seconda ha le graffe, la quarta usa il ternario, che è un'espressione e non un blocco.
+
+</Quiz>
+
+<Exercise title="Il meteo in tre righe" expected={`Comfortable
+Humid
+Muggy day`}>
+
+Scrivi `weather.c3` con due variabili: `int temperature = 23;` e `int humidity = 70;`. Il programma deve stampare tre righe:
+
+1. `Cold` se la temperatura è sotto 18, `Comfortable` se è fino a 24 compreso, altrimenti `Hot` (una catena `if` / `else if` / `else`);
+2. `Humid` se l'umidità supera 60, altrimenti `Dry` (prova a usare il ternario dentro `io::printn`);
+3. `Muggy day` solo se la temperatura supera 20 **e** l'umidità supera 60; altrimenti niente.
+
+Riporta l'output. Poi, per esercizio, cambia i valori e prevedi cosa stamperà prima di lanciarlo.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="weather.c3"
+import std::io;
+
+fn void main()
+{
+	int temperature = 23;
+	int humidity = 70;
+
+	if (temperature < 18)
+	{
+		io::printn("Cold");
+	}
+	else if (temperature <= 24)
+	{
+		io::printn("Comfortable");
+	}
+	else
+	{
+		io::printn("Hot");
+	}
+
+	io::printn(humidity > 60 ? "Humid" : "Dry");
+
+	if (temperature > 20 && humidity > 60) io::printn("Muggy day");
+}
+```
+
+</Solution>
+
+## Ricapitolando
+
+- `if (condizione) { ... }` esegue il blocco solo se la condizione è vera.
+- `else` è il ramo "altrimenti"; `else if` mette in fila più alternative, e vince **la prima vera**.
+- Senza graffe, l'istruzione deve stare sulla stessa riga dell'`if`; con un `else` le graffe sono obbligatorie.
+- Una variabile dichiarata in un blocco vive solo lì (scope), e non può avere lo stesso nome di una già visibile.
+- `c ? a : b` sceglie tra due **valori**; `a ?: b` dà un valore di riserva.
+
+Una catena di `else if` che confronta la stessa variabile con tanti valori diventa presto lunga. Per quel caso C3 ha uno strumento su misura: `switch`.

@@ -1,0 +1,12 @@
+{
+	"title": "Decisioni, cicli e funzioni",
+	"subtitle": "Il programma smette di eseguire righe in fila e comincia a pensare: sceglie una strada, ripete il lavoro, e impara a dare un nome ai propri pezzi.",
+	"icon": "git-branch",
+	"level": "Base",
+	"goals": [
+		"Far prendere decisioni al programma con if, else e switch",
+		"Ripetere istruzioni con while, do, for e foreach",
+		"Scrivere funzioni con parametri, valori di ritorno e argomenti con nome",
+		"Leggere e capire gli errori del compilatore su graffe, variabili e return"
+	]
+}
