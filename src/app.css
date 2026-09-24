@@ -741,7 +741,7 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Reading spotlight (Impostazioni → Lettura → Modalità riflettore).
+   Reading spotlight (Settings → Reading → Spotlight mode).
    Sections come from rehype-lesson-sections; the active one is marked by
    the readingTracker attachment.
    --------------------------------------------------------------------------- */
@@ -793,29 +793,17 @@ body {
 	}
 }
 
-/* ---------------------------------------------------------------------------
-   Page transitions (View Transitions API, started in the root layout)
-   --------------------------------------------------------------------------- */
-@keyframes vt-out {
-	to {
-		opacity: 0;
-	}
+/* Section snap (Impostazioni → Lettura): "proximity" only settles on a section
+   start when the scroll ends close to one, so long sections read freely.
+   The lesson header is the resting point at the top of the page; the intro
+   section (text before the first h2) must not snap, or the page would settle
+   just below the lesson title on load. */
+:root[data-snap='on']:has([data-spotlight]) {
+	scroll-snap-type: y proximity;
 }
-@keyframes vt-in {
-	from {
-		opacity: 0;
-		transform: translateY(8px);
-	}
-}
-::view-transition-old(root) {
-	animation: vt-out 0.16s ease-out both;
-}
-::view-transition-new(root) {
-	animation: vt-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-::view-transition-group(*) {
-	animation-duration: 0.35s;
-	animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+:root[data-snap='on'] .lesson-header,
+:root[data-snap='on'] [data-spotlight] .lesson-section:not([data-section='intro']) {
+	scroll-snap-align: start;
 }
 
 @keyframes ring {
@@ -828,4 +816,25 @@ body {
 }
 .anim-ring {
 	animation: ring 0.7s ease-out both;
+}
+
+/* ---------------------------------------------------------------------------
+   Fade-in: the only entrance effect. `.anim-fade` fades an element in when it
+   appears (pure CSS, so it works on prerendered HTML); the `reveal()`
+   attachment in src/lib/motion.ts fades blocks in as they scroll into view.
+   Opacity only, no movement.
+   --------------------------------------------------------------------------- */
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+}
+.anim-fade {
+	animation: fade-in 0.5s ease backwards;
+}
+[data-reveal] {
+	transition: opacity 0.6s ease;
+}
+[data-reveal='hidden'] {
+	opacity: 0;
 }

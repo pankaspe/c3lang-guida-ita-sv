@@ -1,11 +1,14 @@
 <script lang="ts">
 	import Icon from '$lib/components/ui/Icon.svelte';
-	import { lessonPath, modulePath, moduleIcon } from '$lib/content/registry';
+	import { lessonPath, loadLessonMarkdown, modulePath, moduleIcon } from '$lib/content/registry';
 	import { progress } from '$lib/state/progress.svelte';
 	import { reading, readingTracker } from '$lib/state/reading.svelte';
 	import { feedback } from '$lib/feedback';
 	import { activity } from '$lib/state/activity.svelte';
 	import { setLessonContext } from '$lib/content/lesson-context';
+	import { course } from '$lib/content/course';
+	import { reveal } from '$lib/motion';
+	import { t } from '$lib/i18n/index.svelte';
 
 	let { data } = $props();
 
@@ -31,6 +34,23 @@
 		}
 		return map;
 	});
+
+	/** Lesson whose markdown was just copied, for the button's confirmation. */
+	let copied = $state<string | null>(null);
+	let copyTimer: ReturnType<typeof setTimeout> | undefined;
+
+	async function copyLesson() {
+		const id = lesson.id;
+		try {
+			await navigator.clipboard.writeText(await loadLessonMarkdown(lesson));
+			copied = id;
+			feedback('tap');
+			clearTimeout(copyTimer);
+			copyTimer = setTimeout(() => (copied = null), 1800);
+		} catch {
+			// Clipboard blocked (insecure context): nothing else to do.
+		}
+	}
 
 	/** Lesson just marked as completed, to play the celebration once. */
 	let celebrated = $state<string | null>(null);
@@ -68,7 +88,7 @@
 <svelte:window onscroll={interacted} onkeydown={interacted} onpointermove={interacted} ontouchstart={interacted} />
 
 <svelte:head>
-	<title>{lesson.meta.title} · {module.meta.title} · Impara C3</title>
+	<title>{lesson.meta.title} · {module.meta.title} · {course.title}</title>
 	<meta name="description" content={lesson.meta.description} />
 </svelte:head>
 
@@ -112,21 +132,43 @@
 	</aside>
 
 	<!-- Lesson -->
-	<article class="mx-auto w-full max-w-(--reading-measure) min-w-0">
-		<header class="mb-8">
-			<p class="font-mono text-xs text-muted">
-				Lezione {position} di {module.lessons.length} · {lesson.meta.minutes} min di lettura
-			</p>
+	<!-- Keyed so the entrance and scroll reveal replay when moving to another lesson. -->
+	{#key lesson.id}
+	<article class="anim-fade mx-auto w-full max-w-(--reading-measure) min-w-0">
+		<header class="lesson-header mb-8">
+			<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+				<p class="font-mono text-xs text-muted">
+					{t('lesson.position', { position, total: module.lessons.length })} ·
+					{t('lesson.readingTime', { minutes: lesson.meta.minutes })}
+				</p>
+				<button
+					type="button"
+					onclick={copyLesson}
+					title={t('lesson.copyHint')}
+					aria-live="polite"
+					class={[
+						'-mr-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-sans text-xs font-medium transition hover:bg-surface-2 hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none',
+						copied === lesson.id ? 'text-success' : 'text-muted'
+					]}
+				>
+					{#if copied === lesson.id}
+						<Icon name="check" class="anim-draw size-3.5" />
+						{t('lesson.copied')}
+					{:else}
+						<Icon name="copy" class="size-3.5" />
+						{t('lesson.copy')}
+					{/if}
+				</button>
+			</div>
 			<h1
 				class="mt-2 font-sans text-3xl font-bold tracking-tight text-ink sm:text-4xl"
-				style:view-transition-name="lesson-title-{module.slug}-{lesson.slug}"
 			>
 				{lesson.meta.title}
 			</h1>
 			<p class="mt-3 font-reading text-lg leading-relaxed text-ink-soft">{lesson.meta.description}</p>
 		</header>
 
-		<div {@attach readingTracker(lesson.id, sectionReached)}>
+		<div {@attach readingTracker(lesson.id, sectionReached)} {@attach reveal('.lesson-section > *')}>
 			<Content />
 		</div>
 
@@ -145,26 +187,28 @@
 					]}
 				>
 					{#if done}
-						<Icon name="check" class={['size-4 text-success', celebrated === lesson.id && 'anim-draw']} /> Lezione completata
+						<Icon name="check" class={['size-4 text-success', celebrated === lesson.id && 'anim-draw']} />
+						{t('lesson.completed')}
 					{:else}
-						Segna come completata
+						{t('lesson.markCompleted')}
 					{/if}
 				</button>
 				{#if done && next}
 					<span class={['font-sans text-sm text-muted', celebrated === lesson.id && 'anim-rise']}
-						>Bravo! Pronto per la prossima?</span
+						>{t('lesson.cheer')}</span
 					>
 				{/if}
 			</div>
 
-			<nav class="mt-6 grid gap-3 sm:grid-cols-2" aria-label="Lezione precedente e successiva">
+			<nav class="mt-6 grid gap-3 sm:grid-cols-2" aria-label={t('lesson.pager')}>
 				{#if previous}
 					<a
 						href={lessonPath(previous)}
 						class="group rounded-lg border border-line bg-surface p-4 transition hover:border-accent"
 					>
 						<span class="inline-flex items-center gap-1 font-sans text-xs text-muted"
-							><Icon name="arrow-left" class="size-3.5 transition group-hover:-translate-x-0.5" /> Precedente</span
+							><Icon name="arrow-left" class="size-3.5 transition group-hover:-translate-x-0.5" />
+							{t('lesson.previous')}</span
 						>
 						<span class="mt-1 block font-sans font-semibold text-ink group-hover:text-accent"
 							>{previous.meta.title}</span
@@ -179,7 +223,7 @@
 						class="group rounded-lg border border-line bg-surface p-4 text-right transition hover:border-accent"
 					>
 						<span class="inline-flex items-center gap-1 font-sans text-xs text-muted"
-							>Successiva <Icon name="arrow-right" class="size-3.5 transition group-hover:translate-x-0.5" /></span
+							>{t('lesson.next')} <Icon name="arrow-right" class="size-3.5 transition group-hover:translate-x-0.5" /></span
 						>
 						<span class="mt-1 block font-sans font-semibold text-ink group-hover:text-accent"
 							>{next.meta.title}</span
@@ -190,18 +234,19 @@
 						href="/"
 						class="group inline-flex items-center justify-end gap-1 rounded-lg border border-line bg-surface p-4 text-right font-sans text-sm text-muted transition hover:border-accent"
 					>
-						Hai finito le lezioni disponibili. Torna ai moduli
+						{t('lesson.finished')}
 						<Icon name="arrow-right" class="size-4 transition group-hover:translate-x-0.5" />
 					</a>
 				{/if}
 			</nav>
 		</footer>
 	</article>
+	{/key}
 
 	<!-- Table of contents -->
 	{#if headings.length}
 		<aside class="hidden xl:block xl:sticky xl:top-20 xl:self-start">
-			<p class="font-sans text-xs font-semibold tracking-wide text-muted uppercase">In questa lezione</p>
+			<p class="font-sans text-xs font-semibold tracking-wide text-muted uppercase">{t('lesson.toc')}</p>
 			<ol class="mt-3 grid gap-1 border-l border-line">
 				{#each headings as heading (heading.id)}
 					{@const current = heading.id === reading.section}

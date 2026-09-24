@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import { feedback } from '$lib/feedback';
+	import { t } from '$lib/i18n/index.svelte';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -17,7 +18,7 @@
 	let copyTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const isOutput = $derived(lang === 'output');
-	const label = $derived(title ?? (isOutput ? 'output' : lang === 'bash' ? 'terminale' : lang));
+	const label = $derived(title ?? (isOutput ? 'output' : lang === 'bash' ? t('code.terminal') : lang));
 
 	async function copy() {
 		const code = container.querySelector('code')?.textContent ?? '';
@@ -60,9 +61,11 @@
 				aria-live="polite"
 			>
 				{#if copied}
-					<Icon name="check" class="anim-draw size-3.5" /> Copiato
+					<Icon name="check" class="anim-draw size-3.5" />
+					{t('code.copied')}
 				{:else}
-					<Icon name="copy" class="size-3.5" /> Copia
+					<Icon name="copy" class="size-3.5" />
+					{t('code.copy')}
 				{/if}
 			</button>
 		{/if}

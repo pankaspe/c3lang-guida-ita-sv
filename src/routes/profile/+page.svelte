@@ -4,7 +4,10 @@
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import Heatmap from '$lib/components/profile/Heatmap.svelte';
 	import { allLessons, lessonPath, modulePath, moduleIcon, modules } from '$lib/content/registry';
-	import { BADGES, type BadgeStats } from '$lib/content/badges';
+	import { getBadges, type BadgeStats } from '$lib/content/badges';
+	import { course } from '$lib/content/course';
+	import { reveal } from '$lib/motion';
+	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { activity } from '$lib/state/activity.svelte';
 	import { progress } from '$lib/state/progress.svelte';
 	import { profile, MAX_NAME_LENGTH } from '$lib/state/profile.svelte';
@@ -36,40 +39,42 @@
 
 	function formatDuration(seconds: number): string {
 		const minutes = Math.floor(seconds / 60);
-		if (minutes < 60) return `${minutes} min`;
-		return `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
+		if (minutes < 60) return t('profile.duration.minutes', { minutes });
+		return t('profile.duration.hours', { hours: Math.floor(minutes / 60), minutes: minutes % 60 });
 	}
 
 	const stats = $derived<{ icon: IconName; label: string; value: string; hint: string }[]>([
 		{
 			icon: 'book-open',
-			label: 'Lezioni completate',
+			label: t('profile.stats.lessons'),
 			value: `${progress.completed.size}/${allLessons.length}`,
-			hint: `${Math.round((progress.completed.size / Math.max(1, allLessons.length)) * 100)}% del corso`
+			hint: t('profile.stats.lessonsHint', {
+				percent: Math.round((progress.completed.size / Math.max(1, allLessons.length)) * 100)
+			})
 		},
 		{
 			icon: 'target',
-			label: 'Precisione nei quiz',
+			label: t('profile.stats.quiz'),
 			value: accuracy === null ? '—' : `${accuracy}%`,
-			hint: `${quiz.correct} su ${quiz.answered} al primo colpo`
+			hint: t('profile.stats.quizHint', { correct: quiz.correct, answered: quiz.answered })
 		},
 		{
 			icon: 'terminal',
-			label: 'Esercizi risolti',
+			label: t('profile.stats.exercises'),
 			value: String(activity.exercisesSolved),
-			hint: 'sul tuo computer'
+			hint: t('profile.stats.exercisesHint')
 		},
 		{
 			icon: 'clock',
-			label: 'Tempo di studio',
+			label: t('profile.stats.time'),
 			value: formatDuration(activity.totalSeconds),
-			hint: 'lettura attiva'
+			hint: t('profile.stats.timeHint')
 		},
 		{
 			icon: 'flame',
-			label: 'Serie attuale',
-			value: `${activity.currentStreak} ${activity.currentStreak === 1 ? 'giorno' : 'giorni'}`,
-			hint: `record: ${activity.bestStreak}`
+			label: t('profile.stats.streak'),
+			value: t('profile.stats.streakValue', { count: activity.currentStreak }),
+			hint: t('profile.stats.streakHint', { best: activity.bestStreak })
 		}
 	]);
 
@@ -82,7 +87,7 @@
 		bestStreak: activity.bestStreak,
 		totalSeconds: activity.totalSeconds
 	});
-	const badges = $derived(BADGES.map((badge) => ({ ...badge, isEarned: badge.earned(badgeStats) })));
+	const badges = $derived(getBadges().map((badge) => ({ ...badge, isEarned: badge.earned(badgeStats) })));
 	const earnedCount = $derived(badges.filter((badge) => badge.isEarned).length);
 
 	// --- Resume -------------------------------------------------------------------------
@@ -95,30 +100,20 @@
 	});
 	const firstUnfinished = $derived(allLessons.find((lesson) => !progress.isCompleted(lesson.id)));
 
-	function timeAgo(date: Date): string {
-		const minutes = Math.round((Date.now() - date.getTime()) / 60_000);
-		if (minutes < 1) return 'proprio ora';
-		if (minutes < 60) return `${minutes} min fa`;
-		const hours = Math.round(minutes / 60);
-		if (hours < 24) return `${hours} ${hours === 1 ? 'ora' : 'ore'} fa`;
-		const days = Math.round(hours / 24);
-		return days === 1 ? 'ieri' : `${days} giorni fa`;
-	}
-
 	const since = $derived(
 		activity.since
-			? new Date(`${activity.since}T12:00:00`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
+			? i18n.date(new Date(`${activity.since}T12:00:00`), { day: 'numeric', month: 'long', year: 'numeric' })
 			: null
 	);
 </script>
 
 <svelte:head>
-	<title>Profilo · Impara C3</title>
-	<meta name="description" content="I tuoi progressi, le statistiche e i traguardi raggiunti." />
+	<title>{t('profile.title')} · {course.title}</title>
+	<meta name="description" content={t('profile.description')} />
 </svelte:head>
 
-<div class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-	<p class="font-mono text-sm text-accent">// profilo</p>
+<div class="anim-fade mx-auto max-w-5xl px-4 py-10 sm:px-6" {@attach reveal(':scope > section, :scope > p')}>
+	<p class="font-mono text-sm text-accent">{t('profile.kicker')}</p>
 
 	<!-- Identity -->
 	<header class="mt-3 flex flex-wrap items-center gap-5">
@@ -132,22 +127,22 @@
 						saveName();
 					}}
 				>
-					<label class="sr-only" for="profile-name">Il tuo nome</label>
+					<label class="sr-only" for="profile-name">{t('profile.nameLabel')}</label>
 					<input
 						id="profile-name"
 						bind:value={draft}
 						maxlength={MAX_NAME_LENGTH}
-						placeholder="Come ti chiami?"
+						placeholder={t('profile.namePlaceholder')}
 						autocomplete="nickname"
 						onkeydown={(event) => event.key === 'Escape' && (editing = false)}
 						{@attach focusOnMount}
 						class="w-full max-w-xs rounded-md border border-line bg-surface px-3 py-1.5 font-sans text-2xl font-bold text-ink focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
 					/>
 					<button type="submit" class="rounded-md bg-accent px-3 py-2 font-sans text-sm font-semibold text-accent-ink hover:opacity-90">
-						Salva
+						{t('common.save')}
 					</button>
 					<button type="button" onclick={() => (editing = false)} class="px-2 py-2 font-sans text-sm text-muted hover:text-ink">
-						Annulla
+						{t('common.cancel')}
 					</button>
 				</form>
 			{:else}
@@ -157,16 +152,16 @@
 						type="button"
 						onclick={startEditing}
 						class="grid size-8 place-items-center rounded-full text-muted transition hover:bg-surface-2 hover:text-ink"
-						aria-label="Modifica il nome"
-						title="Modifica il nome"
+						aria-label={t('profile.editName')}
+						title={t('profile.editName')}
 					>
 						<Icon name="pencil" class="size-4" />
 					</button>
 				</h1>
 			{/if}
 			<p class="mt-1 font-sans text-sm text-muted">
-				{#if since}In viaggio dal {since}{:else}Il viaggio comincia con la prima lezione{/if}
-				· {earnedCount}/{badges.length} traguardi
+				{since ? t('profile.since', { date: since }) : t('profile.notStarted')}
+				· {t('profile.badgesCount', { earned: earnedCount, total: badges.length })}
 			</p>
 		</div>
 	</header>
@@ -183,7 +178,8 @@
 						<Icon name="play" class="size-5 translate-x-px" />
 					</span>
 					<span class="min-w-0 flex-1">
-						<span class="block font-mono text-xs text-muted">Riprendi da qui · {timeAgo(resume.at)}</span>
+						<span class="block font-mono text-xs text-muted">{t('profile.resume', { ago: i18n.relative(resume.at) })}</span
+						>
 						<span class="mt-0.5 block font-sans text-lg font-semibold text-ink group-hover:text-accent">
 							{resume.lesson.meta.title}
 						</span>
@@ -202,8 +198,8 @@
 						<Icon name="rocket" class="size-5" />
 					</span>
 					<span class="flex-1 font-sans">
-						<span class="block text-lg font-semibold text-ink">Inizia il percorso</span>
-						<span class="block text-sm text-muted">Le tue statistiche prenderanno vita dalla prima lezione.</span>
+						<span class="block text-lg font-semibold text-ink">{t('profile.startTitle')}</span>
+						<span class="block text-sm text-muted">{t('profile.startHint')}</span>
 					</span>
 				</a>
 			{/if}
@@ -212,7 +208,7 @@
 
 	<!-- Stats -->
 	<section class="mt-8" aria-labelledby="stats-heading">
-		<h2 id="stats-heading" class="font-mono text-xs font-semibold tracking-wider text-muted uppercase">Statistiche</h2>
+		<h2 id="stats-heading" class="font-mono text-xs font-semibold tracking-wider text-muted uppercase">{t('profile.statsHeading')}</h2>
 		<dl class="mt-3 grid grid-cols-2 gap-3 md:grid-cols-5">
 			{#each stats as stat, index (stat.label)}
 				<div
@@ -232,7 +228,7 @@
 
 	<!-- Activity calendar -->
 	<section class="mt-8" aria-labelledby="activity-heading">
-		<h2 id="activity-heading" class="font-mono text-xs font-semibold tracking-wider text-muted uppercase">Attività</h2>
+		<h2 id="activity-heading" class="font-mono text-xs font-semibold tracking-wider text-muted uppercase">{t('profile.activityHeading')}</h2>
 		<div class="mt-3 rounded-xl border border-line bg-surface p-5">
 			<div class="md:hidden"><Heatmap weeks={17} /></div>
 			<div class="hidden md:block"><Heatmap weeks={40} /></div>
@@ -241,7 +237,7 @@
 
 	<!-- Modules -->
 	<section class="mt-8" aria-labelledby="modules-heading">
-		<h2 id="modules-heading" class="font-mono text-xs font-semibold tracking-wider text-muted uppercase">Moduli</h2>
+		<h2 id="modules-heading" class="font-mono text-xs font-semibold tracking-wider text-muted uppercase">{t('profile.modulesHeading')}</h2>
 		<ul class="mt-3 grid gap-3">
 			{#each modules as module (module.slug)}
 				{@const ids = module.lessons.map((lesson) => lesson.id)}
@@ -269,7 +265,7 @@
 	<!-- Badges -->
 	<section class="mt-8" aria-labelledby="badges-heading">
 		<h2 id="badges-heading" class="font-mono text-xs font-semibold tracking-wider text-muted uppercase">
-			Traguardi · {earnedCount}/{badges.length}
+			{t('profile.badgesHeading', { earned: earnedCount, total: badges.length })}
 		</h2>
 		<ul class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
 			{#each badges as badge (badge.id)}
@@ -296,7 +292,7 @@
 
 	<p class="mt-10 flex items-center gap-2 font-sans text-sm text-muted">
 		<Icon name="lock" class="size-4" />
-		Il profilo vive solo in questo browser.
-		<a href="/impostazioni#dati" class="text-link hover:underline">Esporta o elimina i dati</a>
+		{t('profile.localOnly')}
+		<a href="/settings#data" class="text-link hover:underline">{t('profile.manageData')}</a>
 	</p>
 </div>

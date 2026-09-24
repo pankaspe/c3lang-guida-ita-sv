@@ -3,6 +3,9 @@
  * starts with `c3-course:`. Export bundles them into one versioned JSON file,
  * import restores them, and clear removes them.
  */
+import { course } from '$lib/content/course';
+import { t } from '$lib/i18n/index.svelte';
+
 const PREFIX = 'c3-course:';
 const BACKUP_APP = 'impara-c3';
 const BACKUP_VERSION = 1;
@@ -50,20 +53,20 @@ export function downloadBackup(): void {
 	URL.revokeObjectURL(url);
 }
 
-/** Parse and validate a backup file; throws an Italian, user-facing message. */
+/** Parse and validate a backup file; throws a translated, user-facing message. */
 export function parseBackup(text: string): Backup {
 	let parsed: unknown;
 	try {
 		parsed = JSON.parse(text);
 	} catch {
-		throw new Error('Il file non è un JSON valido.');
+		throw new Error(t('backup.invalidJson'));
 	}
 	const backup = parsed as Partial<Backup>;
 	if (backup?.app !== BACKUP_APP || typeof backup.data !== 'object' || backup.data === null) {
-		throw new Error('Questo file non sembra un backup di Impara C3.');
+		throw new Error(t('backup.notABackup', { title: course.title }));
 	}
 	if (typeof backup.version !== 'number' || backup.version > BACKUP_VERSION) {
-		throw new Error('Il backup viene da una versione più recente del corso.');
+		throw new Error(t('backup.tooNew'));
 	}
 	const entries = Object.entries(backup.data).filter(
 		([key, value]) => key.startsWith(PREFIX) && typeof value === 'string'

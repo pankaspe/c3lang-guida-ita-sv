@@ -1,14 +1,17 @@
 # CLAUDE.md
 
 Interactive Italian course for learning the C3 language (https://c3-lang.org), built as a fully
-static SvelteKit site. See README.md for the layout and authoring reference.
+static SvelteKit site. This file is the layout and authoring reference (README.md is only a short
+project description).
 
 ## Hard rules
 
 - **c3-lang.org is the reference.** Always base lesson content on the official docs at
   https://c3-lang.org (full dump: https://c3-lang.org/all), cross-checked against the real compiler
   (see below). Don't rely on memory of C3 or on third-party material.
-- **App code in English** (Svelte, TS, identifiers, comments, commit messages).
+- **App code in English** (Svelte, TS, identifiers, comments, commit messages). **No hard-coded UI
+  text in components**: every user-visible string goes through the i18n dictionaries (see
+  "Internationalisation" below); course-specific texts go in `src/content/course.json`.
 - **Course content in Italian** (`src/content/modules/**/*.svx`) — but the **embedded C3 code is in
   English**: variable/constant/function/type/module names, example file/project names, code comments,
   and printed/output string literals inside `c3`/`output` fences (and matching `Quiz`/`Exercise`/
@@ -24,6 +27,8 @@ static SvelteKit site. See README.md for the layout and authoring reference.
   before writing it into a lesson: `c3c compile-run file.c3` (c3c 0.8.4 is installed at
   `~/.local/c3/c3c`). The online docs lag behind the compiler (e.g. `printn(double)` prints 6
   decimals, `compile-run` messages differ, `isz` is now `sz`). Use the scratchpad for test files.
+  The compiler version shown in the app is `compiler` in `src/content/course.json`: update it
+  when the reference compiler changes.
 - No sandbox / in-browser code execution. Exercises are done on the learner's machine.
 - Runtime is **bun** (`bun run dev|build|check`). There is no `node`/`npx` on this machine.
 
@@ -32,6 +37,25 @@ static SvelteKit site. See README.md for the layout and authoring reference.
 SvelteKit 2 · Svelte 5 runes · Tailwind 4 (+typography, class-based dark mode) · mdsvex ·
 Prism with a hand-written C3 grammar (`src/lib/markdown/prism-c3.ts`) · `@sveltejs/adapter-static`.
 Config lives in `vite.config.ts` (no `svelte.config.js`).
+
+## Internationalisation
+
+The app is a generic, localisable course reader; the content is Italian only (no English lessons).
+
+- UI strings: `src/lib/i18n/locales/<tag>.ts`, auto-discovered. `it.ts` is the **reference**: its
+  shape defines the `Messages` type, so `en.ts` (and any new locale) must have the same keys or
+  `bun run check` fails. **Add every new key to all locale files.**
+- `src/lib/i18n/index.svelte.ts`: `t('dotted.key', { param })` (reactive; `{name}` placeholders,
+  `{ one, other }` plurals picked from `count`), `i18n.md()` for `…Md` keys (inline markdown →
+  `{@html}`), `i18n.date()` / `i18n.relative()` / `i18n.languageName()` via `Intl`. Never format
+  dates with a hard-coded locale.
+- UI language = `locale` in `course.json` unless overridden by the `locale` preference (Settings →
+  Aspetto). Prerendered HTML uses the course language; `<html lang>` is always the course language
+  (`%c3.lang%` in `app.html`, filled by `hooks.server.ts`).
+- `src/content/course.json` (`src/lib/content/course.ts` types it): title, subject, logo, tagline,
+  hero, footer, about, docs link, compiler, course-specific badges. Written in the course language.
+- Routes are English and language-neutral: `/`, `/modules/[module]/[lesson]`, `/profile`,
+  `/settings` (section anchors `#appearance`, `#reading`, `#code`, `#experience`, `#data`, `#info`).
 
 ## How content is wired
 
@@ -60,11 +84,21 @@ Config lives in `vite.config.ts` (no `svelte.config.js`).
   heading inside a lesson component** (Callout/Quiz/Exercise/Solution): it would split the component.
 - Lesson components get the lesson id via `lesson-context.ts` (`createContext`) to key activity records.
 - `src/lib/feedback.ts`: opt-in sounds (Web Audio, synthesised) and vibration for learner actions.
-- Pages: `/impostazioni` (Aspetto, Lettura, Codice, Esperienza, Dati: export/import/delete, Info),
-  `/profilo` (identicon + name, resume, stats, heatmap, modules, badges from `content/badges.ts`).
-- Animations: `.anim-rise|pop|shake|draw|ring` utilities and View Transitions (root layout
-  `onNavigate`); every animation is neutralised by the motion setting / `prefers-reduced-motion`.
-  Keep new animations short and subtle, and always go through these utilities.
+- Pages: `/settings` (Aspetto incl. UI language, Lettura, Codice, Esperienza, Dati:
+  export/import/delete, Info), `/profile` (identicon + name, resume, stats, heatmap, modules, badges
+  from `content/badges.ts` + `course.json`).
+- Animations: page content only **fades in** (opacity, no movement, no stagger, no page/View
+  Transitions — the user explicitly asked for "solo il fadeIn"). `.anim-fade` on a page's root (pure
+  CSS, works on prerendered HTML) + the `reveal(selector)` attachment in `src/lib/motion.ts` for blocks
+  below the fold (only hides those, so nothing visible flickers on hydration). Lesson and module views
+  are wrapped in `{#key}` so the fade replays between lessons/modules. Small interaction feedback
+  (`.anim-rise|pop|shake|draw|ring` on quiz/exercise/buttons) stays. Settings → Esperienza →
+  Animazioni "Nessuna" (`motion: 'reduced'`) removes everything, fades included; so does
+  `prefers-reduced-motion` with "Sistema".
+  - Section snap (`snap` preference, `data-snap`): `scroll-snap-type: y proximity` on lesson pages,
+    each `.lesson-section` snaps at its start. Never `mandatory`: sections are longer than the screen.
+- "Copia lezione" in the lesson header copies the lesson as markdown (`loadLessonMarkdown` in the
+  registry, `?raw` glob loaded on demand, so it never grows the lesson chunk).
 
 ## Theme
 

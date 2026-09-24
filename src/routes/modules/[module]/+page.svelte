@@ -3,6 +3,9 @@
 	import { lessonPath, moduleIcon } from '$lib/content/registry';
 	import { progress } from '$lib/state/progress.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
+	import { course } from '$lib/content/course';
+	import { reveal } from '$lib/motion';
+	import { t } from '$lib/i18n/index.svelte';
 
 	let { data } = $props();
 
@@ -13,22 +16,22 @@
 </script>
 
 <svelte:head>
-	<title>{module.meta.title} · Impara C3</title>
+	<title>{module.meta.title} · {course.title}</title>
 	<meta name="description" content={module.meta.subtitle} />
 </svelte:head>
 
-<div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-	<nav class="mb-6 font-sans text-xs text-muted" aria-label="Percorso">
-		<a href="/" class="hover:text-ink">Moduli</a>
+{#key module.slug}
+<div class="anim-fade mx-auto max-w-3xl px-4 py-10 sm:px-6">
+	<nav class="mb-6 font-sans text-xs text-muted" aria-label={t('module.breadcrumb')}>
+		<a href="/" class="hover:text-ink">{t('module.modules')}</a>
 		<span class="mx-1.5" aria-hidden="true">›</span>
-		<span>Modulo {module.order}</span>
+		<span>{t('module.number', { number: module.order })}</span>
 	</nav>
 
 	<header class="mb-8">
 		<div class="flex items-center gap-3">
 			<span
 				class="grid size-12 shrink-0 place-items-center rounded-lg border border-line bg-surface text-accent"
-				style:view-transition-name="module-icon-{module.slug}"
 			>
 				<Icon name={moduleIcon(module.meta.icon)} class="size-6" />
 			</span>
@@ -38,7 +41,8 @@
 		</div>
 		<p class="mt-3 font-reading text-lg leading-relaxed text-ink-soft">{module.meta.subtitle}</p>
 		<p class="mt-2 font-sans text-xs text-muted">
-			{module.lessons.length} lezioni · circa {totalMinutes} minuti di lettura · livello {module.meta.level.toLowerCase()}
+			{t('module.lessons', { count: module.lessons.length })} · {t('module.readingTime', { minutes: totalMinutes })} ·
+			{t('module.level', { level: module.meta.level.toLowerCase() })}
 		</p>
 		<div class="mt-4">
 			<ProgressBar value={completed} max={ids.length} />
@@ -48,7 +52,7 @@
 	{#if module.meta.goals.length}
 		<section class="mb-8 rounded-lg border border-line bg-surface p-5">
 			<h2 class="font-sans text-sm font-semibold tracking-wide text-muted uppercase">
-				Alla fine saprai
+				{t('module.goals')}
 			</h2>
 			<ul class="mt-2 grid gap-1.5 font-reading text-[0.95rem] text-ink-soft">
 				{#each module.meta.goals as goal (goal)}
@@ -58,7 +62,7 @@
 		</section>
 	{/if}
 
-	<ol class="grid grid-cols-1 gap-2">
+	<ol class="grid grid-cols-1 gap-2" {@attach reveal(':scope > li')}>
 		{#each module.lessons as lesson (lesson.id)}
 			{@const done = progress.isCompleted(lesson.id)}
 			<li class="min-w-0">
@@ -77,18 +81,18 @@
 					<span class="min-w-0 flex-1">
 						<span class="flex items-baseline justify-between gap-3">
 							<span
-								class="font-sans font-semibold text-ink"
-								style:view-transition-name="lesson-title-{module.slug}-{lesson.slug}">{lesson.meta.title}</span
+								class="font-sans font-semibold text-ink">{lesson.meta.title}</span
 							>
-							<span class="shrink-0 font-mono text-xs text-muted sm:hidden">{lesson.meta.minutes} min</span>
+							<span class="shrink-0 font-mono text-xs text-muted sm:hidden">{t('common.minutes', { minutes: lesson.meta.minutes })}</span>
 						</span>
 						<span class="mt-0.5 line-clamp-2 block font-reading text-sm text-muted sm:line-clamp-1"
 							>{lesson.meta.description}</span
 						>
 					</span>
-					<span class="hidden shrink-0 font-mono text-xs text-muted sm:inline">{lesson.meta.minutes} min</span>
+					<span class="hidden shrink-0 font-mono text-xs text-muted sm:inline">{t('common.minutes', { minutes: lesson.meta.minutes })}</span>
 				</a>
 			</li>
 		{/each}
 	</ol>
 </div>
+{/key}

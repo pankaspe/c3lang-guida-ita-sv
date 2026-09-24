@@ -20,6 +20,8 @@ export type CodeSize = 90 | 100 | 115;
 export type Motion = 'system' | 'reduced' | 'full';
 
 export interface Preferences {
+	/** UI language: a dictionary tag from src/lib/i18n/locales, or "auto" to follow the course. */
+	locale: string;
 	mode: ThemeMode;
 	palette: Palette;
 	font: ReadingFont;
@@ -29,12 +31,15 @@ export interface Preferences {
 	codeSize: CodeSize;
 	ligatures: boolean;
 	focus: boolean;
+	/** Mouse wheel / swipe settles on the start of a lesson section when close to one. */
+	snap: boolean;
 	motion: Motion;
 	sound: boolean;
 	haptics: boolean;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
+	locale: 'auto',
 	mode: 'system',
 	palette: 'c3',
 	font: 'serif',
@@ -44,6 +49,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
 	codeSize: 100,
 	ligatures: false,
 	focus: true,
+	snap: true,
 	motion: 'system',
 	sound: false,
 	haptics: false
@@ -88,6 +94,7 @@ export function applyStoredPreferences(): void {
 		codeSize: prefs.codeSize || 100,
 		ligatures: prefs.ligatures ? 'on' : 'off',
 		focus: prefs.focus === false ? 'off' : 'on',
+		snap: prefs.snap === false ? 'off' : 'on',
 		motion: prefs.motion || 'system'
 	};
 	for (var key in attrs) root.dataset[key] = String(attrs[key]);

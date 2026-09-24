@@ -1,0 +1,28 @@
+{
+	"locale": "it",
+	"title": "Impara C3",
+	"subject": "C3",
+	"logo": "C3",
+	"tagline": "un percorso, non un manuale",
+	"description": "Corso interattivo in italiano per imparare il linguaggio C3, dalle basi ai concetti avanzati.",
+	"hero": {
+		"kicker": "import std::io;",
+		"title": "Impara C3, un passo alla volta.",
+		"highlight": "C3",
+		"intro": "C3 è l'evoluzione del C: stessa filosofia, meno trappole, più strumenti. Questo percorso ti porta da zero a programmatore, con lezioni brevi, quiz nell'app ed esercizi da fare sul tuo computer. Niente sandbox: il compilatore vero è il miglior insegnante."
+	},
+	"footer": "Corso non ufficiale · aggiornato al 2026",
+	"about": "Corso non ufficiale, in italiano. Gli esempi sono verificati con il compilatore vero prima di finire in una lezione.",
+	"docs": { "label": "c3-lang.org", "url": "https://c3-lang.org" },
+	"compiler": "c3c 0.8.4",
+	"moreModulesComing": true,
+	"badges": [
+		{
+			"id": "hello-world",
+			"title": "Hello, World!",
+			"description": "Completa la lezione sul primo programma",
+			"icon": "terminal",
+			"lessons": ["primi-passi/hello-world"]
+		}
+	]
+}

@@ -4,12 +4,15 @@
 	import { activity } from '$lib/state/activity.svelte';
 	import { progress } from '$lib/state/progress.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
+	import { course } from '$lib/content/course';
+	import { reveal } from '$lib/motion';
+	import { t } from '$lib/i18n/index.svelte';
 
 	function completedIn(lessonIds: string[]) {
 		return progress.countCompleted(lessonIds);
 	}
 
-	/** First lesson not yet completed, so "Continua" lands in the right place. */
+	/** First lesson not yet completed, so "Continue" lands in the right place. */
 	const nextLesson = $derived(
 		modules.flatMap((module) => module.lessons).find((lesson) => !progress.isCompleted(lesson.id))
 	);
@@ -23,34 +26,37 @@
 		}
 		return nextLesson ? lessonPath(nextLesson) : null;
 	});
+
+	/** Hero title split around the part painted with the brand gradient. */
+	const heroTitle = $derived.by(() => {
+		const { title, highlight } = course.hero;
+		const index = highlight ? title.indexOf(highlight) : -1;
+		if (!highlight || index < 0) return { before: title, highlight: '', after: '' };
+		return { before: title.slice(0, index), highlight, after: title.slice(index + highlight.length) };
+	});
 </script>
 
 <svelte:head>
-	<title>Impara C3 · un percorso dal C al C3</title>
-	<meta
-		name="description"
-		content="Corso interattivo in italiano per imparare il linguaggio C3, dalle basi ai concetti avanzati."
-	/>
+	<title>{course.title} · {course.tagline}</title>
+	<meta name="description" content={course.description} />
 </svelte:head>
 
 <section class="relative isolate">
 	<div class="bg-grid absolute inset-0 -z-10" aria-hidden="true"></div>
-	<div class="mx-auto max-w-6xl px-4 pt-12 pb-8 sm:px-6">
-		<p class="font-mono text-sm text-accent">import std::io;</p>
+	<div class="anim-fade mx-auto max-w-6xl px-4 pt-12 pb-8 sm:px-6">
+		<p class="font-mono text-sm text-accent">{course.hero.kicker}</p>
 		<h1 class="mt-2 max-w-2xl font-sans text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-			Impara <span class="text-brand">C3</span>, un passo alla volta.
+			{heroTitle.before}<span class="text-brand">{heroTitle.highlight}</span>{heroTitle.after}
 		</h1>
 		<p class="mt-4 max-w-2xl font-reading text-lg leading-relaxed text-ink-soft">
-			C3 è l'evoluzione del C: stessa filosofia, meno trappole, più strumenti. Questo percorso ti
-			porta da zero a programmatore, con lezioni brevi, quiz nell'app ed esercizi da fare sul tuo
-			computer. Niente sandbox: il compilatore vero è il miglior insegnante.
+			{course.hero.intro}
 		</p>
 		{#if continueHref}
 			<a
 				href={continueHref}
 				class="bg-brand mt-6 inline-flex items-center gap-2 rounded-md px-5 py-2.5 font-sans text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
 			>
-				{progress.completed.size > 0 || activity.last ? 'Continua da dove eri' : 'Inizia il percorso'}
+				{progress.completed.size > 0 || activity.last ? t('home.continue') : t('home.start')}
 				<Icon name="arrow-right" class="size-4" />
 			</a>
 		{/if}
@@ -58,8 +64,8 @@
 </section>
 
 <section class="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-	<h2 class="mb-4 font-mono text-sm font-semibold tracking-wide text-muted uppercase">Moduli</h2>
-	<ol class="grid gap-4 sm:grid-cols-2">
+	<h2 class="mb-4 font-mono text-sm font-semibold tracking-wide text-muted uppercase">{t('home.modules')}</h2>
+	<ol class="anim-fade grid gap-4 sm:grid-cols-2" {@attach reveal(':scope > li')}>
 		{#each modules as module (module.slug)}
 			{@const ids = module.lessons.map((lesson) => lesson.id)}
 			<li>
@@ -70,7 +76,6 @@
 					<div class="flex items-start justify-between gap-3">
 						<span
 							class="grid size-11 place-items-center rounded-lg border border-line bg-paper text-accent"
-							style:view-transition-name="module-icon-{module.slug}"
 						>
 							<Icon name={moduleIcon(module.meta.icon)} class="size-5" />
 						</span>
@@ -93,10 +98,12 @@
 				</a>
 			</li>
 		{/each}
-		<li
-			class="flex min-h-40 items-center justify-center rounded-xl border-2 border-dashed border-line p-5 text-center font-sans text-sm text-muted"
-		>
-			Altri moduli in arrivo…
-		</li>
+		{#if course.moreModulesComing}
+			<li
+				class="flex min-h-40 items-center justify-center rounded-xl border-2 border-dashed border-line p-5 text-center font-sans text-sm text-muted"
+			>
+				{t('home.moreComing')}
+			</li>
+		{/if}
 	</ol>
 </section>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { activity, dayKey } from '$lib/state/activity.svelte';
+	import { i18n, t } from '$lib/i18n/index.svelte';
 
 	/**
 	 * GitHub-style activity calendar: one column per week (Monday first), one
@@ -11,8 +12,16 @@
 
 	let { weeks = 18 }: Props = $props();
 
-	const MONTHS = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
-	const DAY_LABELS = ['lun', '', 'mer', '', 'ven', '', ''];
+	/** Short month names, January first, in the UI language. */
+	const months = $derived(
+		Array.from({ length: 12 }, (_, month) => i18n.date(new Date(2024, month, 1), { month: 'short' }))
+	);
+	/** Monday, Wednesday and Friday labels (2024-01-01 was a Monday). */
+	const dayLabels = $derived(
+		Array.from({ length: 7 }, (_, day) =>
+			day % 2 === 0 && day < 6 ? i18n.date(new Date(2024, 0, 1 + day), { weekday: 'short' }) : ''
+		)
+	);
 
 	interface Cell {
 		key: string;
@@ -51,7 +60,7 @@
 				// Label a column with its month when the month changes; skip a partial
 				// first column so labels never collide.
 				if (weekday === 0 && cursor.getMonth() !== previousMonth) {
-					if (week > 0 || cursor.getDate() <= 7) month = MONTHS[cursor.getMonth()];
+					if (week > 0 || cursor.getDate() <= 7) month = months[cursor.getMonth()];
 					previousMonth = cursor.getMonth();
 				}
 				cells.push({
@@ -59,7 +68,11 @@
 					date: new Date(cursor),
 					level: level(stats.seconds, stats.actions),
 					future: cursor > today,
-					label: `${cursor.getDate()} ${MONTHS[cursor.getMonth()]}: ${minutes} min, ${stats.actions} ${stats.actions === 1 ? 'azione' : 'azioni'}`
+					label: t('heatmap.cell', {
+						date: i18n.date(cursor, { day: 'numeric', month: 'short' }),
+						minutes,
+						actions: t('heatmap.actions', { count: stats.actions })
+					})
 				});
 				cursor.setDate(cursor.getDate() + 1);
 			}
@@ -81,11 +94,11 @@
 	<div class="inline-flex gap-2 font-mono text-[10px] text-muted">
 		<div class="grid grid-rows-[1rem_repeat(7,0.85rem)] gap-[3px] pr-1" aria-hidden="true">
 			<span></span>
-			{#each DAY_LABELS as label, index (index)}
+			{#each dayLabels as label, index (index)}
 				<span class="leading-[0.85rem]">{label}</span>
 			{/each}
 		</div>
-		<div class="flex gap-[3px]" role="img" aria-label="Calendario dell'attività delle ultime {weeks} settimane">
+		<div class="flex gap-[3px]" role="img" aria-label={t('heatmap.aria', { weeks })}>
 			{#each columns as column (column.cells[0].key)}
 				<div class="grid grid-rows-[1rem_repeat(7,0.85rem)] gap-[3px]">
 					<span class="leading-4 whitespace-nowrap">{column.month}</span>
@@ -100,10 +113,10 @@
 		</div>
 	</div>
 	<div class="mt-2 flex items-center justify-end gap-1 font-mono text-[10px] text-muted" aria-hidden="true">
-		meno
+		{t('heatmap.less')}
 		{#each shades as shade (shade)}
 			<span class={['size-[0.7rem] rounded-[2px]', shade]}></span>
 		{/each}
-		più
+		{t('heatmap.more')}
 	</div>
 </div>

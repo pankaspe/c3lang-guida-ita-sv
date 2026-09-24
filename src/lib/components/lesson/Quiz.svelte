@@ -5,6 +5,7 @@
 	import { activity, shortHash } from '$lib/state/activity.svelte';
 	import { currentLessonId } from '$lib/content/lesson-context';
 	import { feedback } from '$lib/feedback';
+	import { t } from '$lib/i18n/index.svelte';
 
 	/**
 	 * In-app multiple-choice check. The learner picks an option, gets
@@ -45,7 +46,8 @@
 
 <section class="quiz not-prose my-8 rounded-lg border border-line bg-surface p-5 shadow-sm">
 	<p class="mb-1 flex items-center gap-1.5 font-sans text-xs font-semibold tracking-wide text-accent uppercase">
-		<Icon name="help" class="size-4" /> Quiz
+		<Icon name="help" class="size-4" />
+		{t('quiz.label')}
 	</p>
 	<p class="mb-4 font-sans text-base font-medium text-ink">{@html renderInline(question)}</p>
 
@@ -87,7 +89,7 @@
 		>
 			<p class="flex items-center gap-1.5 font-sans font-semibold text-ink">
 				<Icon name={isCorrect ? 'target' : 'help'} class={['anim-pop size-4', isCorrect ? 'text-success' : 'text-danger']} />
-				{isCorrect ? 'Esatto!' : 'Non proprio.'}
+				{isCorrect ? t('quiz.correct') : t('quiz.wrong')}
 			</p>
 			{#if children}
 				<div class="lesson-prose prose-sm mt-1 [&>:first-child]:mt-0 [&>:last-child]:mb-0">
@@ -99,7 +101,7 @@
 				onclick={reset}
 				class="mt-3 font-sans text-xs font-medium text-muted underline-offset-2 hover:text-ink hover:underline"
 			>
-				Riprova
+				{t('quiz.retry')}
 			</button>
 		</div>
 	{/if}

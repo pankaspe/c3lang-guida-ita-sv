@@ -16,6 +16,8 @@ import type { LessonFrontmatter, LessonModule, LessonRef, ModuleMeta, ModuleRef 
 const MODULE_ROOT = '/src/content/modules/';
 
 const lessonLoaders = import.meta.glob<LessonModule>('/src/content/modules/*/*.svx');
+/** Raw markdown sources, loaded only on demand ("copy lesson"). */
+const lessonSources = import.meta.glob<string>('/src/content/modules/*/*.svx', { query: '?raw', import: 'default' });
 
 function buildRegistry(): ModuleRef[] {
 	return courseIndex.map((module) => {
@@ -56,12 +58,23 @@ export async function loadLessonComponent(lesson: LessonRef): Promise<LessonModu
 	return loader();
 }
 
+/**
+ * The lesson as plain markdown: title and description from the frontmatter
+ * as a heading, then the source body (lesson components stay as tags).
+ */
+export async function loadLessonMarkdown(lesson: LessonRef): Promise<string> {
+	const loader = lessonSources[lesson.file];
+	if (!loader) throw new Error(`No lesson file for "${lesson.id}" (${lesson.file})`);
+	const body = (await loader()).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trim();
+	return `# ${lesson.meta.title}\n\n> ${lesson.meta.description}\n\n${body}\n`;
+}
+
 export function lessonPath(lesson: LessonRef): string {
-	return `/moduli/${lesson.moduleSlug}/${lesson.slug}`;
+	return `/modules/${lesson.moduleSlug}/${lesson.slug}`;
 }
 
 export function modulePath(module: ModuleRef): string {
-	return `/moduli/${module.slug}`;
+	return `/modules/${module.slug}`;
 }
 
 /** Module icon from `module.json`, falling back to a neutral one if unknown. */

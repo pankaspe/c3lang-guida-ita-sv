@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import type { Snippet } from 'svelte';
+	import { t } from '$lib/i18n/index.svelte';
 
 	/** Collapsed block: the learner opens it only after trying on their own. */
 	interface Props {
@@ -8,7 +9,7 @@
 		children: Snippet;
 	}
 
-	let { title = 'Mostra una soluzione', children }: Props = $props();
+	let { title, children }: Props = $props();
 </script>
 
 <details class="solution not-prose group my-6 rounded-lg border border-line bg-surface-2">
@@ -17,8 +18,8 @@
 	>
 		<Icon name="chevron-right" class="size-4 text-muted transition group-open:rotate-90" />
 		<Icon name="lock" class="size-4 text-muted" />
-		{title}
-		<span class="font-normal text-muted">(prima prova da solo!)</span>
+		{title ?? t('solution.title')}
+		<span class="font-normal text-muted">{t('solution.tryFirst')}</span>
 	</summary>
 	<div class="lesson-prose prose-sm max-w-none border-t border-line px-4 py-3 [&>:first-child]:mt-0 [&>:last-child]:mb-0">
 		{@render children()}

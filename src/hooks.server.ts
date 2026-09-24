@@ -1,5 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
 import { applyStoredPreferences } from '$lib/state/preferences';
+import { course } from '$lib/content/course';
 
 /**
  * Inline the preferences bootstrap into every prerendered page, so theme and
@@ -10,5 +11,6 @@ const bootScript = `<script>try{(${applyStoredPreferences.toString()})()}catch(e
 
 export const handle: Handle = ({ event, resolve }) =>
 	resolve(event, {
-		transformPageChunk: ({ html }) => html.replace('%c3.boot%', bootScript)
+		// <html lang> is the content language: lessons are what most of the page is.
+		transformPageChunk: ({ html }) => html.replace('%c3.boot%', bootScript).replace('%c3.lang%', course.locale)
 	});

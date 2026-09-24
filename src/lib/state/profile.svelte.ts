@@ -2,6 +2,9 @@
  * Local learner profile: just a display name. No account, no server; it is
  * persisted in localStorage like everything else and included in backups.
  */
+import { course } from '$lib/content/course';
+import { t } from '$lib/i18n/index.svelte';
+
 const STORAGE_KEY = 'c3-course:profile';
 
 export const MAX_NAME_LENGTH = 32;
@@ -12,7 +15,7 @@ class Profile {
 
 	/** Name shown in the UI when none is set. */
 	get displayName(): string {
-		return this.name || 'Studente C3';
+		return this.name || t('profile.defaultName', { subject: course.subject });
 	}
 
 	load(): void {
