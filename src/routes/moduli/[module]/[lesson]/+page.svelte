@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { lessonPath, modulePath } from '$lib/content/registry';
+	import Icon from '$lib/components/ui/Icon.svelte';
+	import { lessonPath, modulePath, moduleIcon } from '$lib/content/registry';
 	import { progress } from '$lib/state/progress.svelte';
 
 	let { data } = $props();
@@ -22,8 +23,10 @@
 			<summary
 				class="cursor-pointer list-none px-4 py-3 font-sans text-xs font-semibold tracking-wide text-muted uppercase lg:cursor-default lg:px-0 lg:py-0"
 			>
-				<span class="mr-1 inline-block transition group-open:rotate-90 lg:hidden" aria-hidden="true">▸</span>
-				<a href={modulePath(module)} class="hover:text-ink">{module.meta.emoji} {module.meta.title}</a>
+				<Icon name="chevron-right" class="mr-1 size-3.5 align-[-2px] transition group-open:rotate-90 lg:hidden" />
+				<a href={modulePath(module)} class="inline-flex items-center gap-1.5 hover:text-ink"
+					><Icon name={moduleIcon(module.meta.icon)} class="size-3.5" /> {module.meta.title}</a
+				>
 			</summary>
 			<ol class="grid gap-0.5 border-t border-line px-2 py-2 lg:mt-3 lg:border-0 lg:p-0">
 				{#each module.lessons as item (item.id)}
@@ -42,7 +45,7 @@
 								class={[
 									'grid size-5 shrink-0 place-items-center rounded-full font-mono text-[10px]',
 									completed ? 'bg-success text-paper' : 'border border-line text-muted'
-								]}>{completed ? '✓' : item.order}</span
+								]}>{#if completed}<Icon name="check" class="size-3" />{:else}{item.order}{/if}</span
 							>
 							<span class="truncate">{item.meta.title}</span>
 						</a>
@@ -79,7 +82,7 @@
 							: 'border-accent bg-accent text-accent-ink hover:opacity-90'
 					]}
 				>
-					{done ? '✓ Lezione completata' : 'Segna come completata'}
+					{#if done}<Icon name="check" class="size-4" /> Lezione completata{:else}Segna come completata{/if}
 				</button>
 				{#if done && next}
 					<span class="font-sans text-sm text-muted">Bravo! Pronto per la prossima?</span>

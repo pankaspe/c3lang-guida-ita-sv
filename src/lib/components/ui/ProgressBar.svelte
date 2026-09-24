@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/ui/Icon.svelte';
 	interface Props {
 		value: number;
 		max: number;
@@ -26,6 +27,8 @@
 		></div>
 	</div>
 	{#if label}
-		<span class="tabular-nums">{value}/{max}{complete ? ' 🏆' : ''}</span>
+		<span class="inline-flex items-center gap-1 tabular-nums"
+			>{value}/{max}{#if complete}<Icon name="award" class="size-3.5 text-success" />{/if}</span
+		>
 	{/if}
 </div>

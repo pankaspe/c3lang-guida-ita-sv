@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/ui/Icon.svelte';
 	import type { Snippet } from 'svelte';
 	import { renderInline } from '$lib/markdown/inline';
 
@@ -30,7 +31,9 @@
 </script>
 
 <section class="quiz not-prose my-8 rounded-lg border border-line bg-surface p-5 shadow-sm">
-	<p class="mb-1 font-sans text-xs font-semibold tracking-wide text-accent uppercase">✏️ Quiz</p>
+	<p class="mb-1 flex items-center gap-1.5 font-sans text-xs font-semibold tracking-wide text-accent uppercase">
+		<Icon name="help" class="size-4" /> Quiz
+	</p>
 	<p class="mb-4 font-sans text-base font-medium text-ink">{@html renderInline(question)}</p>
 
 	<ul class="grid gap-2">
@@ -53,7 +56,7 @@
 					<span
 						class="grid size-6 shrink-0 place-items-center rounded-full border border-line font-mono text-xs"
 					>
-						{#if state === 'correct'}✓{:else if state === 'wrong'}✗{:else}{String.fromCharCode(
+						{#if state === 'correct'}<Icon name="check" class="size-3.5" />{:else if state === 'wrong'}<Icon name="x" class="size-3.5" />{:else}{String.fromCharCode(
 								65 + index
 							)}{/if}
 					</span>
@@ -69,8 +72,9 @@
 				? 'border-success bg-success-soft'
 				: 'border-danger bg-danger-soft'}"
 		>
-			<p class="font-sans font-semibold text-ink">
-				{isCorrect ? '🎯 Esatto!' : '🤔 Non proprio.'}
+			<p class="flex items-center gap-1.5 font-sans font-semibold text-ink">
+				<Icon name={isCorrect ? 'target' : 'help'} class="size-4 {isCorrect ? 'text-success' : 'text-danger'}" />
+				{isCorrect ? 'Esatto!' : 'Non proprio.'}
 			</p>
 			{#if children}
 				<div class="lesson-prose prose-sm mt-1 [&>:first-child]:mt-0 [&>:last-child]:mb-0">

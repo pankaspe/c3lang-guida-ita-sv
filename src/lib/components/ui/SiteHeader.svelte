@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/ui/Icon.svelte';
 	import { page } from '$app/state';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import { allLessons } from '$lib/content/registry';
@@ -34,13 +35,13 @@
 				href="/impostazioni"
 				aria-current={onSettings ? 'page' : undefined}
 				class={[
-					'grid size-9 place-items-center rounded-full border bg-surface text-base transition hover:border-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none',
+					'grid size-9 place-items-center rounded-full border bg-surface text-ink-soft transition hover:text-ink hover:border-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none',
 					onSettings ? 'border-accent' : 'border-line'
 				]}
 				aria-label="Impostazioni di lettura"
 				title="Impostazioni"
 			>
-				<span aria-hidden="true">⚙️</span>
+				<Icon name="settings" class="size-4" />
 			</a>
 			<ThemeToggle />
 		</div>

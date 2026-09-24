@@ -10,6 +10,7 @@
  * Adding a module or a lesson never requires touching application code.
  */
 import courseIndex from 'virtual:course-index';
+import { isIconName, type IconName } from '$lib/components/ui/Icon.svelte';
 import type { LessonFrontmatter, LessonModule, LessonRef, ModuleMeta, ModuleRef } from './types.ts';
 
 const MODULE_ROOT = '/src/content/modules/';
@@ -61,4 +62,9 @@ export function lessonPath(lesson: LessonRef): string {
 
 export function modulePath(module: ModuleRef): string {
 	return `/moduli/${module.slug}`;
+}
+
+/** Module icon from `module.json`, falling back to a neutral one if unknown. */
+export function moduleIcon(name: string): IconName {
+	return isIconName(name) ? name : 'layers';
 }

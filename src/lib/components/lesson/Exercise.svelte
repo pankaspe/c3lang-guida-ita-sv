@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/ui/Icon.svelte';
 	import type { Snippet } from 'svelte';
 	import { normaliseOutput } from '$lib/markdown/inline';
 
@@ -44,8 +45,8 @@
 <section
 	class="exercise not-prose my-8 rounded-lg border-2 border-dashed border-accent/60 bg-surface p-5"
 >
-	<p class="mb-1 font-sans text-xs font-semibold tracking-wide text-accent uppercase">
-		🛠️ Esercizio · sul tuo computer
+	<p class="mb-1 flex items-center gap-1.5 font-sans text-xs font-semibold tracking-wide text-accent uppercase">
+		<Icon name="terminal" class="size-4" /> Esercizio · sul tuo computer
 	</p>
 	<h4 class="mb-3 font-sans text-lg font-semibold text-ink">{title}</h4>
 
@@ -92,7 +93,9 @@
 				{/if}
 				{#if checked}
 					{#if isCorrect}
-						<span class="font-sans text-sm font-semibold text-success">🏆 Perfetto, è proprio così!</span>
+						<span class="inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-success"
+							><Icon name="award" class="size-4" /> Perfetto, è proprio così!</span
+						>
 					{:else}
 						<span class="font-sans text-sm font-semibold text-danger">Non coincide.</span>
 						<span class="font-sans text-sm text-muted">
@@ -111,7 +114,7 @@
 		{:else}
 			<label class="flex cursor-pointer items-center gap-3 font-sans text-sm font-medium text-ink">
 				<input type="checkbox" bind:checked={done} class="size-4 accent-[var(--accent)]" />
-				{done ? '🏆 Fatto! Avanti così.' : 'Segna come fatto quando hai finito'}
+				{#if done}<Icon name="award" class="size-4 text-success" /> Fatto! Avanti così.{:else}Segna come fatto quando hai finito{/if}
 			</label>
 		{/if}
 	</div>

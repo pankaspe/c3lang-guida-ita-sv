@@ -1,7 +1,7 @@
 {
 	"title": "Primi passi",
 	"subtitle": "Installa il compilatore, scrivi il tuo primo programma e impara a parlare con la macchina: variabili, tipi, operatori e stampa.",
-	"emoji": "🚀",
+	"icon": "rocket",
 	"level": "Base",
 	"goals": [
 		"Installare c3c e compilare un programma da terminale",

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/ui/Icon.svelte';
 	import { settings, TEXT_SIZES, type ReadingFont } from '$lib/state/settings.svelte';
 
 	const fonts: { value: ReadingFont; label: string; sample: string; family: string }[] = [
@@ -53,7 +54,9 @@
 				>
 					<span class="flex items-center justify-between gap-2 font-sans text-sm font-semibold text-ink">
 						{font.label}
-						{#if active}<span class="font-mono text-xs text-accent">✓ attivo</span>{/if}
+						{#if active}<span class="inline-flex items-center gap-1 font-mono text-xs text-accent"
+								><Icon name="check" class="size-3.5" /> attivo</span
+							>{/if}
 					</span>
 					<span class="mt-2 block text-2xl text-ink" style:font-family={font.family}>Aa Bb 123</span>
 					<span class="mt-1 block text-sm text-muted" style:font-family={font.family}>{font.sample}</span>
@@ -114,7 +117,9 @@
 	</div>
 
 	<aside class="mt-10 rounded-lg border border-line bg-surface-2 px-5 py-4 font-sans text-sm text-muted">
-		<p class="font-semibold text-ink-soft">🔒 Dove finiscono queste scelte?</p>
+		<p class="flex items-center gap-1.5 font-semibold text-ink-soft">
+			<Icon name="lock" class="size-4" /> Dove finiscono queste scelte?
+		</p>
 		<p class="mt-1">
 			Le impostazioni (come il tema e i tuoi progressi) vivono solo in questo browser, salvate nel suo
 			<code class="font-mono text-xs">localStorage</code>. Nessun account, nessun server: se cambi

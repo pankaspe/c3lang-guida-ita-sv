@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { lessonPath } from '$lib/content/registry';
+	import Icon from '$lib/components/ui/Icon.svelte';
+	import { lessonPath, moduleIcon } from '$lib/content/registry';
 	import { progress } from '$lib/state/progress.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 
@@ -25,7 +26,9 @@
 
 	<header class="mb-8">
 		<div class="flex items-center gap-3">
-			<span class="text-4xl" aria-hidden="true">{module.meta.emoji}</span>
+			<span class="grid size-12 shrink-0 place-items-center rounded-lg border border-line bg-surface text-accent">
+				<Icon name={moduleIcon(module.meta.icon)} class="size-6" />
+			</span>
 			<h1 class="font-sans text-3xl font-bold tracking-tight text-ink sm:text-4xl">
 				{module.meta.title}
 			</h1>
@@ -46,7 +49,7 @@
 			</h2>
 			<ul class="mt-2 grid gap-1.5 font-reading text-[0.95rem] text-ink-soft">
 				{#each module.meta.goals as goal (goal)}
-					<li class="flex gap-2"><span class="text-success" aria-hidden="true">✓</span>{goal}</li>
+					<li class="flex gap-2"><Icon name="check" class="mt-1.5 size-4 text-success" />{goal}</li>
 				{/each}
 			</ul>
 		</section>
@@ -66,7 +69,7 @@
 							done ? 'bg-success text-paper' : 'border border-line bg-paper text-muted'
 						]}
 					>
-						{done ? '✓' : lesson.order}
+						{#if done}<Icon name="check" class="size-4" />{:else}{lesson.order}{/if}
 					</span>
 					<span class="min-w-0 flex-1">
 						<span class="flex items-baseline justify-between gap-3">

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/ui/Icon.svelte';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -40,7 +41,7 @@
 	>
 		<span class="flex items-center gap-2">
 			{#if isOutput}
-				<span aria-hidden="true">▶</span>
+				<Icon name="terminal" class="size-3.5" />
 			{:else}
 				<span class="inline-block size-2 rounded-full bg-accent" aria-hidden="true"></span>
 			{/if}

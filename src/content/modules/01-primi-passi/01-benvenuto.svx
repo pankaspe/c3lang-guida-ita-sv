@@ -32,7 +32,7 @@ Questo non è un manuale da consultare: è un **percorso**. Le lezioni vanno let
 
 - **Codice colorato** che puoi copiare con un click (il bottone "Copia" in alto a destra di ogni blocco).
 - **Riquadri** come quello qui sopra: consigli, curiosità, avvertimenti, e i riquadri "Se vieni dal C" per chi già conosce il linguaggio padre.
-- **Dettagli nerd** 🤓: riquadri chiusi che si aprono con un click e spiegano cosa succede *dentro* il computer (memoria, bit, buffer, compilatore...). Non servono per andare avanti, ma è lì che si capisce davvero come funziona la macchina.
+- **Dettagli nerd**: riquadri chiusi che si aprono con un click e spiegano cosa succede *dentro* il computer (memoria, bit, buffer, compilatore...). Non servono per andare avanti, ma è lì che si capisce davvero come funziona la macchina.
 - **Quiz** da fare direttamente qui nell'app, con la spiegazione subito dopo.
 - **Esercizi da fare sul tuo computer**: scrivi il programma, lo compili, e torni qui a dire cosa ha stampato. L'app controlla se hai fatto centro.
 

@@ -58,10 +58,12 @@ Colours are CSS tokens in `src/app.css` (`:root` light, `.dark` dark) exposed to
 `@theme inline`. The brand comes from the C3 logo gradient (`--brand-blue` #2563eb → `--brand-violet`
 #7c3aed); helpers `.bg-brand`, `.text-brand`, `.bg-grid`. Keep the "tech but calm" look: cool neutral
 surfaces, indigo accent, mono for small labels; don't hard-code colours in components, add a token.
+**No emoji or colour icons anywhere** (UI or lessons): use the monochrome stroke icons in
+`src/lib/components/ui/Icon.svelte` (Lucide paths, `currentColor`); add new ones there when needed.
 
 ## Authoring conventions (lessons)
 
-- Folder `NN-slug/` with `module.json` (`title, subtitle, emoji, level, goals[]`); lessons `NN-slug.svx`
+- Folder `NN-slug/` with `module.json` (`title, subtitle, icon, level, goals[]`, `icon` = a name from `Icon.svelte`); lessons `NN-slug.svx`
   with frontmatter `title`, `description`, `minutes`.
 - Fences: `c3` (with optional `title="file.c3"`), `output` (terminal look), `sh`, `json`, `c`.
 - Components: `Callout type="tip|note|warning|fun|c|deep|nerd"`, `Quiz question options answer`,

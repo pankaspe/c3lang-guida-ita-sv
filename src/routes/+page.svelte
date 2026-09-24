@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { modules, modulePath, lessonPath } from '$lib/content/registry';
+	import Icon from '$lib/components/ui/Icon.svelte';
+	import { modules, modulePath, lessonPath, moduleIcon } from '$lib/content/registry';
 	import { progress } from '$lib/state/progress.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 
@@ -55,7 +56,9 @@
 					class="group flex h-full flex-col rounded-xl border border-line bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
 				>
 					<div class="flex items-start justify-between gap-3">
-						<span class="text-3xl" aria-hidden="true">{module.meta.emoji}</span>
+						<span class="grid size-11 place-items-center rounded-lg border border-line bg-paper text-accent">
+							<Icon name={moduleIcon(module.meta.icon)} class="size-5" />
+						</span>
 						<span
 							class="rounded-full border border-line bg-paper px-2 py-0.5 font-sans text-[11px] font-medium text-muted"
 						>

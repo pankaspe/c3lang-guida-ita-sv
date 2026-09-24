@@ -5,7 +5,8 @@ import type { LessonHeading } from '$lib/markdown/remark-headings';
 export interface ModuleMeta {
 	title: string;
 	subtitle: string;
-	emoji: string;
+	/** Icon name from `Icon.svelte` (monochrome, no emoji), e.g. "rocket". */
+	icon: string;
 	/** Free-form level label shown on the card, e.g. "Base", "Intermedio". */
 	level: string;
 	/** What the learner will be able to do at the end of the module. */

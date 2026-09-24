@@ -34,7 +34,16 @@ export default defineConfig({
 					highlight: { highlighter: highlight },
 					remarkPlugins: [remarkHeadings],
 					rehypePlugins: [rehypeSlug, rehypeLessonComponents]
-				})
+				}),
+				// mdsvex still emits the Svelte 4 `<script context="module">` for frontmatter
+				// metadata; rewrite it to the Svelte 5 `module` attribute to silence the warning.
+				{
+					name: 'mdsvex-script-module',
+					markup: ({ content, filename }) =>
+						filename?.endsWith('.svx')
+							? { code: content.replace(/<script context="module"/g, '<script module') }
+							: undefined
+				}
 			],
 			extensions: ['.svelte', '.svx']
 		})
