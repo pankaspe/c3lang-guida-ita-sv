@@ -103,7 +103,266 @@
 	--terminal-ink: #dfe3f5;
 }
 
-/* Reader settings (see src/lib/state/settings.svelte.ts). */
+/* ---------------------------------------------------------------------------
+   Alternative palettes (Impostazioni → Aspetto). Each one overrides the
+   tokens for light (:not(.dark)) and dark (.dark) mode.
+   --------------------------------------------------------------------------- */
+
+/* Paper: warm, bookish, low contrast. */
+:root[data-palette='paper']:not(.dark) {
+	--brand-gradient: linear-gradient(90deg, #b4512b, #9a3e6f);
+	--paper: #f6f1e7;
+	--surface: #fdfaf3;
+	--surface-2: #efe8da;
+	--ink: #2b2620;
+	--ink-soft: #4d453b;
+	--muted: #7a7062;
+	--line: #e0d7c5;
+	--accent: #b4512b;
+	--accent-ink: #ffffff;
+	--accent-soft: #f3dccd;
+	--link: #2e5f8a;
+	--success: #3d7a4a;
+	--success-soft: #dcebdc;
+	--danger: #a83a3a;
+	--danger-soft: #f2d9d6;
+	--warning: #9a6b12;
+	--warning-soft: #f6e8c4;
+	--info: #2e5f8a;
+	--info-soft: #d9e5ef;
+	--fun: #7a4b9c;
+	--fun-soft: #e8dcf2;
+	--nerd: #2b6f7a;
+	--nerd-soft: #dcecec;
+	--code-bg: #f1ebdf;
+	--code-ink: #3a342c;
+	--code-comment: #8a8071;
+	--code-keyword: #9a3e6f;
+	--code-type: #2b6f7a;
+	--code-string: #6b7d2b;
+	--code-number: #b05a1a;
+	--code-function: #2e5f8a;
+	--code-constant: #b07a10;
+	--code-attribute: #7a4b9c;
+	--code-operator: #6a6256;
+	--code-format: #b05a1a;
+	--terminal-bg: #2b2620;
+	--terminal-ink: #e8e1d3;
+}
+:root[data-palette='paper'].dark {
+	--brand-gradient: linear-gradient(90deg, #e08a5c, #e39ac2);
+	--paper: #1b1917;
+	--surface: #232019;
+	--surface-2: #2c2822;
+	--ink: #e6dfd2;
+	--ink-soft: #c9c0b1;
+	--muted: #9d9385;
+	--line: #3a352e;
+	--accent: #e08a5c;
+	--accent-ink: #1b1917;
+	--accent-soft: #3f2c22;
+	--link: #8db4d8;
+	--success: #8fc79a;
+	--success-soft: #24352a;
+	--danger: #e08a8a;
+	--danger-soft: #3d2626;
+	--warning: #e0b95a;
+	--warning-soft: #3b3120;
+	--info: #8db4d8;
+	--info-soft: #22303c;
+	--fun: #c9a2e6;
+	--fun-soft: #33283d;
+	--nerd: #7fc4cf;
+	--nerd-soft: #1f3134;
+	--code-bg: #1f1c18;
+	--code-ink: #ddd5c6;
+	--code-comment: #857b6c;
+	--code-keyword: #e39ac2;
+	--code-type: #7fc4cf;
+	--code-string: #b8cc6a;
+	--code-number: #f0a56a;
+	--code-function: #8db4d8;
+	--code-constant: #e6c46a;
+	--code-attribute: #c9a2e6;
+	--code-operator: #b3aa9b;
+	--code-format: #f0a56a;
+	--terminal-bg: #12100e;
+	--terminal-ink: #e8e1d3;
+}
+
+/* Terminal: phosphor green, for the nostalgic. */
+:root[data-palette='terminal']:not(.dark) {
+	--brand-gradient: linear-gradient(90deg, #15803d, #0e7490);
+	--paper: #f2f6f1;
+	--surface: #fbfdfa;
+	--surface-2: #e4ece2;
+	--ink: #0f1f12;
+	--ink-soft: #2c4430;
+	--muted: #5b725f;
+	--line: #d0ddcf;
+	--accent: #15803d;
+	--accent-ink: #ffffff;
+	--accent-soft: #d8efdd;
+	--link: #0f766e;
+	--success: #15803d;
+	--success-soft: #d8efdd;
+	--danger: #b91c1c;
+	--danger-soft: #f8dcdc;
+	--warning: #a16207;
+	--warning-soft: #f7ecc9;
+	--info: #0f766e;
+	--info-soft: #d5efec;
+	--fun: #4d7c0f;
+	--fun-soft: #e5f1cf;
+	--nerd: #0e7490;
+	--nerd-soft: #d8eff4;
+	--code-bg: #eef3ec;
+	--code-ink: #13301a;
+	--code-comment: #6b8570;
+	--code-keyword: #15803d;
+	--code-type: #0e7490;
+	--code-string: #4d7c0f;
+	--code-number: #b45309;
+	--code-function: #0f766e;
+	--code-constant: #a16207;
+	--code-attribute: #7e22ce;
+	--code-operator: #4a6350;
+	--code-format: #b45309;
+	--terminal-bg: #06120a;
+	--terminal-ink: #7dff9e;
+}
+:root[data-palette='terminal'].dark {
+	--brand-gradient: linear-gradient(90deg, #3ddc84, #5cc8e0);
+	--paper: #070b08;
+	--surface: #0c130e;
+	--surface-2: #122016;
+	--ink: #c9f5d3;
+	--ink-soft: #9ccfa6;
+	--muted: #648a6c;
+	--line: #1b3021;
+	--accent: #3ddc84;
+	--accent-ink: #03130a;
+	--accent-soft: #0f2e1b;
+	--link: #5ee0a8;
+	--success: #3ddc84;
+	--success-soft: #0f2e1b;
+	--danger: #ff6b6b;
+	--danger-soft: #331414;
+	--warning: #e3c75a;
+	--warning-soft: #2e2710;
+	--info: #5cc8e0;
+	--info-soft: #0e2a31;
+	--fun: #b6e35a;
+	--fun-soft: #212d0e;
+	--nerd: #5cc8e0;
+	--nerd-soft: #0e2a31;
+	--code-bg: #050906;
+	--code-ink: #bff2c9;
+	--code-comment: #4f7457;
+	--code-keyword: #3ddc84;
+	--code-type: #5cc8e0;
+	--code-string: #b6e35a;
+	--code-number: #ffb86b;
+	--code-function: #7ee8c0;
+	--code-constant: #e3c75a;
+	--code-attribute: #d49cff;
+	--code-operator: #8bb894;
+	--code-format: #ffb86b;
+	--terminal-bg: #020402;
+	--terminal-ink: #7dff9e;
+}
+
+/* High contrast: maximum legibility. */
+:root[data-palette='contrast']:not(.dark) {
+	--brand-gradient: linear-gradient(90deg, #1d2bd6, #1d2bd6);
+	--paper: #ffffff;
+	--surface: #ffffff;
+	--surface-2: #eeeeee;
+	--ink: #000000;
+	--ink-soft: #111111;
+	--muted: #3d3d3d;
+	--line: #6b6b6b;
+	--accent: #1d2bd6;
+	--accent-ink: #ffffff;
+	--accent-soft: #dfe2ff;
+	--link: #1d2bd6;
+	--success: #006b21;
+	--success-soft: #d6f5de;
+	--danger: #b00015;
+	--danger-soft: #ffe0e3;
+	--warning: #7a4a00;
+	--warning-soft: #ffefc7;
+	--info: #1d2bd6;
+	--info-soft: #dfe2ff;
+	--fun: #6a00b8;
+	--fun-soft: #f0e0ff;
+	--nerd: #005a6e;
+	--nerd-soft: #d6f3f8;
+	--code-bg: #f4f4f4;
+	--code-ink: #000000;
+	--code-comment: #4a4a4a;
+	--code-keyword: #6a00b8;
+	--code-type: #005a6e;
+	--code-string: #006b21;
+	--code-number: #9c2500;
+	--code-function: #1d2bd6;
+	--code-constant: #7a4a00;
+	--code-attribute: #8a0070;
+	--code-operator: #222222;
+	--code-format: #9c2500;
+	--terminal-bg: #000000;
+	--terminal-ink: #ffffff;
+}
+:root[data-palette='contrast'].dark {
+	--brand-gradient: linear-gradient(90deg, #ffd400, #ffd400);
+	--paper: #000000;
+	--surface: #000000;
+	--surface-2: #1a1a1a;
+	--ink: #ffffff;
+	--ink-soft: #f2f2f2;
+	--muted: #cfcfcf;
+	--line: #9a9a9a;
+	--accent: #ffd400;
+	--accent-ink: #000000;
+	--accent-soft: #332b00;
+	--link: #7fc8ff;
+	--success: #5dff8f;
+	--success-soft: #002b10;
+	--danger: #ff7a85;
+	--danger-soft: #3a0008;
+	--warning: #ffd400;
+	--warning-soft: #332b00;
+	--info: #7fc8ff;
+	--info-soft: #00223a;
+	--fun: #e0a8ff;
+	--fun-soft: #2a0040;
+	--nerd: #6ff0ff;
+	--nerd-soft: #00292f;
+	--code-bg: #0d0d0d;
+	--code-ink: #ffffff;
+	--code-comment: #bdbdbd;
+	--code-keyword: #e0a8ff;
+	--code-type: #6ff0ff;
+	--code-string: #5dff8f;
+	--code-number: #ffb070;
+	--code-function: #7fc8ff;
+	--code-constant: #ffd400;
+	--code-attribute: #ff9df0;
+	--code-operator: #e6e6e6;
+	--code-format: #ffb070;
+	--terminal-bg: #000000;
+	--terminal-ink: #ffffff;
+}
+
+/* ---------------------------------------------------------------------------
+   Reader settings (see src/lib/state/preferences.ts)
+   --------------------------------------------------------------------------- */
+:root {
+	--reading-leading: 1.75;
+	--reading-measure: 48rem;
+	--code-size: 0.875rem;
+	--code-ligatures: 'calt' 0;
+}
 :root[data-font='sans'] {
 	--reading-font: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 }
@@ -112,6 +371,47 @@
 }
 :root[data-text-size='150'] {
 	font-size: 150%;
+}
+:root[data-line-height='compact'] {
+	--reading-leading: 1.6;
+}
+:root[data-line-height='relaxed'] {
+	--reading-leading: 1.95;
+}
+:root[data-measure='narrow'] {
+	--reading-measure: 38rem;
+}
+:root[data-measure='wide'] {
+	--reading-measure: 64rem;
+}
+:root[data-code-size='90'] {
+	--code-size: 0.8125rem;
+}
+:root[data-code-size='115'] {
+	--code-size: 1rem;
+}
+:root[data-ligatures='on'] {
+	--code-ligatures: 'calt' 1;
+}
+
+/* Motion: "reduced" always, "system" follows the OS setting. */
+:root[data-motion='reduced'] *,
+:root[data-motion='reduced'] *::before,
+:root[data-motion='reduced'] *::after {
+	animation-duration: 0.01ms !important;
+	animation-iteration-count: 1 !important;
+	transition-duration: 0.01ms !important;
+	scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+	:root:not([data-motion='full']) *,
+	:root:not([data-motion='full']) *::before,
+	:root:not([data-motion='full']) *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }
 
 @theme inline {
@@ -186,7 +486,8 @@ body {
 	color: transparent;
 }
 
-.dark .text-brand {
+:root[data-palette='c3'].dark .text-brand,
+:root:not([data-palette]).dark .text-brand {
 	background-image: linear-gradient(90deg, #6f9bff, #b18cff);
 }
 
@@ -218,7 +519,7 @@ body {
 	--tw-prose-td-borders: var(--line);
 	font-family: var(--reading-font);
 	font-size: 1.0625rem;
-	line-height: 1.75;
+	line-height: var(--reading-leading);
 }
 
 .lesson-prose :where(h2, h3, h4) {
@@ -286,7 +587,8 @@ body {
 	background: var(--code-bg);
 	color: var(--code-ink);
 	font-family: var(--font-mono);
-	font-size: 0.875rem;
+	font-size: var(--code-size);
+	font-feature-settings: var(--code-ligatures);
 	line-height: 1.65;
 	tab-size: 4;
 }
@@ -361,9 +663,169 @@ body {
 	color: var(--code-constant);
 }
 
-/* Reduce motion for users who ask for it */
-@media (prefers-reduced-motion: reduce) {
-	html {
-		scroll-behavior: auto;
+/* ---------------------------------------------------------------------------
+   Micro-interactions (all neutralised by the motion settings above)
+   --------------------------------------------------------------------------- */
+@keyframes rise {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
 	}
+}
+@keyframes pop {
+	0% {
+		opacity: 0;
+		transform: scale(0.6);
+	}
+	60% {
+		transform: scale(1.15);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+@keyframes shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	20% {
+		transform: translateX(-6px);
+	}
+	40% {
+		transform: translateX(5px);
+	}
+	60% {
+		transform: translateX(-3px);
+	}
+	80% {
+		transform: translateX(2px);
+	}
+}
+@keyframes draw {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+.anim-rise {
+	animation: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.anim-pop {
+	animation: pop 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.anim-shake {
+	animation: shake 0.4s ease both;
+}
+/* Stroke icons that draw themselves (check marks). */
+.anim-draw :is(path, circle) {
+	stroke-dasharray: 32;
+	stroke-dashoffset: 32;
+	animation: draw 0.45s 0.08s ease-out forwards;
+}
+
+/* Smooth open/close for <details> (nerd callouts, solutions), where supported. */
+@supports (interpolate-size: allow-keywords) {
+	:root {
+		interpolate-size: allow-keywords;
+	}
+	details::details-content {
+		block-size: 0;
+		overflow: clip;
+		transition:
+			block-size 0.3s ease,
+			content-visibility 0.3s allow-discrete;
+	}
+	details[open]::details-content {
+		block-size: auto;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+   Reading spotlight (Impostazioni → Lettura → Modalità riflettore).
+   Sections come from rehype-lesson-sections; the active one is marked by
+   the readingTracker attachment.
+   --------------------------------------------------------------------------- */
+.lesson-section {
+	position: relative;
+}
+.lesson-prose > .lesson-section:first-child > :first-child {
+	margin-top: 0;
+}
+:root[data-focus='on'] [data-spotlight] .lesson-section {
+	transition: opacity 0.5s ease;
+}
+:root[data-focus='on'] [data-spotlight] .lesson-section:not([data-active]) {
+	opacity: 0.35;
+}
+:root[data-focus='on'] [data-spotlight] .lesson-section:not([data-active]):focus-within {
+	opacity: 0.75;
+}
+/* Peek at a dimmed section on hover, only with a real pointer (on touch, :hover sticks after a tap). */
+@media (hover: hover) {
+	:root[data-focus='on'] [data-spotlight] .lesson-section:not([data-active]):hover {
+		opacity: 0.75;
+	}
+}
+/* A thin bar that follows the active section. */
+:root[data-focus='on'] [data-spotlight] .lesson-section::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -0.85rem;
+	width: 2px;
+	border-radius: 2px;
+	background: linear-gradient(to bottom, var(--accent), color-mix(in srgb, var(--accent) 5%, transparent));
+	opacity: 0;
+	transform: scaleY(0.3);
+	transform-origin: top;
+	transition:
+		opacity 0.4s ease,
+		transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+:root[data-focus='on'] [data-spotlight] .lesson-section[data-active]::before {
+	opacity: 1;
+	transform: none;
+}
+@media (width >= 40rem) {
+	:root[data-focus='on'] [data-spotlight] .lesson-section::before {
+		left: -1.5rem;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+   Page transitions (View Transitions API, started in the root layout)
+   --------------------------------------------------------------------------- */
+@keyframes vt-out {
+	to {
+		opacity: 0;
+	}
+}
+@keyframes vt-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+}
+::view-transition-old(root) {
+	animation: vt-out 0.16s ease-out both;
+}
+::view-transition-new(root) {
+	animation: vt-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+::view-transition-group(*) {
+	animation-duration: 0.35s;
+	animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes ring {
+	from {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent);
+	}
+	to {
+		box-shadow: 0 0 0 14px transparent;
+	}
+}
+.anim-ring {
+	animation: ring 0.7s ease-out both;
 }

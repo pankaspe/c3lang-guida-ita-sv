@@ -2,6 +2,9 @@
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import type { Snippet } from 'svelte';
 	import { normaliseOutput } from '$lib/markdown/inline';
+	import { activity, shortHash } from '$lib/state/activity.svelte';
+	import { currentLessonId } from '$lib/content/lesson-context';
+	import { feedback } from '$lib/feedback';
 
 	/**
 	 * "Outside the app" exercise: the learner writes and runs code on their
@@ -32,8 +35,24 @@
 	);
 	const multiline = $derived((expected ?? '').includes('\n'));
 
+	const lessonId = currentLessonId();
+	const key = $derived(lessonId ? `${lessonId}::ex::${shortHash(title)}` : null);
+	/** Day this exercise was first solved, from the activity log. */
+	const solvedOn = $derived(key ? activity.exercises[key] : undefined);
+
+	function solved() {
+		feedback('success');
+		if (key) activity.recordExercise(key);
+	}
+
 	function check() {
 		checked = true;
+		if (isCorrect) solved();
+		else feedback('error');
+	}
+
+	function toggleDone() {
+		if (done) solved();
 	}
 
 	function retry() {
@@ -48,7 +67,14 @@
 	<p class="mb-1 flex items-center gap-1.5 font-sans text-xs font-semibold tracking-wide text-accent uppercase">
 		<Icon name="terminal" class="size-4" /> Esercizio · sul tuo computer
 	</p>
-	<h4 class="mb-3 font-sans text-lg font-semibold text-ink">{title}</h4>
+	<div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+		<h4 class="font-sans text-lg font-semibold text-ink">{title}</h4>
+		{#if solvedOn}
+			<span class="inline-flex items-center gap-1 font-mono text-xs text-success">
+				<Icon name="check" class="size-3.5" /> risolto il {new Date(`${solvedOn}T12:00:00`).toLocaleDateString('it-IT')}
+			</span>
+		{/if}
+	</div>
 
 	<div class="lesson-prose prose-sm max-w-none [&>:first-child]:mt-0 [&>:last-child]:mb-0">
 		{@render children()}
@@ -61,6 +87,7 @@
 				{#if multiline}
 					<textarea
 						bind:value={answer}
+						oninput={() => (checked = false)}
 						rows={Math.min(8, expected.split('\n').length + 1)}
 						disabled={checked && isCorrect}
 						spellcheck="false"
@@ -71,6 +98,7 @@
 					<input
 						type="text"
 						bind:value={answer}
+						oninput={() => (checked = false)}
 						disabled={checked && isCorrect}
 						spellcheck="false"
 						onkeydown={(event) => event.key === 'Enter' && check()}
@@ -93,11 +121,11 @@
 				{/if}
 				{#if checked}
 					{#if isCorrect}
-						<span class="inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-success"
-							><Icon name="award" class="size-4" /> Perfetto, è proprio così!</span
+						<span class="anim-rise inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-success"
+							><Icon name="award" class="anim-pop size-4" /> Perfetto, è proprio così!</span
 						>
 					{:else}
-						<span class="font-sans text-sm font-semibold text-danger">Non coincide.</span>
+						<span class="anim-shake font-sans text-sm font-semibold text-danger">Non coincide.</span>
 						<span class="font-sans text-sm text-muted">
 							Riesegui il programma e confronta con calma, spazi inclusi.
 						</span>
@@ -113,8 +141,8 @@
 			</div>
 		{:else}
 			<label class="flex cursor-pointer items-center gap-3 font-sans text-sm font-medium text-ink">
-				<input type="checkbox" bind:checked={done} class="size-4 accent-[var(--accent)]" />
-				{#if done}<Icon name="award" class="size-4 text-success" /> Fatto! Avanti così.{:else}Segna come fatto quando hai finito{/if}
+				<input type="checkbox" bind:checked={done} onchange={toggleDone} class="size-4 accent-[var(--accent)]" />
+				{#if done}<Icon name="award" class="anim-pop size-4 text-success" /> Fatto! Avanti così.{:else}Segna come fatto quando hai finito{/if}
 			</label>
 		{/if}
 	</div>

@@ -2,6 +2,9 @@
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import type { Snippet } from 'svelte';
 	import { renderInline } from '$lib/markdown/inline';
+	import { activity, shortHash } from '$lib/state/activity.svelte';
+	import { currentLessonId } from '$lib/content/lesson-context';
+	import { feedback } from '$lib/feedback';
 
 	/**
 	 * In-app multiple-choice check. The learner picks an option, gets
@@ -25,6 +28,16 @@
 	const isCorrect = $derived(picked !== null && picked === answer);
 	const answered = $derived(picked !== null);
 
+	const lessonId = currentLessonId();
+
+	function pick(index: number) {
+		picked = index;
+		const correct = index === answer;
+		feedback(correct ? 'success' : 'error');
+		// Only the first attempt counts towards the profile's accuracy.
+		if (lessonId) activity.recordQuiz(`${lessonId}::${shortHash(question)}`, correct);
+	}
+
 	function reset() {
 		picked = null;
 	}
@@ -44,19 +57,19 @@
 				<button
 					type="button"
 					disabled={answered}
-					onclick={() => (picked = index)}
+					onclick={() => pick(index)}
 					class={[
 						'flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left font-sans text-sm transition',
 						state === 'idle' && 'border-line bg-paper hover:border-accent hover:bg-accent-soft',
 						state === 'correct' && 'border-success bg-success-soft text-ink',
-						state === 'wrong' && 'border-danger bg-danger-soft text-ink',
+						state === 'wrong' && 'anim-shake border-danger bg-danger-soft text-ink',
 						state === 'dim' && 'border-line bg-paper text-muted opacity-70'
 					]}
 				>
 					<span
 						class="grid size-6 shrink-0 place-items-center rounded-full border border-line font-mono text-xs"
 					>
-						{#if state === 'correct'}<Icon name="check" class="size-3.5" />{:else if state === 'wrong'}<Icon name="x" class="size-3.5" />{:else}{String.fromCharCode(
+						{#if state === 'correct'}<Icon name="check" class={['size-3.5 text-success', index === picked && 'anim-draw']} />{:else if state === 'wrong'}<Icon name="x" class="anim-pop size-3.5 text-danger" />{:else}{String.fromCharCode(
 								65 + index
 							)}{/if}
 					</span>
@@ -68,12 +81,12 @@
 
 	{#if answered}
 		<div
-			class="mt-4 rounded-md border px-4 py-3 text-sm {isCorrect
+			class="anim-rise mt-4 rounded-md border px-4 py-3 text-sm {isCorrect
 				? 'border-success bg-success-soft'
 				: 'border-danger bg-danger-soft'}"
 		>
 			<p class="flex items-center gap-1.5 font-sans font-semibold text-ink">
-				<Icon name={isCorrect ? 'target' : 'help'} class="size-4 {isCorrect ? 'text-success' : 'text-danger'}" />
+				<Icon name={isCorrect ? 'target' : 'help'} class={['anim-pop size-4', isCorrect ? 'text-success' : 'text-danger']} />
 				{isCorrect ? 'Esatto!' : 'Non proprio.'}
 			</p>
 			{#if children}

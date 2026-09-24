@@ -44,18 +44,33 @@ Config lives in `vite.config.ts` (no `svelte.config.js`).
   rewrites `<Callout>` etc. to `Components.Callout` (mdsvex only namespaces hast elements, not raw nodes).
   Keep `LESSON_COMPONENTS` in `components.ts` in sync with the layout exports.
 - `remark-headings.ts` injects `headings` into the lesson `metadata` for the page TOC.
-- Progress, theme and reader settings: `src/lib/state/*.svelte.ts`, localStorage-backed, loaded in
-  the root layout `$effect` so SSR output is deterministic. Theme (`.dark` class) and settings
-  (`data-font="serif|sans"`, `data-text-size="100|125|150"` on `<html>`) are also applied before first
-  paint by the inline script in `src/app.html`: keep it in sync with the stores.
-- Settings page: `src/routes/impostazioni/+page.svelte` (reading font + text size). Text size scales
-  the root `font-size`; the reading font is the `--reading-font` var, used via the `font-reading`
-  utility and `.lesson-prose`. Use `font-reading` (not `font-serif`) for long-form text.
+- Browser state lives in `src/lib/state/`, all in localStorage under `c3-course:*` keys (so the
+  backup in `storage.ts` picks up any new key automatically). Stores are loaded in the root layout
+  `$effect` so SSR output is deterministic:
+  - `preferences.ts` + `settings.svelte.ts`: theme mode/palette and reader settings, exposed to CSS
+    as `data-*` attributes on `<html>` (+ `.dark`). `applyStoredPreferences()` is the single
+    implementation: `src/hooks.server.ts` inlines it into every page (`%c3.boot%` in `app.html`) to
+    apply them before first paint, so it must stay self-contained (no imports/outer variables).
+  - `progress.svelte.ts` (completed lessons), `profile.svelte.ts` (display name),
+    `activity.svelte.ts` (study time per day, first-attempt quizzes, solved exercises, opened nerd
+    callouts, last reading position), `reading.svelte.ts` (current lesson/section/progress).
+- Lesson sections: `rehype-lesson-sections.ts` wraps each h2 + its content in
+  `<section class="lesson-section" data-section="<h2 id>">`. The `readingTracker` attachment marks the
+  active one (reading spotlight, TOC, header progress bar, "riprendi da qui"). **Never put an `##`
+  heading inside a lesson component** (Callout/Quiz/Exercise/Solution): it would split the component.
+- Lesson components get the lesson id via `lesson-context.ts` (`createContext`) to key activity records.
+- `src/lib/feedback.ts`: opt-in sounds (Web Audio, synthesised) and vibration for learner actions.
+- Pages: `/impostazioni` (Aspetto, Lettura, Codice, Esperienza, Dati: export/import/delete, Info),
+  `/profilo` (identicon + name, resume, stats, heatmap, modules, badges from `content/badges.ts`).
+- Animations: `.anim-rise|pop|shake|draw|ring` utilities and View Transitions (root layout
+  `onNavigate`); every animation is neutralised by the motion setting / `prefers-reduced-motion`.
+  Keep new animations short and subtle, and always go through these utilities.
 
 ## Theme
 
 Colours are CSS tokens in `src/app.css` (`:root` light, `.dark` dark) exposed to Tailwind via
-`@theme inline`. The brand comes from the C3 logo gradient (`--brand-blue` #2563eb → `--brand-violet`
+`@theme inline`. Alternative palettes (`data-palette="paper|terminal|contrast"`) override every token
+for both modes (`:not(.dark)` / `.dark`): a new token must be added to all of them. The brand comes from the C3 logo gradient (`--brand-blue` #2563eb → `--brand-violet`
 #7c3aed); helpers `.bg-brand`, `.text-brand`, `.bg-grid`. Keep the "tech but calm" look: cool neutral
 surfaces, indigo accent, mono for small labels; don't hard-code colours in components, add a token.
 **No emoji or colour icons anywhere** (UI or lessons): use the monochrome stroke icons in

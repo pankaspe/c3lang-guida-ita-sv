@@ -1,59 +1,79 @@
 /**
- * Reader settings: lesson font and text size. Like the theme, the initial
- * values are applied to <html> by an inline script in app.html (before
- * hydration, to avoid a flash); this store keeps the runtime in sync and
- * persists changes to localStorage.
- *
- * The values are exposed to CSS as `data-font` and `data-text-size`
- * attributes on <html>, see app.css.
+ * Reactive view of the user preferences (see preferences.ts). The initial
+ * DOM state is applied before hydration by the inline bootstrap; `sync()`
+ * reads the stored values after hydration, and every change is persisted and
+ * re-applied to <html> through the same `applyStoredPreferences` function.
  */
-const STORAGE_KEY = 'c3-course:settings';
-
-export type ReadingFont = 'serif' | 'sans';
-export type TextSize = 100 | 125 | 150;
-
-export const TEXT_SIZES: readonly TextSize[] = [100, 125, 150];
-
-const DEFAULT_FONT: ReadingFont = 'serif';
-const DEFAULT_SIZE: TextSize = 100;
+import {
+	DEFAULT_PREFERENCES,
+	PREFERENCES_KEY,
+	applyStoredPreferences,
+	readPreferences,
+	type Preferences
+} from './preferences';
 
 class SettingsStore {
-	font = $state<ReadingFont>(DEFAULT_FONT);
-	textSize = $state<TextSize>(DEFAULT_SIZE);
+	prefs = $state<Preferences>({ ...DEFAULT_PREFERENCES });
+	/** Whether the dark theme is currently showing (resolves mode "system"). */
+	isDark = $state(false);
+	/** Whether the OS asks for reduced motion. */
+	systemReducedMotion = $state(false);
 
-	/** Read what the inline script already applied to <html>. */
+	private darkQuery?: MediaQueryList;
+	private motionQuery?: MediaQueryList;
+
+	/** Read stored preferences and start following system theme/motion changes. */
 	sync(): void {
-		const root = document.documentElement;
-		this.font = root.dataset.font === 'sans' ? 'sans' : 'serif';
-		const size = Number(root.dataset.textSize);
-		this.textSize = TEXT_SIZES.includes(size as TextSize) ? (size as TextSize) : DEFAULT_SIZE;
+		this.prefs = readPreferences();
+		this.isDark = document.documentElement.classList.contains('dark');
+
+		if (!this.darkQuery) {
+			this.darkQuery = matchMedia('(prefers-color-scheme: dark)');
+			this.darkQuery.addEventListener('change', () => {
+				if (this.prefs.mode === 'system') this.apply();
+			});
+			this.motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+			this.systemReducedMotion = this.motionQuery.matches;
+			this.motionQuery.addEventListener('change', (event) => {
+				this.systemReducedMotion = event.matches;
+			});
+		}
 	}
 
-	setFont(font: ReadingFont): void {
-		this.font = font;
-		this.apply();
+	/** True when animations should be skipped (explicit choice or OS setting). */
+	get reducedMotion(): boolean {
+		const { motion } = this.prefs;
+		return motion === 'reduced' || (motion === 'system' && this.systemReducedMotion);
 	}
 
-	setTextSize(size: TextSize): void {
-		this.textSize = size;
-		this.apply();
+	update(patch: Partial<Preferences>): void {
+		this.prefs = { ...this.prefs, ...patch };
+		this.persist();
+	}
+
+	/** Flip between light and dark (leaving "system" for an explicit choice). */
+	toggleDark(): void {
+		this.update({ mode: this.isDark ? 'light' : 'dark' });
 	}
 
 	reset(): void {
-		this.font = DEFAULT_FONT;
-		this.textSize = DEFAULT_SIZE;
+		this.prefs = { ...DEFAULT_PREFERENCES };
+		this.persist();
+	}
+
+	private persist(): void {
+		try {
+			localStorage.setItem(PREFERENCES_KEY, JSON.stringify(this.prefs));
+			localStorage.removeItem('c3-course:theme'); // legacy key, now part of the settings
+		} catch {
+			// Storage unavailable: preferences apply to this page view only.
+		}
 		this.apply();
 	}
 
 	private apply(): void {
-		const root = document.documentElement;
-		root.dataset.font = this.font;
-		root.dataset.textSize = String(this.textSize);
-		try {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify({ font: this.font, textSize: this.textSize }));
-		} catch {
-			// Ignore: settings simply won't persist.
-		}
+		applyStoredPreferences();
+		this.isDark = document.documentElement.classList.contains('dark');
 	}
 }
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '$lib/components/ui/Icon.svelte';
-	import { modules, modulePath, lessonPath, moduleIcon } from '$lib/content/registry';
+	import { modules, modulePath, lessonPath, moduleIcon, allLessons } from '$lib/content/registry';
+	import { activity } from '$lib/state/activity.svelte';
 	import { progress } from '$lib/state/progress.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 
@@ -12,6 +13,16 @@
 	const nextLesson = $derived(
 		modules.flatMap((module) => module.lessons).find((lesson) => !progress.isCompleted(lesson.id))
 	);
+
+	/** Exact spot where the learner stopped reading, if that lesson isn't done yet. */
+	const continueHref = $derived.by(() => {
+		const last = activity.last;
+		const lesson = last && allLessons.find((item) => item.id === last.lessonId);
+		if (lesson && !progress.isCompleted(lesson.id)) {
+			return lessonPath(lesson) + (last.section !== 'intro' ? `#${last.section}` : '');
+		}
+		return nextLesson ? lessonPath(nextLesson) : null;
+	});
 </script>
 
 <svelte:head>
@@ -34,12 +45,13 @@
 			porta da zero a programmatore, con lezioni brevi, quiz nell'app ed esercizi da fare sul tuo
 			computer. Niente sandbox: il compilatore vero è il miglior insegnante.
 		</p>
-		{#if nextLesson}
+		{#if continueHref}
 			<a
-				href={lessonPath(nextLesson)}
+				href={continueHref}
 				class="bg-brand mt-6 inline-flex items-center gap-2 rounded-md px-5 py-2.5 font-sans text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
 			>
-				{progress.completed.size > 0 ? 'Continua da dove eri' : 'Inizia il percorso'} →
+				{progress.completed.size > 0 || activity.last ? 'Continua da dove eri' : 'Inizia il percorso'}
+				<Icon name="arrow-right" class="size-4" />
 			</a>
 		{/if}
 	</div>
@@ -56,7 +68,10 @@
 					class="group flex h-full flex-col rounded-xl border border-line bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
 				>
 					<div class="flex items-start justify-between gap-3">
-						<span class="grid size-11 place-items-center rounded-lg border border-line bg-paper text-accent">
+						<span
+							class="grid size-11 place-items-center rounded-lg border border-line bg-paper text-accent"
+							style:view-transition-name="module-icon-{module.slug}"
+						>
 							<Icon name={moduleIcon(module.meta.icon)} class="size-5" />
 						</span>
 						<span

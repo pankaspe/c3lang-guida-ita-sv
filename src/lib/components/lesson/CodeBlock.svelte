@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/ui/Icon.svelte';
+	import { feedback } from '$lib/feedback';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -23,6 +24,7 @@
 		try {
 			await navigator.clipboard.writeText(code);
 			copied = true;
+			feedback('tap');
 			clearTimeout(copyTimer);
 			copyTimer = setTimeout(() => (copied = false), 1600);
 		} catch {
@@ -51,10 +53,17 @@
 			<button
 				type="button"
 				onclick={copy}
-				class="rounded px-2 py-0.5 font-sans text-[11px] font-medium text-muted transition hover:bg-surface hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+				class={[
+					'inline-flex items-center gap-1 rounded px-2 py-0.5 font-sans text-[11px] font-medium transition hover:bg-surface hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none',
+					copied ? 'text-success' : 'text-muted'
+				]}
 				aria-live="polite"
 			>
-				{copied ? '✓ Copiato' : 'Copia'}
+				{#if copied}
+					<Icon name="check" class="anim-draw size-3.5" /> Copiato
+				{:else}
+					<Icon name="copy" class="size-3.5" /> Copia
+				{/if}
 			</button>
 		{/if}
 	</figcaption>

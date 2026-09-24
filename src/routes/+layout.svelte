@@ -3,16 +3,31 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import SiteHeader from '$lib/components/ui/SiteHeader.svelte';
 	import { progress } from '$lib/state/progress.svelte';
-	import { theme } from '$lib/state/theme.svelte';
 	import { settings } from '$lib/state/settings.svelte';
+	import { activity } from '$lib/state/activity.svelte';
+	import { profile } from '$lib/state/profile.svelte';
+	import { onNavigate } from '$app/navigation';
 
 	let { children } = $props();
 
 	// Browser-only state is read after hydration so SSR output stays deterministic.
 	$effect(() => {
 		progress.load();
-		theme.sync();
+		activity.load();
+		profile.load();
 		settings.sync();
+	});
+
+	// Animated page transitions where the browser supports them.
+	onNavigate((navigation) => {
+		if (!document.startViewTransition || settings.reducedMotion) return;
+		if (navigation.from?.url.pathname === navigation.to?.url.pathname) return;
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
 	});
 </script>
 

@@ -22,8 +22,11 @@ export function remarkHeadings() {
 
 		visit(tree, 'heading', (node) => {
 			if (node.depth !== 2 && node.depth !== 3) return;
-			const text = toString(node);
-			headings.push({ depth: node.depth, text, id: slugger.slug(text) });
+			// mdsvex escapes `{` / `}` as numeric entities before remark runs: keep
+			// the raw text for the id (it must match rehype-slug), decode it for display.
+			const raw = toString(node);
+			const text = raw.replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)));
+			headings.push({ depth: node.depth, text, id: slugger.slug(raw) });
 		});
 
 		const data = file.data as { fm?: Record<string, unknown> };

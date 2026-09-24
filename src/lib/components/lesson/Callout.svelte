@@ -2,6 +2,9 @@
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import type { Snippet } from 'svelte';
 	import type { IconName } from '$lib/components/ui/Icon.svelte';
+	import { activity } from '$lib/state/activity.svelte';
+	import { currentLessonId } from '$lib/content/lesson-context';
+	import { feedback } from '$lib/feedback';
 
 	/**
 	 * Boxed aside used inside lessons.
@@ -35,10 +38,17 @@
 	};
 
 	const preset = $derived(presets[type]);
+	const lessonId = currentLessonId();
+
+	function opened(event: Event) {
+		if (!(event.currentTarget as HTMLDetailsElement).open) return;
+		feedback('tap');
+		if (lessonId) activity.recordNerd(`${lessonId}::${title ?? ''}`);
+	}
 </script>
 
 {#if type === 'nerd'}
-	<details class="callout group my-6 rounded-r-lg border-l-4 {preset.classes}" data-type={type}>
+	<details class="callout group my-6 rounded-r-lg border-l-4 {preset.classes}" data-type={type} ontoggle={opened}>
 		<summary
 			class="not-prose flex cursor-pointer list-none items-start gap-3 px-5 py-3 font-sans select-none [&::-webkit-details-marker]:hidden"
 		>

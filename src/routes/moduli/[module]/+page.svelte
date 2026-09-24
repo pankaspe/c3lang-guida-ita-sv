@@ -26,7 +26,10 @@
 
 	<header class="mb-8">
 		<div class="flex items-center gap-3">
-			<span class="grid size-12 shrink-0 place-items-center rounded-lg border border-line bg-surface text-accent">
+			<span
+				class="grid size-12 shrink-0 place-items-center rounded-lg border border-line bg-surface text-accent"
+				style:view-transition-name="module-icon-{module.slug}"
+			>
 				<Icon name={moduleIcon(module.meta.icon)} class="size-6" />
 			</span>
 			<h1 class="font-sans text-3xl font-bold tracking-tight text-ink sm:text-4xl">
@@ -73,7 +76,10 @@
 					</span>
 					<span class="min-w-0 flex-1">
 						<span class="flex items-baseline justify-between gap-3">
-							<span class="font-sans font-semibold text-ink">{lesson.meta.title}</span>
+							<span
+								class="font-sans font-semibold text-ink"
+								style:view-transition-name="lesson-title-{module.slug}-{lesson.slug}">{lesson.meta.title}</span
+							>
 							<span class="shrink-0 font-mono text-xs text-muted sm:hidden">{lesson.meta.minutes} min</span>
 						</span>
 						<span class="mt-0.5 line-clamp-2 block font-reading text-sm text-muted sm:line-clamp-1"

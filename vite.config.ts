@@ -8,6 +8,7 @@ import rehypeSlug from 'rehype-slug';
 import { highlight } from './src/lib/markdown/highlighter.ts';
 import { remarkHeadings } from './src/lib/markdown/remark-headings.ts';
 import { rehypeLessonComponents } from './src/lib/markdown/rehype-lesson-components.ts';
+import { rehypeLessonSections } from './src/lib/markdown/rehype-lesson-sections.ts';
 import { courseIndex } from './src/lib/build/course-index.ts';
 
 const lessonLayout = fileURLToPath(new URL('./src/lib/markdown/LessonLayout.svelte', import.meta.url));
@@ -33,7 +34,7 @@ export default defineConfig({
 					smartypants: { dashes: 'oldschool' },
 					highlight: { highlighter: highlight },
 					remarkPlugins: [remarkHeadings],
-					rehypePlugins: [rehypeSlug, rehypeLessonComponents]
+					rehypePlugins: [rehypeSlug, rehypeLessonSections, rehypeLessonComponents]
 				}),
 				// mdsvex still emits the Svelte 4 `<script context="module">` for frontmatter
 				// metadata; rewrite it to the Svelte 5 `module` attribute to silence the warning.
