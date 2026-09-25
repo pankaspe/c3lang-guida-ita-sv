@@ -59,7 +59,7 @@ The app is a generic, localisable course reader; the content is Italian only (no
 - `src/content/course.json` (`src/lib/content/course.ts` types it): title, subject, logo, tagline,
   hero, footer, about, docs link, compiler, course-specific badges. Written in the course language.
 - Routes are English and language-neutral: `/`, `/modules/[module]/[lesson]`, `/profile`,
-  `/settings` (section anchors `#appearance`, `#reading`, `#code`, `#experience`, `#keyboard`, `#data`,
+  `/privacy`, `/settings` (section anchors `#appearance`, `#reading`, `#code`, `#experience`, `#keyboard`, `#data`,
   `#info`).
 
 ## How content is wired
@@ -118,7 +118,10 @@ The app is a generic, localisable course reader; the content is Italian only (no
 - Cloudflare Pages, configured in the dashboard (build `bun run build`, output `build`). There is no
   `wrangler.toml` on purpose: Pages would read it instead of the dashboard and requires `name` in it.
 - `fallback: '404.html'` in the adapter so unknown URLs get a real 404, not the homepage with 200.
-- `url` in `course.json` = public site address. While empty, canonical/`og:url`, the sitemap entries
+- Footer: `components/ui/SiteFooter.svelte` (course links, docs/GitHub/issues from `course.json`
+  `docs`/`repository`, `copyright`). `/privacy` explains the localStorage-only data model; keep it
+  true if anything starts talking to a server (analytics, external fonts...) and bump its date.
+- `url` in `course.json` = public site address (https://c3-tutorial.pages.dev). While empty, canonical/`og:url`, the sitemap entries
   and the `Sitemap:` line in robots.txt are omitted (`src/lib/seo.ts`). `robots.txt` and
   `sitemap.xml` are prerendered routes (`src/routes/*/+server.ts`), the sitemap lists home, modules
   and lessons automatically.

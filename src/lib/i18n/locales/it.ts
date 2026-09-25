@@ -32,8 +32,52 @@ const it = {
 	},
 	footer: {
 		basedOn: 'basato sulla documentazione di',
-		settings: 'impostazioni',
-		shortcuts: 'scorciatoie da tastiera'
+		settings: 'Impostazioni',
+		shortcuts: 'Scorciatoie da tastiera',
+		course: 'Corso',
+		resources: 'Risorse',
+		home: 'Tutti i moduli',
+		profile: 'Il tuo profilo',
+		privacy: 'Privacy',
+		docs: 'Documentazione di C3',
+		source: 'Codice sorgente su GitHub',
+		issue: 'Segnala un errore',
+		verifiedWith: 'esempi verificati con {compiler}'
+	},
+	privacy: {
+		title: 'Privacy',
+		description: 'Come questo sito tratta i tuoi dati: niente cookie, niente tracciamento, tutto resta nel tuo browser.',
+		kicker: '// privacy',
+		heading: 'Privacy',
+		introMd: 'In breve: questo sito **non usa cookie**, **non traccia nessuno** e **non ha un server che riceve i tuoi dati**. I tuoi progressi restano nel tuo browser.',
+		updated: 'Ultimo aggiornamento: {date}',
+		storage: {
+			title: 'Cosa viene salvato, e dove',
+			bodyMd:
+				'Progressi, nome del profilo, preferenze (tema, lettura, codice), tempo di studio e risultati di quiz ed esercizi sono salvati **solo nel `localStorage` del tuo browser**, sotto chiavi che iniziano con `c3-course:`. Non vengono mai inviati da nessuna parte: restano sul tuo dispositivo.'
+		},
+		tracking: {
+			title: 'Niente cookie, niente tracciamento',
+			bodyMd:
+				'Il sito non imposta cookie e non usa strumenti di analisi, pubblicità o profilazione. Non carica nulla da servizi esterni: font, script e stili sono serviti dal sito stesso. Per questo non trovi nessun banner da accettare.'
+		},
+		hosting: {
+			title: 'Hosting',
+			bodyMd:
+				'Il sito è ospitato su **Cloudflare Pages**. Come qualsiasi server web, Cloudflare riceve i dati tecnici necessari a consegnarti le pagine (indirizzo IP, tipo di browser, pagina richiesta) e può conservarli per un periodo limitato per sicurezza e prevenzione degli abusi, secondo la propria informativa.',
+			link: 'Informativa privacy di Cloudflare'
+		},
+		control: {
+			title: 'I tuoi dati, le tue regole',
+			bodyMd:
+				'Da **Impostazioni → Dati** puoi esportare tutto in un file JSON, reimportarlo su un altro dispositivo o cancellare tutto con un clic. Anche cancellare i dati del sito dalle impostazioni del browser rimuove ogni cosa.',
+			link: 'Vai a Impostazioni → Dati'
+		},
+		contact: {
+			title: 'Contatti',
+			bodyMd: 'Hai domande o dubbi su questa pagina? Apri una issue sul repository del progetto.',
+			link: 'Apri una issue su GitHub'
+		}
 	},
 	home: {
 		continue: 'Continua da dove eri',

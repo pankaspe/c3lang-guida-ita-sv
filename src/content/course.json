@@ -1,6 +1,6 @@
 {
 	"locale": "it",
-	"url": "",
+	"url": "https://c3-tutorial.pages.dev",
 	"title": "Impara C3",
 	"subject": "C3",
 	"logo": "C3",
@@ -14,6 +14,8 @@
 	},
 	"footer": "Corso non ufficiale · aggiornato al 2026",
 	"about": "Corso non ufficiale, in italiano. Gli esempi sono verificati con il compilatore vero prima di finire in una lezione.",
+	"copyright": "© 2026 Pankaspe & Claude Code",
+	"repository": { "label": "pankaspe/c3lang-guida-ita-sv", "url": "https://github.com/pankaspe/c3lang-guida-ita-sv" },
 	"docs": { "label": "c3-lang.org", "url": "https://c3-lang.org" },
 	"compiler": "c3c 0.8.4",
 	"moreModulesComing": true,

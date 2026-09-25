@@ -24,8 +24,52 @@ const en: Messages = {
 	},
 	footer: {
 		basedOn: 'based on the documentation at',
-		settings: 'settings',
-		shortcuts: 'keyboard shortcuts'
+		settings: 'Settings',
+		shortcuts: 'Keyboard shortcuts',
+		course: 'Course',
+		resources: 'Resources',
+		home: 'All modules',
+		profile: 'Your profile',
+		privacy: 'Privacy',
+		docs: 'C3 documentation',
+		source: 'Source code on GitHub',
+		issue: 'Report a mistake',
+		verifiedWith: 'examples verified with {compiler}'
+	},
+	privacy: {
+		title: 'Privacy',
+		description: 'How this site handles your data: no cookies, no tracking, everything stays in your browser.',
+		kicker: '// privacy',
+		heading: 'Privacy',
+		introMd: 'In short: this site **uses no cookies**, **tracks nobody** and **has no server receiving your data**. Your progress stays in your browser.',
+		updated: 'Last updated: {date}',
+		storage: {
+			title: 'What is stored, and where',
+			bodyMd:
+				'Progress, profile name, preferences (theme, reading, code), study time and quiz and exercise results are stored **only in your browser\'s `localStorage`**, under keys starting with `c3-course:`. They are never sent anywhere: they stay on your device.'
+		},
+		tracking: {
+			title: 'No cookies, no tracking',
+			bodyMd:
+				'The site sets no cookies and uses no analytics, advertising or profiling tools. It loads nothing from external services: fonts, scripts and styles are served by the site itself. That is why there is no banner to accept.'
+		},
+		hosting: {
+			title: 'Hosting',
+			bodyMd:
+				'The site is hosted on **Cloudflare Pages**. Like any web server, Cloudflare receives the technical data needed to deliver the pages (IP address, browser type, requested page) and may keep it for a limited time for security and abuse prevention, under its own policy.',
+			link: 'Cloudflare privacy policy'
+		},
+		control: {
+			title: 'Your data, your rules',
+			bodyMd:
+				'From **Settings → Data** you can export everything to a JSON file, import it on another device or delete it all in one click. Clearing the site data in your browser settings removes everything too.',
+			link: 'Go to Settings → Data'
+		},
+		contact: {
+			title: 'Contact',
+			bodyMd: 'Questions or concerns about this page? Open an issue on the project repository.',
+			link: 'Open an issue on GitHub'
+		}
 	},
 	home: {
 		continue: 'Continue where you left off',

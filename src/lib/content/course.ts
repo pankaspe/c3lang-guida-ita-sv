@@ -43,6 +43,10 @@ export interface CourseConfig {
 	footer: string;
 	/** Paragraph shown in Settings → Info. */
 	about: string;
+	/** Copyright line in the footer. */
+	copyright?: string;
+	/** Source repository (footer link, privacy contact). */
+	repository?: { label: string; url: string };
 	docs?: { label: string; url: string };
 	/** Reference toolchain every example was verified with, e.g. "c3c 0.8.4". */
 	compiler?: string;

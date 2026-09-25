@@ -5,7 +5,7 @@ export const prerender = true;
 
 /** Every public page. Empty while `url` in course.json is not set (a sitemap needs absolute URLs). */
 export function GET() {
-	const paths = ['/', ...modules.map(modulePath), ...allLessons.map(lessonPath)];
+	const paths = ['/', ...modules.map(modulePath), ...allLessons.map(lessonPath), '/privacy'];
 	const urls = paths
 		.map(absoluteUrl)
 		.filter((url) => url !== undefined)
