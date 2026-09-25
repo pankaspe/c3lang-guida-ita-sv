@@ -5,6 +5,7 @@
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import { course } from '$lib/content/course';
 	import Seo from '$lib/components/ui/Seo.svelte';
+	import { moduleOgImage } from '$lib/seo';
 	import { reveal } from '$lib/motion';
 	import { t } from '$lib/i18n/index.svelte';
 
@@ -16,7 +17,7 @@
 	const totalMinutes = $derived(module.lessons.reduce((sum, lesson) => sum + lesson.meta.minutes, 0));
 </script>
 
-<Seo title="{module.meta.title} · {course.title}" description={module.meta.subtitle} />
+<Seo title="{module.meta.title} · {course.title}" description={module.meta.subtitle} image={moduleOgImage(module.slug)} />
 
 {#key module.slug}
 <div class="anim-fade mx-auto max-w-3xl px-4 py-10 sm:px-6">

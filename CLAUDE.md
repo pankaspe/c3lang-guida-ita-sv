@@ -1,8 +1,9 @@
 # CLAUDE.md
 
 Interactive Italian course for learning the C3 language (https://c3-lang.org), built as a fully
-static SvelteKit site. This file is the layout and authoring reference (README.md is only a short
-project description).
+static SvelteKit site, live at https://c3-tutorial.pages.dev. This file is the layout and authoring
+reference; README.md is the public face of the repo (what the course is, module table, how to run it):
+update its module table when a module is added.
 
 ## Hard rules
 
@@ -127,7 +128,11 @@ The app is a generic, localisable course reader; the content is Italian only (no
   and lessons automatically.
 - Every page sets its head via `components/ui/Seo.svelte` (title, description, canonical, Open Graph,
   Twitter card); `noindex` on `/profile` and `/settings`. The home page adds a schema.org `Course`
-  JSON-LD. No `og:image` yet (needs a PNG).
+  JSON-LD.
+- Preview images (`og:image`, 1200x630) are generated offline by `python3 scripts/og-images.py`
+  (Pillow, fonts from node_modules) into `static/og/` and committed: `index.png` (default),
+  `<module>.png`, `<module>/<lesson>.png`. **Re-run it after adding/renaming a module or lesson**;
+  the build warns about missing ones (`sitemap.xml/+server.ts`).
 
 ## Theme
 

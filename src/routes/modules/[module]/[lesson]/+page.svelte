@@ -8,6 +8,7 @@
 	import { setLessonContext } from '$lib/content/lesson-context';
 	import { course } from '$lib/content/course';
 	import Seo from '$lib/components/ui/Seo.svelte';
+	import { lessonOgImage } from '$lib/seo';
 	import { reveal } from '$lib/motion';
 	import { t } from '$lib/i18n/index.svelte';
 
@@ -88,7 +89,10 @@
 
 <svelte:window onscroll={interacted} onkeydown={interacted} onpointermove={interacted} ontouchstart={interacted} />
 
-<Seo title="{lesson.meta.title} · {module.meta.title} · {course.title}" description={lesson.meta.description} type="article" />
+<Seo title="{lesson.meta.title} · {module.meta.title} · {course.title}" description={lesson.meta.description}
+	image={lessonOgImage(module.slug, lesson.slug)}
+	type="article"
+/>
 
 <div class="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,1fr)_13rem]">
 	<!-- Module navigation -->
