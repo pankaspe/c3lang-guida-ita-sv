@@ -36,3 +36,6 @@ vite.config.ts.timestamp-*
 *.a
 *.so
 *.dll
+
+# Local-only authoring notes for Claude Code
+/CLAUDE.md

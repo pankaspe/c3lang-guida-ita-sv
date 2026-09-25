@@ -85,8 +85,14 @@ bun run build    # sito statico in build/
 
 Le lezioni sono file `.svx` (markdown con componenti) in `src/content/modules/`: aggiungere una
 lezione non richiede di toccare il codice dell'app. Le immagini di anteprima per i link condivisi
-(`static/og/`) si rigenerano con `python3 scripts/og-images.py` (serve Pillow). Le convenzioni per
-scrivere le lezioni sono in [CLAUDE.md](CLAUDE.md).
+(`static/og/`) si rigenerano con `python3 scripts/og-images.py` (serve Pillow).
+
+## Licenza
+
+Le lezioni e gli altri contenuti del corso (`src/content/`, `static/og/`) sono rilasciati con licenza
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.it): puoi condividerli e
+adattarli citando la fonte e mantenendo la stessa licenza. Il codice dell'app è sotto licenza
+[MIT](LICENSE).
 
 ---
 
