@@ -27,6 +27,10 @@ project description).
   before writing it into a lesson: `c3c compile-run file.c3` (c3c 0.8.4 is installed at
   `~/.local/c3/c3c`). The online docs lag behind the compiler (e.g. `printn(double)` prints 6
   decimals, `compile-run` messages differ, `isz` is now `sz`). Use the scratchpad for test files.
+  Before finishing a module, extract every complete program (`c3` fence with `fn void main`) from the
+  new `.svx` files, compile-run it and diff against the following `output` fence. Runtime panic
+  traces are quoted with shortened paths (`in window.main (window.c3:7) [window] [inline]`), and
+  output that varies per run (dangling memory) is presented as such in the prose.
   The compiler version shown in the app is `compiler` in `src/content/course.json`: update it
   when the reference compiler changes.
 - No sandbox / in-browser code execution. Exercises are done on the learner's machine.
