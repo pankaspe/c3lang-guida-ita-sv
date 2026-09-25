@@ -7,6 +7,7 @@
 	import { activity } from '$lib/state/activity.svelte';
 	import { setLessonContext } from '$lib/content/lesson-context';
 	import { course } from '$lib/content/course';
+	import Seo from '$lib/components/ui/Seo.svelte';
 	import { reveal } from '$lib/motion';
 	import { t } from '$lib/i18n/index.svelte';
 
@@ -87,10 +88,7 @@
 
 <svelte:window onscroll={interacted} onkeydown={interacted} onpointermove={interacted} ontouchstart={interacted} />
 
-<svelte:head>
-	<title>{lesson.meta.title} · {module.meta.title} · {course.title}</title>
-	<meta name="description" content={lesson.meta.description} />
-</svelte:head>
+<Seo title="{lesson.meta.title} · {module.meta.title} · {course.title}" description={lesson.meta.description} type="article" />
 
 <div class="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,1fr)_13rem]">
 	<!-- Module navigation -->

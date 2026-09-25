@@ -10,6 +10,7 @@
 	import { clearCourseData, downloadBackup, parseBackup, restoreBackup, storedBytes, type Backup } from '$lib/state/storage';
 	import { allLessons, modules } from '$lib/content/registry';
 	import { course } from '$lib/content/course';
+	import Seo from '$lib/components/ui/Seo.svelte';
 	import { reveal } from '$lib/motion';
 	import { feedback } from '$lib/feedback';
 	import { AVAILABLE_LOCALES, i18n, t } from '$lib/i18n/index.svelte';
@@ -111,10 +112,7 @@
 	const deleteWord = $derived(t('settings.data.deleteWord'));
 </script>
 
-<svelte:head>
-	<title>{t('settings.title')} · {course.title}</title>
-	<meta name="description" content={t('settings.description')} />
-</svelte:head>
+<Seo title="{t('settings.title')} · {course.title}" description={t('settings.description')} noindex />
 
 <div class="anim-fade mx-auto max-w-6xl px-4 py-10 sm:px-6">
 	<p class="font-mono text-sm text-accent">{t('settings.kicker')}</p>

@@ -6,6 +6,7 @@
 	import { allLessons, lessonPath, modulePath, moduleIcon, modules } from '$lib/content/registry';
 	import { getBadges, type BadgeStats } from '$lib/content/badges';
 	import { course } from '$lib/content/course';
+	import Seo from '$lib/components/ui/Seo.svelte';
 	import { reveal } from '$lib/motion';
 	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { activity } from '$lib/state/activity.svelte';
@@ -107,10 +108,7 @@
 	);
 </script>
 
-<svelte:head>
-	<title>{t('profile.title')} · {course.title}</title>
-	<meta name="description" content={t('profile.description')} />
-</svelte:head>
+<Seo title="{t('profile.title')} · {course.title}" description={t('profile.description')} noindex />
 
 <div class="anim-fade mx-auto max-w-5xl px-4 py-10 sm:px-6" {@attach reveal(':scope > section, :scope > p')}>
 	<p class="font-mono text-sm text-accent">{t('profile.kicker')}</p>

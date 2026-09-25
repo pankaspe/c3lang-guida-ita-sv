@@ -26,6 +26,11 @@ export interface CourseConfig {
 	/** Short text in the header logo mark. */
 	logo: string;
 	tagline: string;
+	/**
+	 * Public address of the site (e.g. "https://example.pages.dev"), for canonical
+	 * links, Open Graph and the sitemap. Leave empty until the domain is known.
+	 */
+	url?: string;
 	/** Default meta description. */
 	description: string;
 	hero: {

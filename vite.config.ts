@@ -24,7 +24,9 @@ export default defineConfig({
 			},
 
 			// Fully static site: every module and lesson is prerendered at build time.
-			adapter: adapter({ fallback: undefined, strict: true }),
+			// 404.html is served by static hosts (Cloudflare Pages) with a real 404 status
+			// for unknown URLs, instead of the homepage with 200.
+			adapter: adapter({ fallback: '404.html', strict: true }),
 
 			preprocess: [
 				mdsvex({

@@ -113,6 +113,19 @@ The app is a generic, localisable course reader; the content is Italian only (no
 - "Copia lezione" in the lesson header copies the lesson as markdown (`loadLessonMarkdown` in the
   registry, `?raw` glob loaded on demand, so it never grows the lesson chunk).
 
+## Deploy & SEO
+
+- Cloudflare Pages, configured in the dashboard (build `bun run build`, output `build`). There is no
+  `wrangler.toml` on purpose: Pages would read it instead of the dashboard and requires `name` in it.
+- `fallback: '404.html'` in the adapter so unknown URLs get a real 404, not the homepage with 200.
+- `url` in `course.json` = public site address. While empty, canonical/`og:url`, the sitemap entries
+  and the `Sitemap:` line in robots.txt are omitted (`src/lib/seo.ts`). `robots.txt` and
+  `sitemap.xml` are prerendered routes (`src/routes/*/+server.ts`), the sitemap lists home, modules
+  and lessons automatically.
+- Every page sets its head via `components/ui/Seo.svelte` (title, description, canonical, Open Graph,
+  Twitter card); `noindex` on `/profile` and `/settings`. The home page adds a schema.org `Course`
+  JSON-LD. No `og:image` yet (needs a PNG).
+
 ## Theme
 
 Colours are CSS tokens in `src/app.css` (`:root` light, `.dark` dark) exposed to Tailwind via

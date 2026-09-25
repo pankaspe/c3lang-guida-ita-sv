@@ -5,7 +5,9 @@
 	import { progress } from '$lib/state/progress.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import { course } from '$lib/content/course';
+	import Seo from '$lib/components/ui/Seo.svelte';
 	import { reveal } from '$lib/motion';
+	import { absoluteUrl } from '$lib/seo';
 	import { t } from '$lib/i18n/index.svelte';
 
 	function completedIn(lessonIds: string[]) {
@@ -27,6 +29,21 @@
 		return nextLesson ? lessonPath(nextLesson) : null;
 	});
 
+	const totalMinutes = allLessons.reduce((sum, lesson) => sum + lesson.meta.minutes, 0);
+
+	/** schema.org Course, so search engines can show the site as a course. */
+	const courseJsonLd = JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'Course',
+		name: course.title,
+		description: course.description,
+		inLanguage: course.locale,
+		url: absoluteUrl('/'),
+		isAccessibleForFree: true,
+		provider: { '@type': 'Organization', name: course.title, sameAs: absoluteUrl('/') },
+		hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'online', courseWorkload: `PT${totalMinutes}M` }
+	}).replace(/</g, '\\u003c');
+
 	/** Hero title split around the part painted with the brand gradient. */
 	const heroTitle = $derived.by(() => {
 		const { title, highlight } = course.hero;
@@ -36,9 +53,10 @@
 	});
 </script>
 
+<Seo title="{course.title} · {course.tagline}" description={course.description} />
+
 <svelte:head>
-	<title>{course.title} · {course.tagline}</title>
-	<meta name="description" content={course.description} />
+	{@html `<script type="application/ld+json">${courseJsonLd}</script>`}
 </svelte:head>
 
 <section class="relative isolate">
