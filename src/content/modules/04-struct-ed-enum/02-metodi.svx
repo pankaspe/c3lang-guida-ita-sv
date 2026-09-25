@@ -1,0 +1,264 @@
+---
+title: Metodi, le azioni di un tipo
+description: Funzioni che appartengono a un tipo e si chiamano con il punto. Leggere con self, modificare con &self (e l'errore di chi li confonde), metodi sui tipi predefiniti e quando preferire una funzione normale.
+minutes: 17
+---
+
+## Funzioni con un indirizzo di casa
+
+Hai una struct per i rettangoli, e vuoi calcolarne l'area. Con quello che sai, scriveresti una funzione:
+
+```c3
+fn int area(Rect r) => r.width * r.height;
+```
+
+Funziona, ma `area` è un nome molto generico, e in un programma con cerchi, triangoli e stanze prima o poi si scontra con qualcos'altro. In più, chi legge `area(r)` non sa a colpo d'occhio che la funzione riguarda i rettangoli.
+
+C3 ti permette di legare la funzione al tipo, scrivendo il nome del tipo davanti al nome della funzione. Diventa un **metodo**:
+
+```c3 title="rect.c3"
+import std::io;
+
+struct Rect
+{
+	int width;
+	int height;
+}
+
+fn int Rect.area(self)
+{
+	return self.width * self.height;
+}
+
+fn bool Rect.is_square(self) => self.width == self.height;
+
+fn void main()
+{
+	Rect r = { 3, 4 };
+	io::printn(r.area());
+	io::printn(r.is_square());
+}
+```
+
+```output
+12
+false
+```
+
+Due novità:
+
+- `Rect.area` dice che `area` appartiene al tipo `Rect`. Un altro tipo può avere il suo `area` senza conflitti;
+- il primo parametro si chiama `self` ("se stesso") e **non ha tipo**: è sottinteso che sia un `Rect`, cioè il rettangolo su cui chiami il metodo.
+
+E la chiamata: `r.area()`, con il punto, come i campi. È la stessa sintassi che usi da un modulo con `s.len`, `s.contains("x")` o `list.push(3)`: erano tutti metodi.
+
+<Callout type="note" title="Un metodo è una funzione travestita">
+
+Dietro le quinte, `r.area()` è solo un modo comodo di scrivere `Rect.area(r)`: una funzione normale, che si chiama `Rect.area` e riceve `r` come primo argomento. Puoi scriverla anche così, e il risultato è identico. Nessuna magia, nessun costo in più.
+
+</Callout>
+
+## Modificare: &self
+
+Adesso un metodo che ingrandisce il rettangolo. Primo tentativo, sulla falsariga di `area`:
+
+```c3
+fn void Rect.scale_wrong(self, int factor)
+{
+	self.width *= factor;
+	self.height *= factor;
+}
+```
+
+```c3
+Rect r = { 6, 8 };
+r.scale_wrong(10);
+io::printn(r);
+```
+
+```output
+{ width: 6, height: 8 }
+```
+
+Non è cambiato niente, e il compilatore non ha detto una parola. Ormai sai perché: `self` è un parametro, e i parametri sono **copie**. Il metodo ha ingrandito la sua copia, poi l'ha buttata.
+
+Per lavorare sull'originale si scrive **`&self`**:
+
+```c3
+fn void Rect.scale(&self, int factor)
+{
+	self.width *= factor;
+	self.height *= factor;
+}
+```
+
+```c3
+Rect r = { 3, 4 };
+r.scale(2);
+io::printn(r);
+```
+
+```output
+{ width: 6, height: 8 }
+```
+
+La `&` è la stessa che hai usato con le slice (`&arr`) e nel `foreach (&x : ...)`: il metodo non riceve una copia del rettangolo, ma il suo **indirizzo**, cioè un modo per raggiungere il rettangolo vero. Tecnicamente `self` diventa un *puntatore* a `Rect`. La cosa comoda è che per i campi non cambia nulla: si scrive sempre `self.width`, il punto sa da solo come arrivare a destinazione.
+
+La regola pratica è semplice:
+
+| Il metodo... | Primo parametro | Esempi |
+|---|---|---|
+| legge e calcola | `self` | `area`, `is_square`, `print` |
+| modifica il valore | `&self` | `scale`, `deposit`, `push` |
+
+<Callout type="nerd" title="Perché non usare sempre &self?">
+
+Si potrebbe, e per le struct grandi è anche più efficiente: passare un indirizzo costa 8 byte, copiare una struct di 200 byte ne costa 200. Ma `self` dichiara un'intenzione: "questo metodo non tocca niente". Chi legge il codice lo sa subito, e il compilatore te lo garantisce (le modifiche restano nella copia). Per struct piccole come `Rect` la copia è comunque istantanea: 8 byte, gli stessi di un indirizzo. Dell'indirizzo in sé, e di cosa c'è dentro, abbiamo già parlato nel riquadro «Cosa c'è dentro una slice?» del modulo 3; il resto arriverà nel modulo sui puntatori.
+
+</Callout>
+
+<Quiz question={'Hai `fn void Counter.reset(self) { self.value = 0; }` e `Counter c = { 5 };`. Cosa vale `c.value` dopo `c.reset();`?'} options={['`0`', '`5`', 'Errore di compilazione: `self` non si può modificare', 'Dipende dal compilatore']} answer={1}>
+
+`reset` riceve `self`, una **copia**: azzera la copia, e `c` resta a 5. Il compilatore lo accetta senza errori, ed è proprio per questo che è una trappola. Per azzerare davvero serve `fn void Counter.reset(&self)`.
+
+</Quiz>
+
+## Restituire struct
+
+Un metodo (o una funzione) può anche restituire una struct nuova. Quando il tipo di ritorno è noto, basta scrivere i valori tra graffe:
+
+```c3
+fn Rect Rect.rotated(self)
+{
+	return { self.height, self.width };
+}
+
+fn Rect square(int side) => { side, side };
+```
+
+```c3
+Rect r = { 6, 8 };
+io::printn(r.rotated());
+io::printn(square(5).is_square());
+```
+
+```output
+{ width: 8, height: 6 }
+true
+```
+
+`rotated` non modifica `r`: ne restituisce una versione nuova. È lo stile di `trim` e `to_upper_tcopy` sulle stringhe. E `square(5).is_square()` chiama un metodo direttamente sul risultato di una funzione: il punto funziona su qualsiasi espressione che valga un `Rect`.
+
+Nota che `square` è una funzione normale, non un metodo: crea un rettangolo dal nulla, non lavora su uno esistente.
+
+## Metodi anche sui tipi predefiniti
+
+Puoi aggiungere metodi a qualsiasi tipo, anche a `int`:
+
+```c3
+fn int int.squared(self) => self * self;
+```
+
+```c3
+int n = 7;
+io::printn(n.squared());
+```
+
+```output
+49
+```
+
+È così che la libreria standard aggiunge `is_upper()` e `to_upper()` al tipo `char`, o `contains` a `String`.
+
+Due regole da conoscere. Un metodo **non può** avere lo stesso nome di un campo (`fn int Rect.width(self)` dà `'Rect' already has a field with the same name.`). E il primo parametro si chiama per convenzione `self`, ma non è obbligatorio.
+
+<Callout type="tip" title="Metodo o funzione?">
+
+La guida di stile di C3 è chiara: i metodi servono per **leggere o modificare un valore preciso**. `list.push(x)`, `rect.area()`, `account.deposit(10)` sono ottimi metodi. Azioni "grandi", che coinvolgono mezzo programma, restano funzioni normali: `game::run(settings)`, non `settings.run_game()`. Se ti chiedi "di chi è questa azione?" e la risposta non è ovvia, probabilmente è una funzione.
+
+</Callout>
+
+<Callout type="c" title="Il C lo faceva a mano">
+
+In C non ci sono metodi, e la convenzione è prefissare il nome del tipo: `rect_area(r)`, `rect_scale(&r, 2)`. Per modificare si passa `&r`, a mano. C3 fa la stessa cosa, stesso codice macchina, ma il prefisso diventa un vero spazio di nomi e la `&` la mette il compilatore quando vede `&self`.
+
+</Callout>
+
+<Exercise title="Il conto in banca" expected={`Ada: 150 euro
+Withdraw 200: refused
+Withdraw 120: ok
+Ada: 30 euro
+Empty? true`}>
+
+Scrivi `account.c3` con una struct `Account` (campi `owner`, una `String`, e `balance`, un `int` in euro) e quattro metodi:
+
+- `deposit(amount)`: aggiunge `amount` al saldo;
+- `withdraw(amount)`: se il saldo basta, lo toglie e restituisce `true`; altrimenti non tocca niente e restituisce `false`;
+- `is_empty()`: il saldo è zero?
+- `print()`: stampa `Ada: 150 euro`.
+
+Scegli tu, per ognuno, se serve `self` o `&self`.
+
+Nel `main`: crea il conto di `"Ada"` con 100 euro, deposita 50 e stampalo. Poi prova a prelevare 200 e 120, stampando per ciascuno `Withdraw 200: ` seguito da `ok` o `refused` (il ternario del modulo 2 è perfetto). Stampa di nuovo il conto, preleva gli ultimi 30 euro e stampa `Empty? ` con il risultato di `is_empty()`.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="account.c3"
+import std::io;
+
+struct Account
+{
+	String owner;
+	int balance;
+}
+
+fn void Account.deposit(&self, int amount)
+{
+	self.balance += amount;
+}
+
+fn bool Account.withdraw(&self, int amount)
+{
+	if (amount > self.balance) return false;
+	self.balance -= amount;
+	return true;
+}
+
+fn bool Account.is_empty(self) => self.balance == 0;
+
+fn void Account.print(self)
+{
+	io::printfn("%s: %d euro", self.owner, self.balance);
+}
+
+fn void main()
+{
+	Account acc = { "Ada", 100 };
+	acc.deposit(50);
+	acc.print();
+	io::printfn("Withdraw 200: %s", acc.withdraw(200) ? "ok" : "refused");
+	io::printfn("Withdraw 120: %s", acc.withdraw(120) ? "ok" : "refused");
+	acc.print();
+	acc.withdraw(30);
+	io::printfn("Empty? %s", acc.is_empty());
+}
+```
+
+`deposit` e `withdraw` modificano il saldo, quindi `&self`; `is_empty` e `print` guardano soltanto, quindi `self`. Se avessi usato `self` in `withdraw`, il programma avrebbe stampato `ok` ma il saldo sarebbe rimasto a 150: il bug più silenzioso di questa lezione.
+
+Nota anche il `return false` all'inizio di `withdraw`: il caso "non si può" viene gestito subito, e il resto del metodo è il caso normale. È lo stesso stile di `return` anticipato del modulo 2.
+
+</Solution>
+
+## Ricapitolando
+
+- `fn int Rect.area(self)` definisce un metodo del tipo `Rect`; si chiama con `r.area()`, ed equivale a `Rect.area(r)`.
+- `self` riceve una **copia**: va bene per leggere. `&self` riceve l'**indirizzo** dell'originale: serve per modificare.
+- Confondere i due non dà errori: il metodo modifica la copia e basta.
+- I metodi possono restituire struct nuove con `return { ... };`.
+- Si possono aggiungere metodi anche a `int`, `char`, `String` e a ogni altro tipo, ma non con il nome di un campo.
+- Metodi per lavorare su un valore; funzioni per le azioni più grandi.
+
+Un giocatore, un conto, un rettangolo. Ma i programmi veri hanno squadre, banche, disegni: tanti valori dello stesso tipo. Nella prossima lezione, array e liste di struct.

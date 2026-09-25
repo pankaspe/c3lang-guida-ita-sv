@@ -1,0 +1,222 @@
+---
+title: Enum con i loro dati
+description: Attaccare valori fissi a ogni voce di un enum, metodi che li usano, un semaforo come macchina a stati, e constdef per le costanti con numeri scelti da te.
+minutes: 16
+---
+
+## Ogni pianeta ha la sua gravità
+
+Un enum dei pianeti è facile da scrivere. Ma appena lo usi ti servono delle informazioni **su** ogni pianeta: il nome da mostrare, la gravità. Potresti scrivere uno `switch` per ciascuna ("se è `MARS`, la gravità è 3.71..."), ma quelle informazioni sono fisse, fanno parte del pianeta. C3 ti permette di scriverle direttamente nell'enum:
+
+```c3
+enum Planet : (String label, double gravity)
+{
+	MERCURY { "Mercury", 3.7 },
+	EARTH   { "Earth", 9.81 },
+	MARS    { "Mars", 3.71 },
+	JUPITER { "Jupiter", 24.79 },
+}
+```
+
+Dopo i due punti, tra parentesi, dichiari i **valori associati**: come i parametri di una funzione, un tipo e un nome ciascuno. Poi ogni voce dell'enum riceve i suoi valori tra graffe, nello stesso ordine. Si leggono con il punto, come i campi di una struct:
+
+```c3
+double mass = 70;
+foreach (p : Planet::values)
+{
+	io::printfn("%-8s %6.1f N", p.label, mass * p.gravity);
+}
+```
+
+```output
+Mercury   259.0 N
+Earth     686.7 N
+Mars      259.7 N
+Jupiter  1735.3 N
+```
+
+Il peso di una persona di 70 kg su ogni pianeta, in newton, con un ciclo di tre righe. Aggiungi `SATURN` all'enum, con i suoi dati, e il ciclo lo include da solo.
+
+I valori associati sono **costanti**: fanno parte della definizione, e non vanno modificati mentre il programma gira. Attenzione, però: il compilatore accetta `p.gravity = 5;`, ma il programma si schianta con `Out of bounds memory access.`, lo stesso errore della scrittura in un letterale (il riquadro qui sotto spiega perché).
+
+<Callout type="nerd" title="Dove stanno i valori associati?">
+
+Non dentro la variabile. Un `Planet` occupa sempre 4 byte (`Planet::size` vale 4): contiene solo il suo ordinale, come ogni enum. Il compilatore mette i valori associati in una **tabella** nascosta, una riga per pianeta, nella memoria in sola lettura del programma (la stessa dei letterali, dal modulo 3). Leggere `p.gravity` significa "vai alla riga numero `p.ordinal` della tabella e prendi la colonna `gravity`". Un array di un milione di pianeti occupa quindi 4 MB, non 24: le etichette e le gravità esistono una volta sola.
+
+</Callout>
+
+## Metodi che usano i dati
+
+I valori associati si combinano benissimo con i metodi. Il bar del prossimo esercizio tiene i prezzi in **centesimi** (un `int`), e un metodo li trasforma in testo:
+
+```c3
+enum Drink : (String label, int cents, bool hot)
+{
+	ESPRESSO   { "Espresso", 120, true },
+	CAPPUCCINO { "Cappuccino", 150, true },
+	TEA        { "Tea", 180, true },
+	JUICE      { "Orange juice", 250, false },
+	WATER      { "Water", 100, false },
+}
+
+fn String Drink.price(self) => string::tformat("%d.%02d", self.cents / 100, self.cents % 100);
+```
+
+`150 / 100` fa 1 (divisione intera), `150 % 100` fa 50: il risultato è `"1.50"`.
+
+<Callout type="tip" title="Perché i centesimi?">
+
+Nel modulo 1 hai visto (riquadro «Perché 1,65 "non esiste"?») che un `double` non riesce a rappresentare esattamente molti numeri decimali. Per i soldi è un problema serio: sommando tanti prezzi, gli errori di arrotondamento si accumulano. La soluzione classica è contare in **centesimi** con un intero, che è sempre esatto, e mettere la virgola solo quando stampi.
+
+</Callout>
+
+<Quiz question={'Con l\'enum `Drink` qui sopra, quanto vale `Drink.TEA.cents + Drink.WATER.cents`?'} options={['`280`', '`2.80`', '`3`', 'Errore: gli enum non si sommano']} answer={0}>
+
+Non si sommano gli enum, ma i loro valori associati, che sono normali `int`: 180 + 100 = 280. Qui serve il nome completo `Drink.TEA`: in un'espressione come questa non c'è nessun tipo da cui il compilatore possa dedurre che `TEA` è una bevanda.
+
+</Quiz>
+
+## Una macchina a stati
+
+Un semaforo passa da verde a giallo, da giallo a rosso, da rosso a verde. Ogni colore dura un certo tempo. Un enum con un valore associato e un metodo `next` lo descrive per intero:
+
+```c3 title="traffic.c3"
+import std::io;
+
+enum Light : (int seconds)
+{
+	GREEN { 30 },
+	YELLOW { 5 },
+	RED { 25 },
+}
+
+fn Light Light.next(self)
+{
+	switch (self)
+	{
+		case GREEN: return YELLOW;
+		case YELLOW: return RED;
+		case RED: return GREEN;
+	}
+}
+
+fn bool Light.can_go(self) => self == GREEN;
+
+fn void main()
+{
+	Light l = GREEN;
+	for (int i = 0; i < 4; i++)
+	{
+		io::printfn("%s for %ds (go: %s)", l, l.seconds, l.can_go());
+		l = l.next();
+	}
+}
+```
+
+```output
+GREEN for 30s (go: true)
+YELLOW for 5s (go: false)
+RED for 25s (go: false)
+GREEN for 30s (go: true)
+```
+
+Questo schema ha un nome, **macchina a stati**: un insieme finito di stati (l'enum), e delle regole per passare dall'uno all'altro (`next`). Descrive un'enorme quantità di cose: i personaggi di un videogioco (fermo, cammina, salta), un ordine online (pagato, spedito, consegnato), la connessione di un'app (offline, in connessione, online). Con un enum, uno stato impossibile non si può nemmeno scrivere.
+
+## constdef: quando i numeri li scegli tu
+
+Gli ordinali di un enum partono da 0 e salgono di uno, senza buchi. A volte però i numeri sono imposti dall'esterno: i codici di risposta del web (200 va bene, 404 non trovato), i codici dei tasti, i valori di una libreria C. Per questi c'è **`constdef`**, un elenco di costanti con un tipo e un nome comune:
+
+```c3
+constdef HttpStatus
+{
+	OK = 200,
+	NOT_FOUND = 404,
+	TEAPOT = 418,
+}
+```
+
+```c3
+HttpStatus status = NOT_FOUND;
+io::printn((int)status);
+```
+
+```output
+404
+```
+
+Anche qui il nome corto si deduce dal tipo. Ma un `constdef` è più "morbido" di un enum: i suoi valori si stampano come numeri e non per nome, uno `switch` non pretende che tu li gestisca tutti, e con un cast ci puoi mettere un numero che non è nell'elenco (`(HttpStatus)500`). È pensato soprattutto per parlare con il codice C, che di enum rigidi non ne ha. Per i tuoi programmi, quando puoi, preferisci un `enum`.
+
+<Callout type="fun" title="418 I'm a teapot">
+
+Il codice 418 esiste davvero: fu definito nel 1998 in un documento ufficiale dell'IETF, pubblicato come pesce d'aprile, per un protocollo di controllo delle caffettiere via web. Significa "sono una teiera" e un server lo restituisce quando gli chiedi di preparare il caffè. È talmente amato che, quando nel 2017 qualcuno propose di toglierlo, la comunità si mobilitò per salvarlo.
+
+</Callout>
+
+<Exercise title="Il bar" expected={`MENU
+  Espresso        1.20
+  Cappuccino      1.50
+  Tea             1.80
+  Orange juice    2.50
+  Water           1.00
+Order: 5 drinks, 3 hot
+Total: 7.40`}>
+
+Scrivi `cafe.c3` con l'enum `Drink` e il metodo `price()` di questa lezione.
+
+1. Stampa `MENU`, poi una riga per ogni bevanda del menu (usa `Drink::values`): due spazi, il nome allineato a sinistra su 14 caratteri, uno spazio e il prezzo allineato a destra su 5.
+2. Un cliente ordina due espressi, una spremuta, un cappuccino e un'acqua. Scrivi l'ordine come un array di `Drink`: `Drink[*] order = { ESPRESSO, ... };`.
+3. Con un solo ciclo, calcola il totale in centesimi e conta le bevande calde.
+4. Stampa `Order: ` con il numero di bevande e `, ` con quelle calde seguito da ` hot`, e poi `Total: ` con il totale nel formato euro.centesimi.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="cafe.c3"
+import std::io;
+
+enum Drink : (String label, int cents, bool hot)
+{
+	ESPRESSO   { "Espresso", 120, true },
+	CAPPUCCINO { "Cappuccino", 150, true },
+	TEA        { "Tea", 180, true },
+	JUICE      { "Orange juice", 250, false },
+	WATER      { "Water", 100, false },
+}
+
+fn String Drink.price(self) => string::tformat("%d.%02d", self.cents / 100, self.cents % 100);
+
+fn void main()
+{
+	io::printn("MENU");
+	foreach (d : Drink::values)
+	{
+		io::printfn("  %-14s %5s", d.label, d.price());
+	}
+
+	Drink[*] order = { ESPRESSO, ESPRESSO, JUICE, CAPPUCCINO, WATER };
+	int total = 0;
+	int hot = 0;
+	foreach (d : order)
+	{
+		total += d.cents;
+		if (d.hot) hot++;
+	}
+	io::printfn("Order: %d drinks, %d hot", order.len, hot);
+	io::printfn("Total: %d.%02d", total / 100, total % 100);
+}
+```
+
+Nell'array `order` basta il nome corto: il tipo degli elementi è `Drink`, e il compilatore lo deduce per ciascuno. Il totale si formatta con la stessa formula di `price`; se ti accorgi di scriverla due volte, è il segnale che vuole diventare una funzione tutta sua (per esempio `fn String euros(int cents)`), usata sia da `price` sia dal totale.
+
+</Solution>
+
+## Ricapitolando
+
+- `enum Planet : (String label, double gravity) { EARTH { "Earth", 9.81 }, ... }` associa valori fissi a ogni voce.
+- Si leggono con il punto, `p.gravity`; sono costanti, e non occupano spazio nella variabile.
+- Enum + metodo `next` = **macchina a stati**: stati finiti, transizioni esplicite.
+- Per i soldi, interi in centesimi.
+- `constdef` elenca costanti con numeri scelti da te, soprattutto per il codice C; per il resto, meglio un `enum`.
+
+Hai creato tipi con struct ed enum. Nell'ultima lezione prima della sfida, due strumenti per dare nomi nuovi ai tipi esistenti: `alias` e `typedef`.

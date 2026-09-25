@@ -1,0 +1,204 @@
+---
+title: alias e typedef, nomi nuovi per tipi vecchi
+description: Un soprannome per un tipo con alias, un tipo davvero nuovo con typedef. Unità di misura che non si mescolano, @constinit per i letterali, inline per le conversioni, e il segreto di String svelato.
+minutes: 15
+---
+
+## Due modi di ribattezzare
+
+Struct ed enum creano tipi fatti di pezzi nuovi. A volte però il tipo che ti serve esiste già (un `double`, un `int`, una `List{int}`) e vuoi solo dargli un **nome** diverso. C3 ha due strumenti per farlo, che si somigliano nella forma ma sono molto diversi nella sostanza:
+
+- `alias` dà un **soprannome**: il tipo resta lo stesso;
+- `typedef` crea un tipo **nuovo**, fatto come quello di partenza ma incompatibile con lui.
+
+## alias: un soprannome
+
+```c3
+alias Score = int;
+alias ScoreList = List{int};
+```
+
+Da qui in poi `Score` e `int` sono la stessa cosa, perfettamente intercambiabili:
+
+```c3
+Score s = 10;
+int plain = s + 5;       // no problem: Score is int
+ScoreList list;
+list.push(s);
+io::printn(plain);
+io::printn(list);
+```
+
+```output
+15
+[10]
+```
+
+A cosa serve, allora? A due cose. Primo, a **documentare**: `fn Score best(Score[] all)` racconta più di `fn int best(int[] all)`. Secondo, ad **accorciare** i tipi lunghi. Quando userai tipi generici più complessi di `List{int}`, un `alias` in cima al file ti eviterà di riscriverli per intero ogni volta. È anche il modo consigliato dalla documentazione di C3 per dare un nome ai tipi generici che usi spesso.
+
+Come per tutti i tipi, il nome comincia con la maiuscola, e la dichiarazione sta fuori dalle funzioni.
+
+## typedef: un tipo nuovo
+
+Ora un programma che lavora con le distanze, alcune in metri e altre in piedi. Sono tutte `double`, e questo è il problema: niente ti impedisce di passare dei piedi a una funzione che si aspetta metri.
+
+<Callout type="fun" title="La sonda persa per un'unità di misura">
+
+Il 23 settembre 1999 la sonda Mars Climate Orbiter della NASA, dopo dieci mesi di viaggio, si avvicinò a Marte troppo in basso e andò perduta nell'atmosfera. L'inchiesta scoprì che un programma a terra, scritto da un'azienda fornitrice, calcolava gli impulsi dei motori in libbre-forza per secondo, mentre il software di navigazione li leggeva come newton per secondo: valori sbagliati di un fattore 4,45. Nessun errore di calcolo: solo due numeri dello stesso tipo, con significati diversi. Una missione da centinaia di milioni di dollari.
+
+</Callout>
+
+Con `typedef` ogni unità diventa un tipo a sé:
+
+```c3
+typedef Meters @constinit = double;
+typedef Feet @constinit = double;
+
+fn void climb(Meters m)
+{
+	io::printfn("Climbing %.1f m", m);
+}
+```
+
+(Il misterioso `@constinit` lo spieghiamo tra un attimo.)
+
+`Meters` e `Feet` sono fatti esattamente come un `double`: stessa memoria, stessi calcoli, stessa velocità. Ma per il compilatore sono **tipi diversi**, e non si mescolano:
+
+```c3
+Feet plane = 35000.0;
+climb(plane);
+// error: Implicitly casting 'Feet' to 'Meters' is not permitted. ...
+```
+
+L'errore della sonda, in C3, non compila. E nemmeno i `double` "anonimi" passano di nascosto: `Meters + double` dà `Cannot do the addition 'Meters' + 'double'.`, e assegnare un `Meters` a un `double` chiede un cast esplicito. Tra valori dello stesso tipo, invece, tutto funziona come prima: `everest + everest` è un `Meters`, e moltiplicare per un numero scritto nel codice (`everest * 2`) va benissimo.
+
+### @constinit: i letterali sono benvenuti
+
+Senza `@constinit`, anche scrivere un numero nel codice richiederebbe un cast: `Meters everest = 8848.0;` darebbe `Implicitly casting 'double' to 'Meters' is not permitted`. Con `@constinit`, i **letterali** (i numeri scritti direttamente) si convertono da soli, perché è chiaro cosa intendi. Le variabili `double`, no: lì il cast resta obbligatorio, ed è proprio quello che vuoi.
+
+Per tipi come gli identificativi, dove un numero scritto a mano è quasi sempre un errore, lascia fuori `@constinit`:
+
+```c3
+typedef UserId = int;
+
+fn void ban(UserId id) => io::printfn("User %d banned", id);
+```
+
+Ora `ban(42)` non compila: devi scrivere `ban((UserId)42)`, cioè dichiarare consapevolmente che quel 42 è un utente. E nessuno potrà mai passare a `ban` il numero di un ordine o un'età per sbaglio.
+
+### Convertire: cast e metodi
+
+Tra tipi distinti si passa con un **cast** esplicito, quando sei sicuro di quello che fai. Il posto giusto per le conversioni è un metodo, così la formula sta in un punto solo:
+
+```c3
+fn Meters Feet.to_meters(self) => (Meters)((double)self * 0.3048);
+```
+
+```c3
+climb(plane.to_meters());
+```
+
+```output
+Climbing 10668.0 m
+```
+
+Sì, anche i tipi creati con `typedef` possono avere metodi.
+
+<Quiz question={'Con `typedef Meters @constinit = double;` e `double d = 3.0;`, quale riga compila?'} options={['`Meters m = d;`', '`Meters m = 3.0;`', '`double x = (Meters)3.0;`', '`Meters m = 3.0 + d;`']} answer={1}>
+
+Grazie a `@constinit`, il letterale `3.0` diventa un `Meters` da solo. Una variabile `double` invece no, e nemmeno un'espressione che la contiene: servirebbe `(Meters)d`. E un `Meters` non torna `double` senza cast.
+
+</Quiz>
+
+## inline: tipo nuovo, ma disponibile
+
+A volte vuoi un tipo nuovo che però possa essere usato **dove serve** il tipo di partenza. È quello che fa la parola `inline`:
+
+```c3
+typedef Money @constinit = inline long;
+```
+
+```c3
+Money price = 1999;
+long raw = price;           // fine: Money converts to long by itself
+```
+
+La conversione va in una sola direzione: da `Money` a `long` sì, da `long` a `Money` no (`Implicitly casting 'long' to 'Money' is not permitted`). Così puoi passare un `Money` a qualsiasi funzione che vuole un `long`, ma nessun `long` qualsiasi diventa denaro per caso.
+
+E adesso rileggi questa riga, dal modulo 3:
+
+```c3
+typedef String = inline char[];
+```
+
+Ora la capisci tutta. `String` è un tipo **nuovo**, distinto da `char[]` (per questo servivano i cast come `(String)&buffer`), ma `inline`: una `String` si può usare ovunque serva una slice di `char`, e si porta dietro tutti i metodi di `String` (`contains`, `trim`...) che una `char[]` qualsiasi non ha.
+
+<Callout type="c" title="Il typedef del C è un alias">
+
+Occhio ai nomi: il `typedef` del C crea solo un soprannome, esattamente come l'`alias` di C3. `typedef double meters;` in C non ti protegge da nulla: `meters` e `double` restano intercambiabili. Il `typedef` di C3 fa quello che in C non si può fare senza avvolgere il valore in una struct.
+
+</Callout>
+
+<Exercise title="Il termometro" expected={`Rome: 22.0 C = 71.6 F
+New York: 50.0 F = 10.0 C
+Siberia: -40.0 C = -40.0 F
+Freezing in Rome? false
+Freezing in New York? false
+Freezing in Siberia? true`}>
+
+Scrivi `temps.c3` con due tipi distinti, `Celsius` e `Fahrenheit`, entrambi basati su `double` e con `@constinit`, e:
+
+- un metodo `Celsius.to_fahrenheit()`: F = C × 9 / 5 + 32;
+- un metodo `Fahrenheit.to_celsius()`: C = (F − 32) × 5 / 9;
+- una funzione `fn bool is_freezing(Celsius t)`: vero a 0 gradi o meno.
+
+Nel `main` crea `rome` (22 °C), `new_york` (50 °F) e `siberia` (−40 °C). Stampa le tre temperature con la loro conversione, una cifra decimale, come nell'output atteso; poi chiedi `is_freezing` per ciascuna città. Per New York, dovrai convertire prima di chiedere.
+
+Prima di consegnare, prova a scrivere `is_freezing(new_york)` e leggi l'errore: è il motivo per cui hai creato due tipi.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="temps.c3"
+import std::io;
+
+typedef Celsius @constinit = double;
+typedef Fahrenheit @constinit = double;
+
+fn Fahrenheit Celsius.to_fahrenheit(self) => (Fahrenheit)((double)self * 9 / 5 + 32);
+
+fn Celsius Fahrenheit.to_celsius(self) => (Celsius)(((double)self - 32) * 5 / 9);
+
+fn bool is_freezing(Celsius t) => t <= 0.0;
+
+fn void main()
+{
+	Celsius rome = 22.0;
+	Fahrenheit new_york = 50.0;
+	Celsius siberia = -40.0;
+
+	io::printfn("Rome: %.1f C = %.1f F", rome, rome.to_fahrenheit());
+	io::printfn("New York: %.1f F = %.1f C", new_york, new_york.to_celsius());
+	io::printfn("Siberia: %.1f C = %.1f F", siberia, siberia.to_fahrenheit());
+	io::printfn("Freezing in Rome? %s", is_freezing(rome));
+	io::printfn("Freezing in New York? %s", is_freezing(new_york.to_celsius()));
+	io::printfn("Freezing in Siberia? %s", is_freezing(siberia));
+}
+```
+
+Nei metodi, `(double)self` riporta il valore a un `double` qualsiasi per fare i conti con numeri che non sono temperature (9, 5, 32), e il cast finale lo "etichetta" con l'unità giusta. Le conversioni esplicite stanno solo lì dentro: il resto del programma lavora con tipi che non si possono confondere. E `is_freezing(new_york)` dà `Implicitly casting 'Fahrenheit' to 'Celsius' is not permitted`.
+
+Curiosità: −40 è l'unica temperatura uguale nelle due scale.
+
+</Solution>
+
+## Ricapitolando
+
+- `alias Name = Type;` è un soprannome: stesso tipo, intercambiabile. Utile per documentare e per accorciare tipi lunghi.
+- `typedef Name = Type;` crea un tipo **distinto**: stessa memoria e stesse operazioni, ma non si mescola con l'originale né con altri `typedef`.
+- `@constinit` lascia entrare i letterali senza cast; le variabili del tipo base no.
+- `inline` permette al nuovo tipo di convertirsi da solo nel tipo base (non viceversa): è il caso di `String`.
+- Tra tipi distinti si passa con un cast, meglio se chiuso dentro un metodo di conversione.
+
+Hai tutti gli strumenti per inventare tipi tuoi. Nella sfida finale li usi tutti insieme, con un mazzo di carte.

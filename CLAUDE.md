@@ -156,8 +156,15 @@ surfaces, indigo accent, mono for small labels; don't hard-code colours in compo
   stringhe, costruire-stringhe (temp memory, `tformat`, `DString`, `@pool`, a first taste of
   `mem`/`free`), liste (`List`, `sort::quicksort`), sfida-finale. Optionals (`pop`, `to_int`) were
   deliberately avoided; the final challenge's parallel lists set up structs.
-- Next: Module 4 — structs and enums (promised at the end of module 3).
-  Planned later modules: optionals & error handling, modules, memory & pointers,
+- Module 4 "Struct ed enum" done (7 lessons): struct, metodi (`self` vs `&self`),
+  collezioni-di-struct (foreach `&p`, comparator for `sort::quicksort`), enum, enum-con-dati
+  (associated values, state machine, constdef), alias-e-typedef, sfida-finale (blackjack).
+  Gotchas found: `==` on structs is an error; `printn` of an array/List of structs prints addresses;
+  enum props are `Enum::values` / `Enum::from_ordinal` (docs say `.`); short enum names fail where
+  the type can't be inferred; writing an associated value compiles but crashes.
+- Next: Module 5 — optionals & error handling (promised at the end of module 4: `find` returning
+  -1, `pop()`, `to_int()`).
+  Planned later modules: modules, memory & pointers,
   defer/contracts, generics/macros, C interop.
 - Idea under evaluation (not started, don't build unasked): a `/play` section with an android the
   learner names (`const NAME`) and assembles as the course goes on. Parts appear with completed lessons,

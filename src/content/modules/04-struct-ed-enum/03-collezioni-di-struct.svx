@@ -1,0 +1,310 @@
+---
+title: Squadre, archivi e classifiche
+description: Array e liste di struct. Inizializzarli, modificare un elemento, la trappola della copia nel foreach, cercare, e ordinare secondo un criterio tuo passando una funzione a sort.
+minutes: 19
+---
+
+## Tanti giocatori
+
+Una struct da sola è utile; una **collezione** di struct è il cuore di quasi ogni programma: gli studenti di una classe, i prodotti di un negozio, i nemici di un livello. E non serve niente di nuovo: array, slice e liste funzionano con le struct esattamente come con gli `int`.
+
+```c3
+struct Player
+{
+	String name;
+	int score;
+}
+```
+
+```c3
+Player[*] team = {
+	{ "Ada", 72 },
+	{ "Grace", 42 },
+	{ "Linus", 20 },
+};
+io::printn(team[1].name);
+team[2].score += 5;
+```
+
+```output
+Grace
+```
+
+L'inizializzazione è un array di inizializzazioni: un paio di graffe esterne per l'array, e dentro un paio per ogni giocatore. Per raggiungere un campo si combinano indice e punto: `team[2].score` è "il punteggio del giocatore di indice 2".
+
+<Callout type="nerd" title="Come sta un array di struct in memoria?">
+
+Esattamente come un array di numeri: gli elementi uno dopo l'altro, senza spazi in mezzo. Ogni `Player` occupa 24 byte (16 della `String` e 4 dell'`int`, più 4 di imbottitura per l'allineamento, come hai visto nel riquadro della prima lezione), quindi `team` è un blocco di 72 byte e `team[2]` comincia al byte 48. Il calcolo dell'indirizzo è sempre lo stesso: *inizio + indice × dimensione dell'elemento*.
+
+</Callout>
+
+## Stampare una collezione di struct
+
+Con gli `int` bastava `io::printn(team)`. Con le struct, sorpresa:
+
+```c3
+io::printn(team);
+```
+
+```output
+[<struct type:5a5a40449bb8, addr:7ffc87b30cb0>, <struct type:5a5a40449bb8, addr:7ffc87b30cc8>, <struct type:5a5a40449bb8, addr:7ffc87b30ce0>]
+```
+
+`printn` sa stampare una struct da sola, ma dentro un array o una lista si arrende e mostra solo tipo e indirizzo di ogni elemento. Poco male: è l'occasione perfetta per un metodo.
+
+```c3
+fn void Player.print(self) => io::printfn("%-8s %3d", self.name, self.score);
+```
+
+```c3
+foreach (p : team) p.print();
+```
+
+```output
+Ada       72
+Grace     42
+Linus     25
+```
+
+Così decidi tu anche il formato: nome allineato a sinistra su 8 caratteri, punti a destra su 3.
+
+## La copia nel foreach, di nuovo
+
+Nel modulo 2 lo avevamo visto con gli `int`: la variabile del `foreach` è una **copia**. Con le struct la trappola è ancora più facile da far scattare:
+
+```c3
+foreach (p : team) p.score = 0;
+io::printn(team[0].score);
+```
+
+```output
+72
+```
+
+Hai azzerato tre copie. Per modificare gli elementi veri serve la `&`, come nel modulo 2:
+
+```c3
+foreach (&p : team) p.score += 1;    // one bonus point each
+foreach (p : team) p.print();
+```
+
+```output
+Ada       73
+Grace     43
+Linus     26
+```
+
+C'è una bella differenza rispetto agli `int`, però: con le struct non serve l'asterisco. Con un `int` scrivevi `*v += 1`; con una struct basta `p.score += 1`, perché il punto sa arrivare al campo anche attraverso un indirizzo (lo stesso motivo per cui in un metodo con `&self` scrivi `self.width`).
+
+<Quiz question={'Dopo `foreach (p : team) p.score *= 2;` seguito da `foreach (&p : team) p.score += 1;`, se `team[0].score` valeva 10, quanto vale ora?'} options={['`10`', '`11`', '`20`', '`21`']} answer={1}>
+
+Il primo `foreach` lavora su copie: raddoppia tre copie, e l'array resta com'era. Il secondo usa `&p` e aggiunge davvero 1: `10 + 1 = 11`.
+
+</Quiz>
+
+## Liste di struct
+
+Una `List` di struct si riempie con `push`, passando la struct tra graffe (per posizione o per nome):
+
+```c3
+List{Player} players;
+players.push({ "Linus", 20 });
+players.push({ "Zoe", 90 });
+players.push({ "Ada", 72 });
+players.push({ .name = "Barbara", .score = 55 });
+players[0].score += 5;
+```
+
+`players[0].score += 5` modifica davvero l'elemento della lista: l'indice di una lista, come quello di un array, porta all'elemento vero. Funziona anche con i metodi `&self`: `players[0].add(5)` cambierebbe il giocatore nella lista. Solo la variabile del `foreach` è una copia.
+
+## Cercare
+
+"Dov'è il giocatore che si chiama così?" è una domanda che farai spessissimo. Una funzione che riceve una slice di `Player` e restituisce l'indice, oppure -1 se non lo trova:
+
+```c3
+fn int find(Player[] players, String name)
+{
+	foreach (i, p : players)
+	{
+		if (p.name == name) return (int)i;
+	}
+	return -1;
+}
+```
+
+```c3
+io::printn(find(&team, "Grace"));
+io::printn(find(&team, "Margaret"));
+```
+
+```output
+1
+-1
+```
+
+Grazie alla slice, la stessa `find` funziona su un array (`&team`) e su una lista (`players.array_view()`). Il -1 per dire "non c'è" è una convenzione vecchia quanto il C; C3 ha un modo più sicuro per dire "nessun risultato", gli *optional*, e ci arriveremo nel prossimo modulo.
+
+## Ordinare con un criterio tuo
+
+Nel modulo 3 `sort::quicksort` ordinava numeri e stringhe da solo. Ma come si ordinano dei giocatori? Per nome? Per punteggio? Dal più alto o dal più basso? Deve dirlo tu, scrivendo una **funzione di confronto**: riceve due elementi `a` e `b` e restituisce un numero **negativo** se `a` va prima di `b`, **positivo** se va dopo, **zero** se per te sono equivalenti. È la stessa convenzione di `compare_to` sulle stringhe.
+
+```c3
+fn int by_score_desc(Player a, Player b) => b.score - a.score;
+fn int by_name(Player a, Player b) => a.name.compare_to(b.name);
+```
+
+Poi la passi a `quicksort` come secondo argomento, con una `&` davanti al nome:
+
+```c3
+sort::quicksort(&players, &by_score_desc);
+foreach (p : players) p.print();
+sort::quicksort(&players, &by_name);
+foreach (p : players) p.print();
+```
+
+```output
+Zoe       90
+Ada       72
+Barbara   55
+Linus     25
+Ada       72
+Barbara   55
+Linus     25
+Zoe       90
+```
+
+`b.score - a.score` è negativo quando `a` ha più punti di `b`: allora `a` va prima, e l'ordine è decrescente. Per l'ordine crescente basta invertire: `a.score - b.score`.
+
+Passare una **funzione** a un'altra funzione è un'idea nuova e potente: `quicksort` sa *come* ordinare (l'algoritmo), e tu gli dici *cosa* significa "viene prima". `&by_name` è l'indirizzo della funzione, un *puntatore a funzione*.
+
+<Callout type="deep" title="La funzione senza nome">
+
+Quando il criterio serve una volta sola, puoi scrivere la funzione direttamente dove la usi, senza darle un nome. Si chiama *lambda*:
+
+```c3
+sort::quicksort(&team, fn int(Player a, Player b) => a.score - b.score);
+```
+
+È una funzione a tutti gli effetti (tipo di ritorno, parametri, corpo), solo anonima. Comoda per criteri brevi; per quelli lunghi o riusati, meglio una funzione con un nome che spieghi cosa fa.
+
+</Callout>
+
+<Exercise title="Il podio" expected={`1. Ada       72 points, games: 2
+2. Barbara   55 points, games: 1
+3. Linus     51 points, games: 3
+4. Grace     42 points, games: 2`}>
+
+Riprendi la classifica della sfida del modulo 3, stavolta con le struct. Scrivi `podium.c3` con:
+
+- `struct Match` con `player` (`String`) e `points` (`int`): una partita;
+- `struct Player` con `name` (`String`), `total` e `games` (`int`);
+- un metodo `Player.add(points)` che aggiunge i punti al totale e conta una partita in più (quale forma di `self` serve?);
+- la funzione `find` di questa lezione (adattata ai campi di `Player`);
+- una funzione di confronto per ordinare dal totale più alto al più basso.
+
+I dati sono già pronti:
+
+```c3
+Match[*] matches = {
+	{ "Ada", 42 },
+	{ "Grace", 17 },
+	{ "Linus", 8 },
+	{ "Ada", 30 },
+	{ "Barbara", 55 },
+	{ "Grace", 25 },
+	{ "Linus", 12 },
+	{ "Linus", 31 },
+};
+```
+
+Per ogni partita, cerca il giocatore nella `List{Player}`: se non c'è, aggiungilo con totale e partite a zero. Poi chiama `add` su di lui, **nella lista**. Alla fine ordina e stampa la classifica numerata come nell'output atteso (nome su 8 caratteri a sinistra, totale su 3).
+
+</Exercise>
+
+<Solution>
+
+```c3 title="podium.c3"
+import std::io;
+import std::collections::list;
+import std::sort;
+
+struct Match
+{
+	String player;
+	int points;
+}
+
+struct Player
+{
+	String name;
+	int total;
+	int games;
+}
+
+fn void Player.add(&self, int points)
+{
+	self.total += points;
+	self.games++;
+}
+
+fn int find(Player[] players, String name)
+{
+	foreach (i, p : players)
+	{
+		if (p.name == name) return (int)i;
+	}
+	return -1;
+}
+
+fn int by_total_desc(Player a, Player b) => b.total - a.total;
+
+fn void main()
+{
+	Match[*] matches = {
+		{ "Ada", 42 },
+		{ "Grace", 17 },
+		{ "Linus", 8 },
+		{ "Ada", 30 },
+		{ "Barbara", 55 },
+		{ "Grace", 25 },
+		{ "Linus", 12 },
+		{ "Linus", 31 },
+	};
+
+	List{Player} players;
+	foreach (m : matches)
+	{
+		int index = find(players.array_view(), m.player);
+		if (index == -1)
+		{
+			players.push({ .name = m.player });
+			index = (int)players.len() - 1;
+		}
+		players[index].add(m.points);
+	}
+
+	sort::quicksort(&players, &by_total_desc);
+
+	foreach (i, p : players)
+	{
+		io::printfn("%d. %-8s %3d points, games: %d", i + 1, p.name, p.total, p.games);
+	}
+}
+```
+
+Confronta con la sfida del modulo 3: niente più liste parallele da tenere allineate, un solo `push` per giocatore, e il codice dice quello che fa (`players[index].add(m.points)`). Il nuovo giocatore entra con `{ .name = m.player }`: totale e partite nascono a zero da soli. E il suo indice è l'ultimo, `len() - 1`.
+
+Linus ha giocato peggio in ogni singola partita, ma avendone giocate tre supera Grace. Se vuoi una classifica più giusta, prova a ordinare per **media** punti: attenzione alla divisione intera!
+
+</Solution>
+
+## Ricapitolando
+
+- Array, slice e liste di struct funzionano come quelli di numeri: `team[2].score`, `players.push({ "Ada", 72 })`.
+- `printn` non stampa bene le collezioni di struct: scrivi un metodo `print` e usa un ciclo.
+- La variabile del `foreach` è una copia: per modificare usa `foreach (&p : team)`, e con le struct basta il punto, `p.score`.
+- `team[i]` e `list[i]` portano all'elemento vero: `list[i].add(5)` modifica la lista.
+- Per cercare, una funzione su `Player[]` che restituisce l'indice (o -1).
+- `sort::quicksort(&list, &by_score)` ordina con una **funzione di confronto**: negativo se `a` va prima, positivo se va dopo.
+
+Nella classifica, ogni giocatore è una combinazione di valori qualsiasi. Ma ci sono cose che possono essere solo **una tra poche**: un seme delle carte, una direzione, un giorno della settimana. Per quelle, gli enum.

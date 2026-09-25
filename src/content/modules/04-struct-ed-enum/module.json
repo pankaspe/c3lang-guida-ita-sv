@@ -1,0 +1,12 @@
+{
+	"title": "Struct ed enum",
+	"subtitle": "Smetti di usare solo i tipi che il linguaggio ti dà e comincia a crearne di tuoi: oggetti con più campi, azioni che gli appartengono, e valori scelti da un elenco chiuso.",
+	"icon": "box",
+	"level": "Base",
+	"goals": [
+		"Definire struct, inizializzarle in tutti i modi e capire che sono valori",
+		"Scrivere metodi, sapendo quando serve &self per modificare",
+		"Gestire array e liste di struct: scorrerle, modificarle, ordinarle",
+		"Usare enum, valori associati e typedef per rendere impossibili gli stati sbagliati"
+	]
+}

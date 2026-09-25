@@ -1,0 +1,243 @@
+---
+title: Riepilogo e sfida finale
+description: Il modulo in una tabella, gli errori da riconoscere, tre quiz di controllo e una sfida con un mazzo di carte, due mani e le regole del blackjack.
+minutes: 22
+---
+
+## I tuoi tipi, le tue parole
+
+All'inizio del modulo i tuoi programmi parlavano la lingua del computer: `int`, `double`, `String`, e liste parallele da tenere allineate a mano. Adesso sai:
+
+- raccogliere valori diversi in una **struct**, inizializzarla per posizione o per nome, annidarla, copiarla;
+- dare ai tuoi tipi dei **metodi**, scegliendo tra `self` per leggere e `&self` per modificare;
+- tenere **collezioni di struct**, modificarle senza cadere nella copia del `foreach`, cercarle e ordinarle con un criterio tuo;
+- descrivere scelte chiuse con gli **enum**, con i loro valori associati e gli `switch` che non dimenticano nessun caso;
+- dare nomi nuovi ai tipi esistenti con `alias`, e creare tipi incompatibili tra loro con `typedef`.
+
+Il filo che lega tutto: **rendere impossibili gli stati sbagliati**. Un `Player` non può perdere il suo punteggio per strada, un `Direction` non può valere 7, un `Meters` non può finire dove servono `Feet`. Ogni errore che il compilatore rifiuta è un errore che non dovrai cercare di notte.
+
+## La pagina da tenere accanto
+
+| Cosa | Come si scrive |
+|---|---|
+| Struct | `struct Player { String name; int score; }` (fuori dalle funzioni, maiuscola) |
+| Per posizione / per nome | `Player a = { "Ada", 42 };` / `Player b = { .name = "Ada" };` |
+| Copia e modifica | `Player c = { ...a, .score = 0 };` |
+| Campi annidati | `s.to.x = 10;` e `{ .to.y = 7 }` |
+| Metodo che legge | `fn int Rect.area(self) => self.width * self.height;` |
+| Metodo che modifica | `fn void Rect.scale(&self, int f) { self.width *= f; }` |
+| Chiamata | `r.area()`, equivale a `Rect.area(r)` |
+| Array di struct | `Player[*] team = { { "Ada", 72 }, { "Grace", 42 } };` |
+| Modificare nel foreach | `foreach (&p : team) p.score += 1;` |
+| Ordinare con un criterio | `sort::quicksort(&list, &by_score);` con `fn int by_score(Player a, Player b)` |
+| Enum | `enum Direction { NORTH, EAST, SOUTH, WEST }` |
+| Nome corto / completo | `Direction d = NORTH;` / `Direction.NORTH` dove il tipo non si deduce |
+| Numero d'ordine | `d.ordinal`, `Direction::from_ordinal(1)` |
+| Tutti i valori | `foreach (x : Direction::values)` |
+| Valori associati | `enum Planet : (double gravity) { EARTH { 9.81 }, ... }` e `p.gravity` |
+| Costanti con numeri tuoi | `constdef HttpStatus { OK = 200, NOT_FOUND = 404 }` |
+| Soprannome | `alias Score = int;` |
+| Tipo distinto | `typedef Meters @constinit = double;` |
+| Distinto ma convertibile al tipo base | `typedef Money = inline long;` |
+
+## Errori che ormai riconosci
+
+| Messaggio | Cosa hai fatto |
+|---|---|
+| `Names of structs must start with an uppercase letter.` | `struct player`: i tipi vogliono la maiuscola |
+| `'Point' does not support comparisons.` | `==` tra due struct: confronta i campi |
+| `There is no field or method 'Player.points'.` | Un campo o un metodo che non esiste (o scritto male) |
+| `Enum value WEST was not handled in the switch...` | Uno `switch` su un enum senza tutti i casi |
+| `The enum type cannot be inferred, so in that case you need to use the qualified name...` | Un nome corto dove il tipo non si deduce |
+| `Implicitly casting 'Feet' to 'Meters' is not permitted...` | Hai mescolato due `typedef` diversi |
+
+E due errori che il compilatore **non** vede: un metodo che modifica `self` invece di `&self` (cambia una copia), e un `foreach (p : team)` che modifica `p` (idem).
+
+## Quiz di controllo
+
+<Quiz question={'Cosa stampa? `Rect r = { 2, 3 }; Rect q = r; q.scale(2); io::printn(r.area());` (con `scale(&self, int f)` che moltiplica i lati)'} options={['`6`', '`12`', '`24`', 'Errore: `q` è una copia']} answer={0}>
+
+`q` è una **copia** di `r`: `scale` riceve l'indirizzo di `q` e ingrandisce lei. `r` resta 2 × 3, area 6. `&self` modifica l'originale su cui chiami il metodo, ma l'originale qui è `q`. (Lezioni 1 e 2.)
+
+</Quiz>
+
+<Quiz question={'Con `typedef Id = int;` e `fn void load(Id id)`, quale chiamata compila?'} options={['`load(5);`', '`load((Id)5);`', '`int n = 5; load(n);`', 'Tutte e tre']} answer={1}>
+
+Senza `@constinit`, nemmeno un letterale diventa un `Id` da solo: serve il cast esplicito. È proprio quello che si vuole per gli identificativi, dove un numero scritto a mano è quasi sempre un errore. (Lezione 6.)
+
+</Quiz>
+
+<Quiz question={'Con `enum Day { MON, TUE, WED }`, cosa stampa `io::printn(Day::from_ordinal((Day.WED.ordinal + 1) % 3));`?'} options={['`3`', '`WED`', '`MON`', 'Errore: ordinale fuori dai limiti']} answer={2}>
+
+`WED` ha ordinale 2; `(2 + 1) % 3` fa 0, e l'ordinale 0 è `MON`. È il trucco del "giro" con il resto, lo stesso di `turn_right` nel robot. Senza il `% 3`, `from_ordinal(3)` fermerebbe il programma. (Lezione 4.)
+
+</Quiz>
+
+## La sfida: blackjack
+
+Un mazzo di carte è il banco di prova perfetto per questo modulo: due enum (semi e valori), una struct (la carta), una collezione (il mazzo), e delle regole da tradurre in metodi.
+
+<Exercise title="Blackjack" expected={`Deck: 52 cards, from 2H to AS
+Player  AH KS QC = 21
+Dealer  7C 6D 5H = 18
+Player wins
+HEARTS   2
+DIAMONDS 1
+CLUBS    2
+SPADES   1`}>
+
+Scrivi `cards.c3`.
+
+**1. I tipi.** Un enum `Suit` con un valore associato `letter` (`"H"`, `"D"`, `"C"`, `"S"` per cuori, quadri, fiori, picche, in quest'ordine). Un enum `Rank` con due valori associati, `label` e `points`: dal `TWO` (`"2"`, 2 punti) al `TEN` (`"10"`, 10 punti), poi `JACK`, `QUEEN` e `KING` (`"J"`, `"Q"`, `"K"`, 10 punti ciascuno) e infine `ACE` (`"A"`, 11 punti). Una struct `Card` con `rank` e `suit`, e un metodo `name()` che restituisce per esempio `"10H"` o `"AS"` (con `tformat`).
+
+**2. Il mazzo.** Una `List{Card}` riempita con due `foreach` annidati su `Suit::values` e `Rank::values`: 52 carte, tutti i cuori dal 2 all'asso, poi i quadri, e così via. Stampa `Deck: ` con il numero di carte, `, from ` con il nome della prima e ` to ` con quello dell'ultima.
+
+**3. Le mani.** Una struct `Hand` con `owner` (`String`) e `cards` (una `List{Card}`), e tre metodi: `take(card)` aggiunge una carta; `score()` calcola i punti; `print()` stampa il nome allineato a sinistra su 7 caratteri, le carte (ognuna preceduta da uno spazio) e ` = ` con il punteggio.
+
+La regola del punteggio: somma i punti delle carte, ma l'asso vale 11 **oppure** 1. Quindi, finché il totale supera 21 e hai assi contati come 11, togli 10 e considera quell'asso come un 1.
+
+**4. La distribuzione.** Senza numeri casuali (li vedremo più avanti), le carte si prendono dal mazzo "mescolato" con una formula: la carta numero `i`, per `i` da 0 a 5, è `deck[(i * 19 + 12) % 52]`. Le carte con `i` pari vanno al `"Player"`, quelle con `i` dispari al `"Dealer"`. (Usa `sz` per `i`: è un indice.) Stampa le due mani.
+
+**5. Il verdetto.** Con uno `switch` senza espressione: se il giocatore supera 21 vince il banco; altrimenti se il banco supera 21, o il giocatore ha di più, vince il giocatore; a parità è pareggio; altrimenti vince il banco. Stampa `Player wins`, `Dealer wins` o `Draw`.
+
+**6. I semi.** Conta quante carte di ogni seme sono state distribuite (in tutte e due le mani) usando un `int[4]` indicizzato con `suit.ordinal`, e stampa ogni seme con il suo nome allineato a sinistra su 8 caratteri e il conteggio.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="cards.c3"
+import std::io;
+import std::collections::list;
+
+enum Suit : (String letter)
+{
+	HEARTS   { "H" },
+	DIAMONDS { "D" },
+	CLUBS    { "C" },
+	SPADES   { "S" },
+}
+
+enum Rank : (String label, int points)
+{
+	TWO   { "2", 2 },
+	THREE { "3", 3 },
+	FOUR  { "4", 4 },
+	FIVE  { "5", 5 },
+	SIX   { "6", 6 },
+	SEVEN { "7", 7 },
+	EIGHT { "8", 8 },
+	NINE  { "9", 9 },
+	TEN   { "10", 10 },
+	JACK  { "J", 10 },
+	QUEEN { "Q", 10 },
+	KING  { "K", 10 },
+	ACE   { "A", 11 },
+}
+
+struct Card
+{
+	Rank rank;
+	Suit suit;
+}
+
+fn String Card.name(self) => string::tformat("%s%s", self.rank.label, self.suit.letter);
+
+struct Hand
+{
+	String owner;
+	List{Card} cards;
+}
+
+fn void Hand.take(&self, Card c) => self.cards.push(c);
+
+fn int Hand.score(self)
+{
+	int total = 0;
+	int aces = 0;
+	foreach (c : self.cards)
+	{
+		total += c.rank.points;
+		if (c.rank == ACE) aces++;
+	}
+	while (total > 21 && aces > 0)
+	{
+		total -= 10;
+		aces--;
+	}
+	return total;
+}
+
+fn void Hand.print(self)
+{
+	io::printf("%-7s", self.owner);
+	foreach (c : self.cards) io::printf(" %s", c.name());
+	io::printfn(" = %d", self.score());
+}
+
+fn void main()
+{
+	List{Card} deck;
+	foreach (suit : Suit::values)
+	{
+		foreach (rank : Rank::values) deck.push({ rank, suit });
+	}
+	io::printfn("Deck: %d cards, from %s to %s", deck.len(), deck[0].name(), deck[^1].name());
+
+	Hand player = { .owner = "Player" };
+	Hand dealer = { .owner = "Dealer" };
+	for (sz i = 0; i < 6; i++)
+	{
+		Card c = deck[(i * 19 + 12) % 52];
+		if (i % 2 == 0)
+		{
+			player.take(c);
+		}
+		else
+		{
+			dealer.take(c);
+		}
+	}
+	player.print();
+	dealer.print();
+
+	int p = player.score();
+	int d = dealer.score();
+	switch
+	{
+		case p > 21: io::printn("Dealer wins");
+		case d > 21 || p > d: io::printn("Player wins");
+		case p == d: io::printn("Draw");
+		default: io::printn("Dealer wins");
+	}
+
+	int[4] per_suit;
+	foreach (c : player.cards) per_suit[c.suit.ordinal]++;
+	foreach (c : dealer.cards) per_suit[c.suit.ordinal]++;
+	foreach (suit : Suit::values)
+	{
+		io::printfn("%-8s %d", suit, per_suit[suit.ordinal]);
+	}
+}
+```
+
+I punti delicati:
+- **L'asso:** la mano del giocatore vale 11 + 10 + 10 = 31 contando l'asso 11; il `while` toglie 10 una volta e arriva a 21. Il ciclo (non un semplice `if`) serve per le mani con più assi: due assi e un nove fanno 31, poi 21.
+- **`deck.push({ rank, suit })`:** la carta si crea al volo tra graffe, per posizione. Il mazzo esce in ordine perché i cicli seguono l'ordine degli enum.
+- **L'ordine dei `case` nel verdetto:** "il giocatore sballa" va controllato per primo, perché se il giocatore supera 21 perde anche se il banco supera 21 a sua volta. Sono le regole del blackjack.
+- **`int[4]` indicizzato con `ordinal`:** un piccolo contatore per ogni valore dell'enum. Se i semi fossero di più, basterebbe cambiare il 4 (o, meglio, usare `Suit::values.len`).
+- **La formula di distribuzione:** 19 e 52 non hanno divisori comuni, quindi `(i * 19 + 12) % 52` visita tutte le 52 posizioni senza ripetersi prima di aver finito il mazzo. È un modo semplice di "mescolare" in modo prevedibile.
+
+</Solution>
+
+<Callout type="fun" title="Se ci sei riuscito">
+
+Fai giocare il banco con la regola vera: pesca altre carte (continuando con `i` = 6, 7, ...) finché il suo punteggio è **sotto 17**, poi si ferma. Prova a cambiare il 12 della formula (con il 19 fisso) per ottenere partite diverse, e trova un valore che fa sballare il banco. Poi aggiungi un metodo `Hand.is_blackjack()`: vero se la mano ha esattamente due carte e vale 21.
+
+</Callout>
+
+## Cosa succede nel Modulo 5
+
+Più volte in questo modulo abbiamo girato attorno a un problema: cosa restituisce `find` se il giocatore non c'è? Abbiamo usato -1, una convenzione fragile (e se -1 fosse un valore valido?). E `list.pop()` su una lista vuota? E `"12x".to_int()`? Nel prossimo modulo arrivano gli **optional** e la gestione degli errori di C3: un modo per dire "qui potrebbe non esserci un risultato, ed ecco perché", che il compilatore ti obbliga a gestire. È una delle idee più originali del linguaggio.
+
+Segna questa lezione come completata. Hai costruito un mazzo di carte da zero, e le regole di un gioco vero stanno in trenta righe di metodi.

@@ -1,0 +1,252 @@
+---
+title: Enum, una scelta da un elenco chiuso
+description: Quando un valore può essere solo uno tra pochi. Dichiarare un enum, usarlo senza ripeterne il nome, lo switch che pretende tutti i casi, ordinal, from_ordinal e l'elenco di tutti i valori.
+minutes: 17
+---
+
+## Il problema dei numeri magici
+
+Un robot si muove su una griglia, e deve sapere dove guarda: nord, est, sud o ovest. Come lo rappresenti?
+
+Con un `int` (0 = nord, 1 = est, ...) devi ricordarti la tabella a memoria, e nessuno ti impedisce di scrivere `facing = 7`. Con una `String` (`"north"`) leggi meglio, ma un `"nroth"` scritto di fretta passa il compilatore e diventa un bug. In entrambi i casi il tipo permette **infiniti** valori, mentre le direzioni sono **quattro**.
+
+C3 ha un tipo fatto apposta:
+
+```c3
+enum Direction
+{
+	NORTH,
+	EAST,
+	SOUTH,
+	WEST,
+}
+```
+
+Un **enum** (da *enumeration*, elenco) è un tipo i cui valori possibili sono **esattamente** quelli elencati. Una variabile `Direction` può valere `NORTH`, `EAST`, `SOUTH` o `WEST`, e nient'altro. Come per le struct, il nome del tipo comincia con la maiuscola; i valori sono tutti in MAIUSCOLO, come le costanti (con un minuscolo il compilatore risponde `Names of enum constants must be all uppercase.`). La virgola dopo l'ultimo valore è facoltativa.
+
+## Usare un enum
+
+Il nome completo di un valore è `Direction.NORTH`. Ma quasi sempre il compilatore sa già che ti serve una `Direction`, e allora basta il nome del valore:
+
+```c3
+Direction a = Direction.NORTH;
+Direction b = WEST;              // Direction.WEST, inferred
+io::printn(a);
+io::printfn("Facing %s", b);
+io::printn(a == NORTH);
+```
+
+```output
+NORTH
+Facing WEST
+true
+```
+
+Lo stesso vale quando passi un valore a una funzione che vuole una `Direction`, o nei `case` di uno `switch`: il tipo si capisce dal contesto. E `printn` e `%s` stampano il **nome** del valore, cosa comodissima per il debug.
+
+Gli errori di battitura, poi, non passano più:
+
+```c3
+Direction c = NROTH;
+// error: 'NROTH' could not be found, did you spell it right?
+```
+
+## Lo switch che non dimentica niente
+
+Un enum e uno `switch` sono fatti l'uno per l'altro:
+
+```c3
+fn String describe(Direction d)
+{
+	switch (d)
+	{
+		case NORTH: return "up";
+		case EAST: return "right";
+		case SOUTH: return "down";
+		case WEST: return "left";
+	}
+}
+```
+
+Nota che non c'è nessun `return` dopo lo `switch`, eppure il compilatore non si lamenta di `Missing return statement`: sa che `d` può valere solo quei quattro valori, e che li hai gestiti tutti.
+
+E se ne dimentichi uno? Ecco il vero superpotere:
+
+```c3
+switch (d)
+{
+	case NORTH: return "up";
+	case EAST: return "right";
+	case SOUTH: return "down";
+}
+// error: Enum value WEST was not handled in the switch - either add it or add 'default'.
+```
+
+Immagina di aggiungere, tra sei mesi, `NORTH_EAST` all'enum. Il compilatore ti mostrerà **ogni** `switch` del programma che non lo gestisce ancora. Con i numeri o le stringhe, li avresti dovuti cercare a mano (e ne avresti dimenticato uno).
+
+<Callout type="tip" title="default solo se lo pensi davvero">
+
+Un `default` fa tacere l'errore, e con lui il controllo: da quel momento i valori nuovi finiscono lì senza che nessuno se ne accorga. Negli `switch` sugli enum, elenca tutti i casi ogni volta che puoi, e usa `default` solo quando "tutto il resto" ha davvero lo stesso significato.
+
+</Callout>
+
+<Quiz question="Quale di queste righe è corretta, con l'enum `Direction` di questa lezione?" options={['`Direction d = 2;`', '`Direction d = north;`', '`Direction d = SOUTH;`', '`Direction d = "SOUTH";`']} answer={2}>
+
+Solo `SOUTH` è un valore di `Direction` (il tipo viene dedotto dalla variabile). Un numero richiederebbe una conversione esplicita, `north` in minuscolo non esiste, e una stringa è un altro tipo ancora.
+
+</Quiz>
+
+## Dietro le quinte: un numero
+
+Ogni valore di un enum ha un numero d'ordine, l'**ordinale**, che parte da 0 e segue l'ordine della dichiarazione: `NORTH` è 0, `EAST` 1, `SOUTH` 2, `WEST` 3. Te lo dà `.ordinal`, e `Direction::from_ordinal` fa il viaggio inverso:
+
+```c3
+Direction d = SOUTH;
+io::printn(d.ordinal);
+io::printn(Direction::from_ordinal(1));
+```
+
+```output
+2
+EAST
+```
+
+La conversione non è automatica, in nessuna delle due direzioni: `int x = d;` dà un errore che suggerisce proprio `.ordinal`, e `Direction d = 1;` chiede un cast esplicito. Ed è controllata: `Direction::from_ordinal(7)` ferma il programma con `the value exceeds the max ordinal (3)`. Un enum non può contenere un valore fuori dall'elenco, nemmeno per sbaglio.
+
+Visto che c'è un ordine, i valori si possono anche confrontare con `<` e `>`: con `d` che vale `SOUTH`, `d > EAST` è vero. Qui il nome corto funziona perché dall'altra parte c'è una `Direction`. Con due valori nudi, `NORTH < WEST`, il compilatore non ha niente da cui dedurre il tipo e chiede il nome completo: `Direction.NORTH < Direction.WEST`.
+
+<Callout type="nerd" title="Quanto occupa un enum?">
+
+In memoria, un enum è semplicemente il suo ordinale, un numero intero: nessuna stringa, nessun nome. I nomi `NORTH`, `EAST`... esistono per te e per il compilatore, che li conserva a parte solo per poterli stampare.
+
+Di default l'ordinale è un `int` (4 byte), ma puoi scegliere un tipo più piccolo dopo il nome: `enum Direction : char { ... }` occupa un solo byte, e ci stanno fino a 256 valori. Utile quando ne hai milioni in un array.
+
+</Callout>
+
+## Tutti i valori, uno per uno
+
+`Direction::values` è l'elenco di tutti i valori dell'enum, in ordine. Si scorre con `foreach`:
+
+```c3
+foreach (dir : Direction::values) io::printf("%s ", dir);
+io::printn();
+io::printn(Direction::values.len);
+```
+
+```output
+NORTH EAST SOUTH WEST
+4
+```
+
+Perfetto per menu, tabelle, test: aggiungi un valore all'enum e i cicli lo includono da soli.
+
+## Metodi sugli enum
+
+Un enum è un tipo come gli altri, quindi può avere metodi. Girare a destra significa passare al valore successivo, e dopo `WEST` ricominciare da `NORTH`:
+
+```c3
+fn Direction Direction.turn_right(self) => Direction::from_ordinal((self.ordinal + 1) % 4);
+
+fn Direction Direction.turn_left(self) => Direction::from_ordinal((self.ordinal + 3) % 4);
+```
+
+Il `% 4` fa il giro, come nella giostra del modulo 3. E per girare a sinistra, invece di sottrarre 1 (che da `NORTH` darebbe -1), si aggiunge 3: tre giri a destra sono uno a sinistra.
+
+<Callout type="c" title="Un enum che resta un enum">
+
+In C un `enum` è poco più di un elenco di costanti intere: puoi assegnare `facing = 42`, sommare due direzioni, passare un giorno della settimana dove serve un mese. Il compilatore al massimo avvisa. In C3 un enum è un tipo a sé: niente conversioni implicite da e verso i numeri, valori controllati, `switch` che pretende tutti i casi, e i nomi stampabili senza scrivere a mano una tabella di stringhe.
+
+</Callout>
+
+<Exercise title="Il robot" expected={`Start: (0, 0) facing NORTH
+After FFRFFFLF: (3, 3) facing NORTH
+Unknown command 'X'
+After LLFFXFR: (3, 0) facing WEST`}>
+
+Scrivi `robot.c3` con l'enum `Direction` e i due metodi `turn_right` e `turn_left` di questa lezione, più una struct `Robot` con la posizione (`x`, `y`) e la direzione (`facing`). Nord è verso le `y` crescenti, est verso le `x` crescenti.
+
+Metodi del robot:
+
+- `forward()`: avanza di una casella nella direzione in cui guarda (uno `switch` sull'enum, con tutti e quattro i casi);
+- `run(commands)`: esegue una stringa di comandi, un carattere alla volta: `F` avanti, `R` gira a destra, `L` gira a sinistra. Per qualsiasi altro carattere stampa `Unknown command '` seguito dal carattere e da `'`, e prosegue.
+
+Nel `main` crea un `Robot` **senza inizializzarlo** (dove si trova? dove guarda?), stampa la posizione iniziale, esegui `"FFRFFFLF"`, stampa, esegui `"LLFFXFR"`, stampa, con il formato dell'output atteso.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="robot.c3"
+import std::io;
+
+enum Direction
+{
+	NORTH,
+	EAST,
+	SOUTH,
+	WEST,
+}
+
+fn Direction Direction.turn_right(self) => Direction::from_ordinal((self.ordinal + 1) % 4);
+
+fn Direction Direction.turn_left(self) => Direction::from_ordinal((self.ordinal + 3) % 4);
+
+struct Robot
+{
+	int x;
+	int y;
+	Direction facing;
+}
+
+fn void Robot.forward(&self)
+{
+	switch (self.facing)
+	{
+		case NORTH: self.y++;
+		case EAST: self.x++;
+		case SOUTH: self.y--;
+		case WEST: self.x--;
+	}
+}
+
+fn void Robot.run(&self, String commands)
+{
+	foreach (c : commands)
+	{
+		switch (c)
+		{
+			case 'F': self.forward();
+			case 'R': self.facing = self.facing.turn_right();
+			case 'L': self.facing = self.facing.turn_left();
+			default: io::printfn("Unknown command '%c'", c);
+		}
+	}
+}
+
+fn void main()
+{
+	Robot r;
+	io::printfn("Start: (%d, %d) facing %s", r.x, r.y, r.facing);
+	r.run("FFRFFFLF");
+	io::printfn("After FFRFFFLF: (%d, %d) facing %s", r.x, r.y, r.facing);
+	r.run("LLFFXFR");
+	io::printfn("After LLFFXFR: (%d, %d) facing %s", r.x, r.y, r.facing);
+}
+```
+
+Il robot non inizializzato sta in `(0, 0)` e guarda a `NORTH`: tutto azzerato, e l'ordinale 0 è il primo valore dell'enum. Scegli con cura il primo valore dei tuoi enum, perché è quello che ottieni "per default".
+
+I due `switch` sono diversi: quello su `self.facing` elenca tutti i casi e non ha `default` (se un giorno aggiungi `NORTH_EAST`, il compilatore te lo ricorderà); quello su `c`, un `char`, ha 256 valori possibili e il `default` è indispensabile.
+
+</Solution>
+
+## Ricapitolando
+
+- `enum Direction { NORTH, EAST, SOUTH, WEST }` crea un tipo che ammette **solo** quei valori, tutti in maiuscolo.
+- `Direction.NORTH`, oppure solo `NORTH` quando il tipo si deduce (assegnazioni, argomenti, `case`).
+- `printn` e `%s` stampano il nome; `==`, `<` e `>` confrontano.
+- Uno `switch` su un enum deve gestire **tutti** i valori, o avere un `default`.
+- `.ordinal` dà il numero d'ordine (da 0), `Direction::from_ordinal(n)` il valore; nessuna conversione implicita.
+- `Direction::values` elenca tutti i valori; gli enum possono avere metodi.
+
+Un enum sa chi è, ma per ora non sa niente altro. Nella prossima lezione gli attacchiamo dei dati: un pianeta con la sua gravità, un semaforo con i suoi secondi.

@@ -1,0 +1,240 @@
+---
+title: Struct, tanti valori sotto un nome
+description: Il tuo primo tipo. Dichiarare una struct, inizializzarla per posizione o per nome, leggere e scrivere i campi, struct dentro struct, e perché una struct si copia come un numero.
+minutes: 18
+---
+
+## Un giocatore è più di un numero
+
+Nella sfida del modulo 3 hai tenuto i giocatori in due liste "parallele": i nomi da una parte, i punteggi dall'altra, allineati a mano. Funzionava, ma bastava un `push` dimenticato per mescolare tutto. Il problema è che per il programma un nome e un punteggio erano due cose scollegate, mentre per te erano **una cosa sola**: un giocatore.
+
+C3 ti permette di dirlo esplicitamente, creando un tipo nuovo:
+
+```c3
+struct Player
+{
+	String name;
+	int score;
+	bool active;
+}
+```
+
+Questa è una **struct** (da *structure*, struttura): un tipo composto da più valori, ognuno con il suo nome e il suo tipo. I valori si chiamano **campi** (o *membri*). Da qui in poi `Player` è un tipo a tutti gli effetti, come `int` o `String`: puoi dichiarare variabili, parametri, array e liste di `Player`.
+
+La dichiarazione va **fuori** dalle funzioni, di solito in cima al file, dopo gli `import`. E il nome comincia con la maiuscola: ricordi la regola del modulo 1? I tipi definiti da te iniziano con la maiuscola, sempre. Se scrivi `struct player`, il compilatore risponde `Names of structs must start with an uppercase letter.`
+
+## Creare e usare una struct
+
+Il modo più breve per creare un `Player` è elencare i valori dei campi tra graffe, **nell'ordine** in cui sono dichiarati:
+
+```c3
+Player a = { "Ada", 42, true };
+io::printn(a);
+io::printfn("%s has %d points", a.name, a.score);
+```
+
+```output
+{ name: Ada, score: 42, active: true }
+Ada has 42 points
+```
+
+`printn` sa stampare una struct intera, con i nomi dei campi. Per arrivare a un singolo campo si usa il **punto**: `a.name`, `a.score`. E con il punto si scrive, anche:
+
+```c3
+a.score += 8;
+```
+
+Come per gli array, se elenchi i valori per posizione devi darli **tutti**, e nel tipo giusto. `Player a = { "Ada" };` dà `Too few elements in initializer`, e `{ 42, "Ada" }` (ordine sbagliato) dà `It is not possible to cast 'int' to 'String'.`
+
+## Per nome, e il resto a zero
+
+Quando i campi sono tanti, contarli è scomodo e rischioso. Meglio l'inizializzazione **per nome**, con un punto davanti a ogni campo:
+
+```c3
+Player b = { .name = "Grace" };
+io::printn(b);
+```
+
+```output
+{ name: Grace, score: 0, active: false }
+```
+
+Qui puoi indicare solo i campi che ti interessano, in qualsiasi ordine: tutti gli altri nascono **azzerati**, come ogni variabile di C3. E una struct dichiarata senza niente è tutta a zero: `Player c;` ha nome vuoto, punteggio 0 e `active` a `false`.
+
+<Callout type="tip" title="Posizione o nome?">
+
+La forma per posizione è comoda per le struct piccole e ovvie, come un punto `{ 3, 4 }`. Per tutto il resto preferisci i nomi: si leggono da soli (`{ .width = 3, .height = 4 }` non ha bisogno di spiegazioni), e se un giorno aggiungi un campo alla struct le inizializzazioni esistenti continuano a funzionare.
+
+</Callout>
+
+Esiste anche una forma per "copiare e cambiare qualcosa": `...` seguito da una struct esistente prende tutti i suoi valori, e i campi nominati dopo li sovrascrivono.
+
+```c3
+Player d = { ...a, .score = 0 };   // like a, but with score 0
+```
+
+<Quiz question={'Con `struct Point { int x; int y; int z; }`, cosa contiene `Point p = { .z = 5, .x = 1 };`?'} options={['`{ x: 5, y: 1, z: 0 }`', '`{ x: 1, y: 0, z: 5 }`', 'Errore: i campi vanno nell\'ordine della dichiarazione', 'Errore: manca `y`']} answer={1}>
+
+Con l'inizializzazione per nome l'ordine non conta e i campi non nominati valgono zero: `x` è 1, `z` è 5, `y` resta 0.
+
+</Quiz>
+
+## Struct dentro struct
+
+Un campo può essere di qualsiasi tipo, anche un'altra struct:
+
+```c3
+struct Point
+{
+	int x;
+	int y;
+}
+
+struct Segment
+{
+	Point from;
+	Point to;
+}
+```
+
+```c3
+Segment s = { { 0, 0 }, { 3, 4 } };
+s.to.x = 10;                 // the x of the end point
+io::printn(s);
+Segment s2 = { .from = { 1, 1 }, .to.y = 7 };
+io::printn(s2);
+```
+
+```output
+{ from: { x: 0, y: 0 }, to: { x: 10, y: 4 } }
+{ from: { x: 1, y: 1 }, to: { x: 0, y: 7 } }
+```
+
+I punti si concatenano: `s.to.x` è "il campo `x` del campo `to` di `s`". E nell'inizializzazione per nome puoi arrivare direttamente in profondità, con `.to.y = 7`.
+
+## Una struct è un valore
+
+Come gli array fissi, le struct si comportano come i numeri: assegnarle o passarle a una funzione le **copia**, campo per campo.
+
+```c3
+Player copy = a;
+copy.name = "Copy";
+io::printn(a);
+io::printn(copy);
+```
+
+```output
+{ name: Ada, score: 50, active: true }
+{ name: Copy, score: 50, active: true }
+```
+
+Anche una funzione con un parametro `Player` riceve la sua copia privata: può cambiarla quanto vuole, l'originale non se ne accorge. (Nella prossima lezione vedrai come permettere a una funzione di modificare l'originale, quando serve.)
+
+C'è però una cosa che, a differenza degli array, le struct **non** sanno fare da sole: confrontarsi.
+
+```c3
+Point p1 = { 1, 2 };
+Point p2 = { 1, 2 };
+io::printn(p1 == p2);
+// error: 'Point' does not support comparisons.
+```
+
+Cosa vuol dire che due giocatori sono "uguali"? Stesso nome? Stesso nome e punteggio? Dipende dal programma, e C3 non tira a indovinare: se ti serve, confronti tu i campi che contano (`p1.x == p2.x && p1.y == p2.y`), magari dentro una funzione.
+
+<Callout type="c" title="Niente typedef struct">
+
+In C, per usare `Player` senza scrivere ogni volta `struct Player`, si ricorre al classico `typedef struct { ... } Player;`. In C3 il nome di una struct è già un tipo, pronto all'uso. E c'è un'altra differenza: in C una struct locale non inizializzata contiene spazzatura; in C3 è azzerata.
+
+</Callout>
+
+<Callout type="nerd" title="Quanto spazio occupa una struct?">
+
+Viene da pensare: la somma dei campi. `Player` ha una `String` (16 byte: indirizzo e lunghezza, come ogni slice), un `int` (4) e un `bool` (1): 21 byte. Invece `Player::size` vale **24**.
+
+Il motivo è l'**allineamento**. Il processore legge la memoria a blocchi, e un valore da 8 byte si legge in un colpo solo se il suo indirizzo è un multiplo di 8. Per questo il compilatore aggiunge byte vuoti (*padding*, "imbottitura") in modo che ogni campo stia al suo posto ideale, e che in un array di `Player` anche il secondo elemento cominci allineato.
+
+L'ordine dei campi quindi conta. Una struct con `bool`, `long`, `bool` occupa 24 byte (7 byte di imbottitura dopo ogni `bool`); la stessa con `long`, `bool`, `bool` ne occupa 16. Per le struct di tutti i giorni non importa; per milioni di elementi in memoria, sì.
+
+</Callout>
+
+<Exercise title="Lo scaffale" expected={`The C Programming Language, by Kernighan & Ritchie
+  22/02/1978, 228 pages
+SICP, by Abelson & Sussman
+  00/00/1985, 657 pages
+The C Programming Language, by Kernighan & Ritchie
+  01/04/1988, 272 pages
+First edition still from 1978`}>
+
+Scrivi `books.c3` con due struct:
+
+- `Date` con tre `int`: `day`, `month`, `year`;
+- `Book` con `title` e `author` (`String`), `published` (una `Date`) e `pages` (`int`).
+
+Poi una funzione `fn void print_book(Book b)` che stampa il libro su due righe: titolo e autore separati da `, by `, e sotto, rientrata di due spazi, la data nel formato `giorno/mese/anno` con giorno e mese su due cifre (`%02d`), seguita dal numero di pagine.
+
+Nel `main`:
+
+1. crea `kr` **per posizione**: `"The C Programming Language"`, `"Kernighan & Ritchie"`, pubblicato il 22 febbraio 1978, 228 pagine;
+2. crea `sicp` **per nome**, indicando solo il titolo `"SICP"`, l'anno di pubblicazione 1985 (con `.published.year`) e 657 pagine; poi assegna l'autore `"Abelson & Sussman"` con il punto;
+3. crea `second` come **copia** di `kr`, e cambiale la data (1 aprile 1988) e le pagine (272);
+4. stampa i tre libri con `print_book`, e infine `First edition still from ` con l'anno di `kr`.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="books.c3"
+import std::io;
+
+struct Date
+{
+	int day;
+	int month;
+	int year;
+}
+
+struct Book
+{
+	String title;
+	String author;
+	Date published;
+	int pages;
+}
+
+fn void print_book(Book b)
+{
+	io::printfn("%s, by %s", b.title, b.author);
+	io::printfn("  %02d/%02d/%d, %d pages", b.published.day, b.published.month, b.published.year, b.pages);
+}
+
+fn void main()
+{
+	Book kr = { "The C Programming Language", "Kernighan & Ritchie", { 22, 2, 1978 }, 228 };
+	Book sicp = { .title = "SICP", .published.year = 1985, .pages = 657 };
+	sicp.author = "Abelson & Sussman";
+
+	Book second = kr;
+	second.published = { 1, 4, 1988 };
+	second.pages = 272;
+
+	print_book(kr);
+	print_book(sicp);
+	print_book(second);
+	io::printfn("First edition still from %d", kr.published.year);
+}
+```
+
+Nota `second.published = { 1, 4, 1988 };`: si può assegnare un'intera struct con le graffe, anche dopo la dichiarazione, perché il compilatore sa già di che tipo è il campo. La data di `sicp` esce `00/00/1985`: giorno e mese non indicati, quindi zero. E `kr` è rimasto del 1978: `second` è una copia.
+
+</Solution>
+
+## Ricapitolando
+
+- `struct Name { Type field; ... }`, fuori dalle funzioni e con la maiuscola, crea un tipo nuovo.
+- Si inizializza per posizione `{ "Ada", 42, true }` (tutti i campi) o per nome `{ .name = "Ada" }` (gli altri a zero). `{ ...a, .score = 0 }` copia e modifica.
+- I campi si leggono e scrivono con il punto, anche in profondità: `s.to.x`.
+- Una struct è un **valore**: si copia assegnandola o passandola a una funzione.
+- `==` tra struct non esiste: confronta tu i campi che contano.
+- `printn` stampa una struct intera con i nomi dei campi.
+
+Una struct raccoglie dati. Ma spesso ci sono anche delle **azioni** che riguardano quei dati: calcolare l'area di un rettangolo, aggiungere punti a un giocatore. Nella prossima lezione, i metodi.

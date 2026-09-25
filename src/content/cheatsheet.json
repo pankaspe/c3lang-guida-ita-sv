@@ -495,6 +495,98 @@
 			]
 		},
 		{
+			"id": "structs",
+			"title": "Struct e metodi",
+			"icon": "box",
+			"entries": [
+				{
+					"term": "struct",
+					"code": "struct Player\n{\n\tString name;\n\tint score;\n}",
+					"text": "Un tipo fatto di più campi. Fuori dalle funzioni, nome con la maiuscola. Si copia come un valore; `==` non è definito.",
+					"lesson": "struct-ed-enum/struct"
+				},
+				{
+					"term": "inizializzare una struct",
+					"code": "Player a = { \"Ada\", 42 };\nPlayer b = { .name = \"Grace\" };\nPlayer c = { ...a, .score = 0 };",
+					"text": "Per posizione (tutti i campi) o per nome (gli altri a zero). `...a` copia i campi di un'altra struct.",
+					"lesson": "struct-ed-enum/struct"
+				},
+				{
+					"term": ". (campi)",
+					"code": "a.score += 8;\nsegment.to.x = 10;",
+					"text": "Legge e scrive un campo, anche annidato e anche attraverso un indirizzo.",
+					"lesson": "struct-ed-enum/struct"
+				},
+				{
+					"term": "metodi: self · &self",
+					"code": "fn int Rect.area(self) => self.width * self.height;\nfn void Rect.scale(&self, int f)\n{\n\tself.width *= f;\n\tself.height *= f;\n}",
+					"text": "`self` riceve una copia (per leggere), `&self` l'originale (per modificare). `r.area()` equivale a `Rect.area(r)`.",
+					"lesson": "struct-ed-enum/metodi"
+				},
+				{
+					"term": "foreach (&p : team)",
+					"code": "foreach (&p : team) p.score += 1;",
+					"text": "Per modificare le struct di una collezione nel ciclo; con le struct basta il punto, senza `*`.",
+					"lesson": "struct-ed-enum/collezioni-di-struct"
+				},
+				{
+					"term": "funzione di confronto",
+					"code": "fn int by_score(Player a, Player b) => b.score - a.score;\n\nsort::quicksort(&players, &by_score);",
+					"text": "Negativo se `a` va prima, positivo se va dopo, zero se equivalenti. Si passa a `quicksort` con `&`.",
+					"lesson": "struct-ed-enum/collezioni-di-struct"
+				}
+			]
+		},
+		{
+			"id": "enums",
+			"title": "Enum e tipi",
+			"icon": "type",
+			"entries": [
+				{
+					"term": "enum",
+					"code": "enum Direction { NORTH, EAST, SOUTH, WEST }\n\nDirection d = NORTH;\nDirection.WEST",
+					"text": "Un tipo con un elenco chiuso di valori in MAIUSCOLO. Il nome corto basta dove il tipo si deduce.",
+					"lesson": "struct-ed-enum/enum"
+				},
+				{
+					"term": "switch su enum",
+					"code": "switch (d)\n{\n\tcase NORTH: ...\n\tcase EAST: ...\n\tcase SOUTH: ...\n\tcase WEST: ...\n}",
+					"text": "Deve gestire tutti i valori (o avere un `default`): il compilatore segnala quelli mancanti.",
+					"lesson": "struct-ed-enum/enum"
+				},
+				{
+					"term": ".ordinal · ::from_ordinal · ::values",
+					"code": "d.ordinal\nDirection::from_ordinal(1)\nforeach (x : Direction::values)",
+					"text": "Numero d'ordine da 0, il viaggio inverso (controllato), e l'elenco di tutti i valori.",
+					"lesson": "struct-ed-enum/enum"
+				},
+				{
+					"term": "valori associati",
+					"code": "enum Planet : (String label, double gravity)\n{\n\tEARTH { \"Earth\", 9.81 },\n\tMARS  { \"Mars\", 3.71 },\n}\n\nPlanet.MARS.gravity",
+					"text": "Dati fissi per ogni voce dell'enum, letti con il punto.",
+					"lesson": "struct-ed-enum/enum-con-dati"
+				},
+				{
+					"term": "constdef",
+					"code": "constdef HttpStatus\n{\n\tOK = 200,\n\tNOT_FOUND = 404,\n}",
+					"text": "Costanti con numeri scelti da te, soprattutto per il codice C.",
+					"lesson": "struct-ed-enum/enum-con-dati"
+				},
+				{
+					"term": "alias",
+					"code": "alias Score = int;\nalias ScoreList = List{int};",
+					"text": "Un soprannome: stesso tipo, intercambiabile.",
+					"lesson": "struct-ed-enum/alias-e-typedef"
+				},
+				{
+					"term": "typedef",
+					"code": "typedef Meters @constinit = double;\ntypedef UserId = int;\ntypedef Money = inline long;",
+					"text": "Un tipo distinto che non si mescola con l'originale. `@constinit` accetta i letterali, `inline` converte verso il tipo base.",
+					"lesson": "struct-ed-enum/alias-e-typedef"
+				}
+			]
+		},
+		{
 			"id": "functions",
 			"title": "Funzioni",
 			"icon": "wrench",
