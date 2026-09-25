@@ -156,3 +156,10 @@ surfaces, indigo accent, mono for small labels; don't hard-code colours in compo
   bounds errors and `foreach (&x : a)` as a teaser; pointers were promised a module of their own).
   Planned later modules: structs/enums, optionals & error handling, modules, memory & pointers,
   defer/contracts, generics/macros, C interop.
+- Idea under evaluation (not started, don't build unasked): a `/play` section with an android the
+  learner names (`const NAME`) and assembles as the course goes on. Parts appear with completed lessons,
+  and per-module missions have the learner run C3 locally and paste a small line-based "firmware"
+  output (`NAME: Bolt`, `STEP`, ...) that the app parses and animates (no in-browser execution).
+  Leaning towards three.js with a low-poly android built from primitives, lazy-loaded on /play, colours
+  from CSS tokens. Open: 2D vs 3D, one android vs one per module, missions optional vs badges.
+  First step when resumed: design the module-1 firmware on paper.
