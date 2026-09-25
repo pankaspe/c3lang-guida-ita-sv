@@ -55,7 +55,8 @@ The app is a generic, localisable course reader; the content is Italian only (no
 - `src/content/course.json` (`src/lib/content/course.ts` types it): title, subject, logo, tagline,
   hero, footer, about, docs link, compiler, course-specific badges. Written in the course language.
 - Routes are English and language-neutral: `/`, `/modules/[module]/[lesson]`, `/profile`,
-  `/settings` (section anchors `#appearance`, `#reading`, `#code`, `#experience`, `#data`, `#info`).
+  `/settings` (section anchors `#appearance`, `#reading`, `#code`, `#experience`, `#keyboard`, `#data`,
+  `#info`).
 
 ## How content is wired
 
@@ -97,6 +98,14 @@ The app is a generic, localisable course reader; the content is Italian only (no
   `prefers-reduced-motion` with "Sistema".
   - Section snap (`snap` preference, `data-snap`): `scroll-snap-type: y proximity` on lesson pages,
     each `.lesson-section` snaps at its start. Never `mandatory`: sections are longer than the screen.
+- Cheat sheet ("Prontuario"): floating button on every page + `K` key, a native `<dialog>` via
+  `components/ui/Modal.svelte`. Data in `src/content/cheatsheet.json` (typed by
+  `src/lib/content/cheatsheet.ts`); the body (`CheatSheetBody.svelte`, with Prism) is lazy-loaded on
+  first open.
+- Keyboard shortcuts: `src/lib/shortcuts.svelte.ts` (`handleShortcut` on the window in the root layout,
+  `panels` = which dialog is open, `SHORTCUTS` = the table shown in the `?` dialog and Settings →
+  Tastiera). A new shortcut goes in `SHORTCUTS` + `shortcuts.actions.*` in every locale. Letter keys are
+  ignored while typing in a field. Lesson prev/next links carry `data-shortcut="previous|next"`.
 - "Copia lezione" in the lesson header copies the lesson as markdown (`loadLessonMarkdown` in the
   registry, `?raw` glob loaded on demand, so it never grows the lesson chunk).
 
@@ -125,6 +134,11 @@ surfaces, indigo accent, mono for small labels; don't hard-code colours in compo
 - Never put an `##` heading inside a lesson component (see "Lesson sections" above).
 - Tone: fun but clear, short sections, one idea at a time, "Se vieni dal C" callouts for C comparisons,
   a recap list at the end of each lesson, quizzes inline and at least one on-machine exercise per lesson.
+- **Cheat sheet**: every lesson that introduces a keyword, type, operator, stdlib call or compiler
+  command adds an entry to `src/content/cheatsheet.json` (in the right section, or a new section with
+  an `Icon.svelte` icon): `term`, optional `code` (English, verified with c3c; `lang: "bash"` for shell),
+  `text` (Italian, inline markdown), `lesson` (`<moduleSlug>/<lessonSlug>`). Keep entries to 1–2
+  sentences.
 - **"Dettagli nerd"** (`Callout type="nerd" title="<the question it answers>"`): whenever a lesson
   uses a term about how the computer works (buffer, RAM, byte/bit, registers, stdout, linker, PATH,
   two's complement, IEEE 754, UTF-8, ...), add a nerd callout explaining it in plain Italian, placed

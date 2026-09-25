@@ -18,7 +18,8 @@ const it = {
 		save: 'Salva',
 		minutes: '{minutes} min',
 		unknownDate: 'data sconosciuta',
-		justNow: 'proprio ora'
+		justNow: 'proprio ora',
+		close: 'Chiudi'
 	},
 	nav: {
 		profile: 'Profilo',
@@ -31,7 +32,8 @@ const it = {
 	},
 	footer: {
 		basedOn: 'basato sulla documentazione di',
-		settings: 'impostazioni'
+		settings: 'impostazioni',
+		shortcuts: 'scorciatoie da tastiera'
 	},
 	home: {
 		continue: 'Continua da dove eri',
@@ -169,6 +171,7 @@ const it = {
 			reading: 'Lettura',
 			code: 'Codice',
 			experience: 'Esperienza',
+			keyboard: 'Tastiera',
 			data: 'Dati',
 			info: 'Info'
 		},
@@ -282,6 +285,44 @@ const it = {
 			lessons: { one: '{count} lezione', other: '{count} lezioni' },
 			compiler: 'Compilatore di riferimento',
 			docs: 'Documentazione ufficiale'
+		}
+	},
+	cheatsheet: {
+		open: 'Prontuario',
+		openAria: 'Apri il prontuario del linguaggio',
+		title: 'Prontuario',
+		intro: 'Parole chiave e sintassi viste finora, in una pagina sola.',
+		search: 'Cerca: for, printf, %d…',
+		searchLabel: 'Cerca nel prontuario',
+		loading: 'Caricamento…',
+		empty: 'Nessuna voce per «{query}».',
+		results: { one: '{count} voce', other: '{count} voci' },
+		lesson: 'Vista nella lezione {number}: {title}',
+		escHint: 'per chiudere'
+	},
+	shortcuts: {
+		title: 'Scorciatoie da tastiera',
+		intro:
+			'Il corso si naviga anche solo con la tastiera. Le lettere non funzionano mentre stai scrivendo in un campo di testo: premi Esc per uscirne.',
+		groups: {
+			global: 'Ovunque',
+			lesson: 'Nelle lezioni'
+		},
+		actions: {
+			cheatsheet: 'Apri o chiudi il prontuario',
+			help: 'Mostra queste scorciatoie',
+			theme: 'Passa dal tema chiaro a quello scuro',
+			close: 'Chiudi la finestra aperta',
+			focus: 'Passa al link o pulsante successivo / precedente',
+			next: 'Lezione successiva',
+			previous: 'Lezione precedente',
+			check: 'Verifica la risposta di un esercizio'
+		},
+		keys: {
+			esc: 'Esc',
+			tab: 'Tab',
+			shift: 'Maiusc',
+			enter: 'Invio'
 		}
 	},
 	backup: {

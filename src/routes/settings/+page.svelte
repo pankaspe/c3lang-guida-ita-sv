@@ -2,6 +2,7 @@
 	import Icon, { type IconName } from '$lib/components/ui/Icon.svelte';
 	import Segmented from '$lib/components/settings/Segmented.svelte';
 	import SettingRow from '$lib/components/settings/SettingRow.svelte';
+	import ShortcutList from '$lib/components/shortcuts/ShortcutList.svelte';
 	import Switch from '$lib/components/settings/Switch.svelte';
 	import { settings } from '$lib/state/settings.svelte';
 	import { progress } from '$lib/state/progress.svelte';
@@ -13,12 +14,13 @@
 	import { feedback } from '$lib/feedback';
 	import { AVAILABLE_LOCALES, i18n, t } from '$lib/i18n/index.svelte';
 
-	type SectionId = 'appearance' | 'reading' | 'code' | 'experience' | 'data' | 'info';
+	type SectionId = 'appearance' | 'reading' | 'code' | 'experience' | 'keyboard' | 'data' | 'info';
 	const sections: { id: SectionId; icon: IconName }[] = [
 		{ id: 'appearance', icon: 'palette' },
 		{ id: 'reading', icon: 'book-open' },
 		{ id: 'code', icon: 'code' },
 		{ id: 'experience', icon: 'sparkles' },
+		{ id: 'keyboard', icon: 'keyboard' },
 		{ id: 'data', icon: 'database' },
 		{ id: 'info', icon: 'info' }
 	];
@@ -358,6 +360,13 @@
 					<Icon name="history" class="size-4" />
 					{t('settings.reset')}
 				</button>
+			</section>
+
+			<!-- Keyboard -->
+			<section id="keyboard" class="mt-10 scroll-mt-32 lg:scroll-mt-24">
+				<h2 class="font-mono text-xs font-semibold tracking-wider text-muted uppercase">{t('settings.sections.keyboard')}</h2>
+				<p class="mt-3 mb-4 font-sans text-sm text-ink-soft">{t('shortcuts.intro')}</p>
+				<ShortcutList />
 			</section>
 
 			<!-- Data -->

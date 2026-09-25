@@ -1,0 +1,409 @@
+{
+	"sections": [
+		{
+			"id": "program",
+			"title": "Struttura del programma",
+			"icon": "code",
+			"entries": [
+				{
+					"term": "import",
+					"code": "import std::io;",
+					"text": "Porta dentro un modulo della libreria standard. `std::io` serve per stampare.",
+					"lesson": "primi-passi/hello-world"
+				},
+				{
+					"term": "fn void main()",
+					"code": "fn void main()\n{\n\tio::printn(\"Hi\");\n}",
+					"text": "Il punto d'ingresso: il programma parte da qui. `fn` introduce una funzione.",
+					"lesson": "primi-passi/hello-world"
+				},
+				{
+					"term": "module",
+					"code": "module first_project;",
+					"text": "Dà un nome al file in un progetto. Nome tutto minuscolo.",
+					"lesson": "primi-passi/progetti"
+				},
+				{
+					"term": "main con argomenti",
+					"code": "fn int main(String[] args)\n{\n\treturn 0;\n}",
+					"text": "La forma usata da `c3c init`: restituisce il codice d'uscita (`0` = tutto ok).",
+					"lesson": "primi-passi/progetti"
+				},
+				{
+					"term": "; e { }",
+					"text": "Ogni istruzione finisce con `;`. Le graffe raccolgono un blocco di istruzioni.",
+					"lesson": "primi-passi/hello-world"
+				},
+				{
+					"term": "commenti",
+					"code": "// single line\n/* block, /* nestable */ */\n<* documentation *>",
+					"text": "Ignorati dal compilatore. I blocchi `/* */` si possono annidare.",
+					"lesson": "primi-passi/hello-world"
+				}
+			]
+		},
+		{
+			"id": "print",
+			"title": "Stampare",
+			"icon": "terminal",
+			"entries": [
+				{
+					"term": "io::printn / io::print",
+					"code": "io::printn(\"Hello\");  // with newline\nio::print(\"Hello\");   // without",
+					"text": "Stampa un valore qualsiasi. `printn` va a capo, `print` no. `io::printn()` stampa solo un a capo.",
+					"lesson": "primi-passi/hello-world"
+				},
+				{
+					"term": "io::printfn / io::printf",
+					"code": "io::printfn(\"%s is %d\", name, age);",
+					"text": "Stampa formattata: i segnaposto `%` vengono sostituiti dagli argomenti, in ordine.",
+					"lesson": "primi-passi/stampare-e-formattare"
+				},
+				{
+					"term": "segnaposto",
+					"code": "%s  %d  %f  %.2f  %c  %x  %b  %%",
+					"text": "`%s` qualsiasi valore, `%d` intero, `%f` decimale (6 cifre), `%.2f` con 2 cifre, `%c` carattere, `%x` esadecimale, `%b` binario, `%%` il simbolo `%`.",
+					"lesson": "primi-passi/stampare-e-formattare"
+				},
+				{
+					"term": "larghezza",
+					"code": "%5d   %-5d   %05d   %8.2f",
+					"text": "Il numero è la larghezza minima: a destra, `-` a sinistra, `0` riempie con zeri.",
+					"lesson": "primi-passi/stampare-e-formattare"
+				},
+				{
+					"term": "escape",
+					"code": "\"Line\\nNext\\tTab \\\"quoted\\\"\"",
+					"text": "`\\n` a capo, `\\t` tabulazione, `\\\"` virgolette dentro una stringa.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "stringa raw",
+					"code": "String path = `C:\\Users\\ada`;",
+					"text": "Tra backtick le `\\` non sono escape: il testo resta com'è.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				}
+			]
+		},
+		{
+			"id": "types",
+			"title": "Tipi",
+			"icon": "type",
+			"entries": [
+				{
+					"term": "int · long · short · ichar · int128",
+					"text": "Interi con segno: 32, 64, 16, 8 e 128 bit. `int` è il default.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "uint · ulong · ushort · char · uint128",
+					"text": "I gemelli **senza segno** (solo positivi). `char` è un byte: 0…255.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "usz · sz",
+					"text": "Interi grandi quanto la macchina (64 bit). `usz` è il tipo delle lunghezze.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "double · float",
+					"code": "double pi = 3.14159;\nfloat weight = 72.5f;",
+					"text": "Numeri con la virgola. `double` è il default; il suffisso `f` fa un `float`.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "bool · true · false",
+					"code": "bool is_raining = true;",
+					"text": "Vero o falso. È il risultato di ogni confronto.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "String · .len",
+					"code": "String name = \"Ada\";\nio::printn(name.len);   // 3",
+					"text": "Testo tra virgolette doppie. `.len` dà la lunghezza in byte.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "char 'A'",
+					"code": "char letter = 'A';   // 65\nio::printfn(\"%c\", letter);",
+					"text": "Un carattere tra apici singoli. È un numero: si stampa come lettera con `%c`.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "letterali numerici",
+					"code": "1_000_000   0xFF   0b1010   0o755   6.022e23",
+					"text": "`_` separa le cifre; `0x` esadecimale, `0b` binario, `0o` ottale; `e` notazione scientifica.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "cast (tipo)",
+					"code": "int i = (int)7.9;       // 7\ndouble d = (double)a / 2;",
+					"text": "Converte esplicitamente un valore in un altro tipo. Verso `int` tronca i decimali.",
+					"lesson": "primi-passi/operatori"
+				}
+			]
+		},
+		{
+			"id": "variables",
+			"title": "Variabili e costanti",
+			"icon": "database",
+			"entries": [
+				{
+					"term": "dichiarazione",
+					"code": "int age = 34;\nage = 35;",
+					"text": "Tipo, nome e valore. Senza valore iniziale, una variabile vale zero.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "const",
+					"code": "const int MAX_PLAYERS = 4;\nconst GAME_NAME = \"Briscola\";",
+					"text": "Un valore che non cambia mai. Nome in MAIUSCOLO; il tipo si può omettere.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "una per riga",
+					"text": "`int a, b = 4;` non compila: dichiara una variabile alla volta.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "regole dei nomi",
+					"text": "`variabile_o_funzione`, `TipoDefinito`, `COSTANTE`, `modulo_minuscolo`.",
+					"lesson": "primi-passi/variabili-e-tipi"
+				},
+				{
+					"term": "visibilità (scope)",
+					"text": "Una variabile vive nel blocco `{ }` in cui nasce. Non puoi riusare un nome già in uso (*shadowing*).",
+					"lesson": "decisioni-cicli-funzioni/if-else"
+				}
+			]
+		},
+		{
+			"id": "operators",
+			"title": "Operatori",
+			"icon": "cpu",
+			"entries": [
+				{
+					"term": "+ - * / %",
+					"code": "7 / 2     // 3: between ints it truncates\n7 % 2     // 1: the remainder\n7.0 / 2   // 3.500000",
+					"text": "Aritmetica. Tra interi `/` butta via i decimali: basta un `double` per evitarlo.",
+					"lesson": "primi-passi/operatori"
+				},
+				{
+					"term": "+= -= *= /= ++ --",
+					"code": "x += 5;\nx++;\nx--;",
+					"text": "Modificano una variabile \"in posto\". `x++` aggiunge 1, `x--` toglie 1.",
+					"lesson": "primi-passi/operatori"
+				},
+				{
+					"term": "== != < > <= >=",
+					"code": "bool is_adult = age >= 18;",
+					"text": "Confronti: il risultato è un `bool`.",
+					"lesson": "primi-passi/operatori"
+				},
+				{
+					"term": "&& || !",
+					"code": "age >= 18 && has_ticket",
+					"text": "E, O, NON logici: combinano condizioni.",
+					"lesson": "primi-passi/operatori"
+				},
+				{
+					"term": "& | ^ << >>",
+					"code": "5 & 3    // 1\n1 << 3   // 8",
+					"text": "Operatori sui bit. In C3 hanno precedenza più alta di `+`, `-` e dei confronti.",
+					"lesson": "primi-passi/operatori"
+				},
+				{
+					"term": "precedenza",
+					"text": "`()` → `!` → `* / %` → bit → `+ -` → confronti → `&&` → `||` → `=`. Nel dubbio, parentesi.",
+					"lesson": "primi-passi/operatori"
+				},
+				{
+					"term": "cond ? a : b",
+					"code": "String parity = n % 2 == 0 ? \"even\" : \"odd\";",
+					"text": "Ternario: un `if` in forma di espressione, che produce un valore.",
+					"lesson": "decisioni-cicli-funzioni/if-else"
+				},
+				{
+					"term": "?: (Elvis)",
+					"code": "int volume = user_choice ?: 50;",
+					"text": "Valore di riserva: se a sinistra c'è zero (o `false`), usa quello a destra.",
+					"lesson": "decisioni-cicli-funzioni/if-else"
+				}
+			]
+		},
+		{
+			"id": "decisions",
+			"title": "Decisioni",
+			"icon": "git-branch",
+			"entries": [
+				{
+					"term": "if · else if · else",
+					"code": "if (score >= 90)\n{\n\tio::printn(\"Excellent\");\n}\nelse if (score >= 70)\n{\n\tio::printn(\"Good\");\n}\nelse\n{\n\tio::printn(\"Keep going\");\n}",
+					"text": "Esegue il primo blocco la cui condizione è vera.",
+					"lesson": "decisioni-cicli-funzioni/if-else"
+				},
+				{
+					"term": "if su una riga",
+					"code": "if (n < 0) n = -n;",
+					"text": "Senza graffe solo sulla stessa riga e senza `else`. Con `else` le graffe sono obbligatorie.",
+					"lesson": "decisioni-cicli-funzioni/if-else"
+				},
+				{
+					"term": "switch · case · default",
+					"code": "switch (day)\n{\n\tcase 6:\n\tcase 7:\n\t\tio::printn(\"Weekend!\");\n\tdefault:\n\t\tio::printn(\"Work day\");\n}",
+					"text": "Sceglie tra molti valori (anche stringhe). Niente `break`: ogni `case` si ferma da solo. Un `case` vuoto condivide il blocco del successivo.",
+					"lesson": "decisioni-cicli-funzioni/switch"
+				},
+				{
+					"term": "case a..b",
+					"code": "case 13..17:",
+					"text": "Un intervallo di valori, estremi inclusi.",
+					"lesson": "decisioni-cicli-funzioni/switch"
+				},
+				{
+					"term": "nextcase",
+					"code": "case 3:\n\tio::printn(\"dragon\");\n\tnextcase;",
+					"text": "Prosegue di proposito nel `case` successivo.",
+					"lesson": "decisioni-cicli-funzioni/switch"
+				},
+				{
+					"term": "switch senza valore",
+					"code": "switch\n{\n\tcase bmi < 18.5:\n\t\tio::printn(\"Underweight\");\n\tdefault:\n\t\tio::printn(\"Normal\");\n}",
+					"text": "Ogni `case` è una condizione: vince la prima vera.",
+					"lesson": "decisioni-cicli-funzioni/switch"
+				}
+			]
+		},
+		{
+			"id": "loops",
+			"title": "Cicli",
+			"icon": "history",
+			"entries": [
+				{
+					"term": "while",
+					"code": "while (seconds > 0)\n{\n\tseconds--;\n}",
+					"text": "Ripete finché la condizione è vera. Controlla prima di ogni giro.",
+					"lesson": "decisioni-cicli-funzioni/while"
+				},
+				{
+					"term": "do … while",
+					"code": "do\n{\n\tk++;\n} while (k < 5);",
+					"text": "Come `while`, ma controlla alla fine: il corpo gira almeno una volta.",
+					"lesson": "decisioni-cicli-funzioni/while"
+				},
+				{
+					"term": "for",
+					"code": "for (int i = 0; i < 10; i++)\n{\n\tio::printf(\"%d \", i);\n}",
+					"text": "Inizializzazione, condizione, aggiornamento. `i` esiste solo dentro il ciclo.",
+					"lesson": "decisioni-cicli-funzioni/for"
+				},
+				{
+					"term": "break · continue",
+					"code": "if (n % 7 == 0) break;\nif (i % 3 == 0) continue;",
+					"text": "`break` esce dal ciclo, `continue` salta al giro successivo.",
+					"lesson": "decisioni-cicli-funzioni/while"
+				},
+				{
+					"term": "etichette",
+					"code": "for OUTER: (int i = 0; i < 9; i++)\n{\n\tfor (int j = 0; j < 9; j++)\n\t{\n\t\tif (i * j == 42) break OUTER;\n\t}\n}",
+					"text": "Danno un nome a un ciclo, per uscire da quello esterno con `break NOME`.",
+					"lesson": "decisioni-cicli-funzioni/for"
+				},
+				{
+					"term": "foreach",
+					"code": "foreach (score : scores) io::printn(score);\nforeach (i, score : scores) io::printfn(\"%d: %d\", i, score);",
+					"text": "Scorre ogni elemento di un array o di una stringa, con l'indice se ti serve.",
+					"lesson": "decisioni-cicli-funzioni/foreach"
+				},
+				{
+					"term": "foreach_r",
+					"code": "foreach_r (score : scores) io::printn(score);",
+					"text": "Come `foreach`, ma dall'ultimo elemento al primo.",
+					"lesson": "decisioni-cicli-funzioni/foreach"
+				},
+				{
+					"term": "foreach (&x : a)",
+					"code": "foreach (&score : scores) *score += 1;",
+					"text": "Con `&` lavori sull'elemento vero, non su una copia: `*score` lo legge e lo modifica.",
+					"lesson": "decisioni-cicli-funzioni/foreach"
+				}
+			]
+		},
+		{
+			"id": "arrays",
+			"title": "Array",
+			"icon": "layers",
+			"entries": [
+				{
+					"term": "int[*]",
+					"code": "int[*] scores = { 18, 25, 30, 27 };",
+					"text": "Un array di lunghezza fissa: la dimensione la conta il compilatore.",
+					"lesson": "decisioni-cicli-funzioni/foreach"
+				},
+				{
+					"term": "a[i] · .len",
+					"code": "scores[0]        // the first one\nscores[1] = 28;\nscores.len       // 4",
+					"text": "Gli indici partono da 0 e arrivano a `.len - 1`. Fuori da lì è un errore.",
+					"lesson": "decisioni-cicli-funzioni/foreach"
+				}
+			]
+		},
+		{
+			"id": "functions",
+			"title": "Funzioni",
+			"icon": "wrench",
+			"entries": [
+				{
+					"term": "fn · return",
+					"code": "fn int square(int x)\n{\n\treturn x * x;\n}",
+					"text": "Tipo restituito, nome, parametri. `return` esce e restituisce il valore.",
+					"lesson": "decisioni-cicli-funzioni/funzioni"
+				},
+				{
+					"term": "void",
+					"code": "fn void print_banner(String title)\n{\n\tio::printn(title);\n}",
+					"text": "La funzione non restituisce nulla. `return;` da solo esce prima.",
+					"lesson": "decisioni-cicli-funzioni/funzioni"
+				},
+				{
+					"term": "=> (in una riga)",
+					"code": "fn bool is_even(int n) => n % 2 == 0;",
+					"text": "Forma corta per le funzioni che restituiscono una sola espressione.",
+					"lesson": "decisioni-cicli-funzioni/funzioni"
+				},
+				{
+					"term": "argomenti predefiniti e con nome",
+					"code": "fn void greet(String name, int times = 1) {}\n\ngreet(\"Ada\");\ngreet(\"Grace\", times: 2);",
+					"text": "Un parametro con `=` si può omettere; `nome: valore` passa un argomento per nome.",
+					"lesson": "decisioni-cicli-funzioni/funzioni"
+				},
+				{
+					"term": "parametri = copie",
+					"text": "La funzione riceve una copia degli argomenti: modificarla non cambia l'originale.",
+					"lesson": "decisioni-cicli-funzioni/funzioni"
+				}
+			]
+		},
+		{
+			"id": "compiler",
+			"title": "Il compilatore c3c",
+			"icon": "terminal",
+			"entries": [
+				{
+					"term": "compile-run · compile",
+					"lang": "bash",
+					"code": "c3c compile-run hello.c3\nc3c compile hello.c3",
+					"text": "Compila un singolo file e lo lancia, oppure crea solo l'eseguibile.",
+					"lesson": "primi-passi/hello-world"
+				},
+				{
+					"term": "init · run · build · clean",
+					"lang": "bash",
+					"code": "c3c init first_project\nc3c run\nc3c build\nc3c clean",
+					"text": "Crea un progetto; poi, dalla sua cartella, compila e lancia, solo compila, o svuota `build/`.",
+					"lesson": "primi-passi/progetti"
+				}
+			]
+		}
+	]
+}

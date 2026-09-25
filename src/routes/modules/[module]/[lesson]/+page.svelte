@@ -204,6 +204,8 @@
 				{#if previous}
 					<a
 						href={lessonPath(previous)}
+						data-shortcut="previous"
+						aria-keyshortcuts="p"
 						class="group rounded-lg border border-line bg-surface p-4 transition hover:border-accent"
 					>
 						<span class="inline-flex items-center gap-1 font-sans text-xs text-muted"
@@ -220,6 +222,8 @@
 				{#if next}
 					<a
 						href={lessonPath(next)}
+						data-shortcut="next"
+						aria-keyshortcuts="n"
 						class="group rounded-lg border border-line bg-surface p-4 text-right transition hover:border-accent"
 					>
 						<span class="inline-flex items-center gap-1 font-sans text-xs text-muted"

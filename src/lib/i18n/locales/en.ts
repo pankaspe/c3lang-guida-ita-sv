@@ -10,7 +10,8 @@ const en: Messages = {
 		save: 'Save',
 		minutes: '{minutes} min',
 		unknownDate: 'unknown date',
-		justNow: 'just now'
+		justNow: 'just now',
+		close: 'Close'
 	},
 	nav: {
 		profile: 'Profile',
@@ -23,7 +24,8 @@ const en: Messages = {
 	},
 	footer: {
 		basedOn: 'based on the documentation at',
-		settings: 'settings'
+		settings: 'settings',
+		shortcuts: 'keyboard shortcuts'
 	},
 	home: {
 		continue: 'Continue where you left off',
@@ -162,6 +164,7 @@ const en: Messages = {
 			code: 'Code',
 			experience: 'Experience',
 			data: 'Data',
+			keyboard: 'Keyboard',
 			info: 'Info'
 		},
 		language: {
@@ -272,6 +275,44 @@ const en: Messages = {
 			lessons: { one: '{count} lesson', other: '{count} lessons' },
 			compiler: 'Reference compiler',
 			docs: 'Official documentation'
+		}
+	},
+	cheatsheet: {
+		open: 'Cheat sheet',
+		openAria: 'Open the language cheat sheet',
+		title: 'Cheat sheet',
+		intro: 'Keywords and syntax seen so far, on a single page.',
+		search: 'Search: for, printf, %d…',
+		searchLabel: 'Search the cheat sheet',
+		loading: 'Loading…',
+		empty: 'No entries for “{query}”.',
+		results: { one: '{count} entry', other: '{count} entries' },
+		lesson: 'Introduced in lesson {number}: {title}',
+		escHint: 'to close'
+	},
+	shortcuts: {
+		title: 'Keyboard shortcuts',
+		intro:
+			'The course can be navigated with the keyboard alone. Letter keys do nothing while you are typing in a text field: press Esc to leave it.',
+		groups: {
+			global: 'Everywhere',
+			lesson: 'In lessons'
+		},
+		actions: {
+			cheatsheet: 'Open or close the cheat sheet',
+			help: 'Show these shortcuts',
+			theme: 'Switch between light and dark theme',
+			close: 'Close the open dialog',
+			focus: 'Move to the next / previous link or button',
+			next: 'Next lesson',
+			previous: 'Previous lesson',
+			check: 'Check an exercise answer'
+		},
+		keys: {
+			esc: 'Esc',
+			tab: 'Tab',
+			shift: 'Shift',
+			enter: 'Enter'
 		}
 	},
 	backup: {
