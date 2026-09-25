@@ -1,0 +1,202 @@
+---
+title: Riepilogo e sfida finale
+description: Tutto il modulo in una tabella, tre quiz di controllo e una sfida che legge un registro di punteggi, lo interpreta e disegna una classifica.
+minutes: 22
+---
+
+## Dai valori alle collezioni
+
+All'inizio del modulo sapevi tenere un valore per variabile, e un array visto di sfuggita. Adesso sai:
+
+- usare gli **array** fissi fino in fondo, anche a due dimensioni, sapendo che sono valori che si copiano;
+- guardarli a pezzi con le **slice**, senza copiare nulla, e scrivere funzioni che accettano collezioni di qualsiasi lunghezza;
+- trattare il testo come quello che è, una slice di byte: tagliarlo, confrontarlo, cercarci dentro, esaminarlo carattere per carattere;
+- **costruire** testo nuovo con `tformat` e `DString`, e raccogliere valori in una **lista** che cresce;
+- distinguere dove vivono i dati: letterali in sola lettura, variabili locali nello stack, memoria temporanea da pulire con `@pool`.
+
+L'ultimo punto è quello che ti porterai dietro più a lungo. "Chi possiede questi byte, e fino a quando esistono?" è la domanda che separa chi programma in C3 (o in C) da chi usa linguaggi che se ne occupano da soli.
+
+## La pagina da tenere accanto
+
+| Cosa | Come si scrive |
+|---|---|
+| Array azzerato | `int[5] a;` (dimensione numero o costante) |
+| Solo alcune caselle | `int[8] s = { [2] = 1, [5] = 1 };` |
+| Lunghezza e byte del tipo | `int[4]::len`, `int[4]::size` |
+| Copia e confronto | `int[3] b = a;` copia, `a == b` confronta il contenuto |
+| Slice dell'intero array | `int[] s = &a;` oppure `a[..]` |
+| Intervalli | `a[1..3]` (fine inclusa), `a[1:3]` (inizio, quanti), `a[..2]`, `a[3..]` |
+| Dalla fine | `a[^1]` ultimo, `a[^2..]` ultimi due |
+| Riempire / copiare a pezzi | `a[0..2] = 0;` / `a[3..] = b[..];` |
+| Parametro collezione | `fn int sum(int[] values)` chiamata con `sum(&a)` |
+| Griglia | `int[4][3] g;` (3 righe da 4), `g[riga][colonna]` |
+| Carattere di una stringa | `s[0]` è un `char`: si stampa con `%c` |
+| Cercare nel testo | `starts_with`, `ends_with`, `contains`, `count` |
+| Ripulire | `trim()`, `strip_prefix(x)`, `strip_suffix(x)` |
+| Esaminare un carattere | `c.is_upper()`, `c.is_digit()`, `c.to_upper()`, `c - '0'` |
+| Testo modificabile | `char[*] buf = "hello";` poi `(String)&buf` |
+| Costruire testo | `string::tformat("%s: %d", name, n)` |
+| Spezzare / riunire | `s.tsplit(",")` / `string::tjoin(parts, ", ")` |
+| Costruttore | `DString t; t.append("x"); t.appendf("%d", n);` |
+| Pulizia della memoria temporanea | `@pool() { ... };` |
+| Lista | `List{int} l; l.push(3); l[0]; l.len();` |
+| Lista come slice | `l.array_view()` |
+| Ordinare | `sort::quicksort(&l);` |
+
+## Cinque errori che ormai riconosci
+
+| Messaggio | Cosa hai fatto |
+|---|---|
+| `Too few (2) elements in initializer, expected 5.` | Hai elencato solo alcuni valori di un array (o hai invertito le dimensioni di una griglia) |
+| `Expected a constant value as length.` | La dimensione di un array fisso è una variabile: serve una costante, o una lista |
+| `Conversions from arrays or vectors to slices are only permitted on constant arrays...` | Hai passato un array a una funzione che vuole una slice senza `&` |
+| `Arrays of different lengths may not be converted.` | Hai assegnato o passato un array di lunghezza diversa da quella del tipo |
+| `End index out of bounds (end index of 6 exceeds size of 6)` | Un intervallo esce dall'array (mentre il programma gira) |
+
+E due errori che il compilatore **non** vede, e che ora sai riconoscere dai sintomi: numeri a caso da una slice che guarda un array locale ormai sparito, e `�����` da una stringa temporanea usata dopo il suo `@pool`.
+
+## Quiz di controllo
+
+<Quiz question={'Cosa stampa? `int[*] a = { 1, 2, 3, 4, 5 }; int[] s = a[1..3]; s[0] = 9; io::printn(a);`'} options={['`[1, 2, 3, 4, 5]`', '`[9, 2, 3, 4, 5]`', '`[1, 9, 3, 4, 5]`', '`[1, 9, 9, 9, 5]`']} answer={2}>
+
+`s` è una finestra che comincia all'indice 1 di `a`: `s[0]` **è** `a[1]`. Scrivere nella slice modifica l'array. Se `s` fosse stato un `int[3]`, cioè una copia, `a` sarebbe rimasto intatto. (Lezione 2.)
+
+</Quiz>
+
+<Quiz question={'Cosa stampa `String w = "banana"; io::printn(w[1..3]);`?'} options={['`an`', '`ana`', '`anan`', '`ban`']} answer={1}>
+
+Con `..` la fine è **inclusa**: indici 1, 2 e 3, cioè `a`, `n`, `a`. Per ottenere `an` avresti dovuto scrivere `w[1..2]` oppure `w[1:2]`. (Lezioni 2 e 5.)
+
+</Quiz>
+
+<Quiz question="Quale di questi usi della memoria è corretto?" options={['Restituire da una funzione `local[:3]`, dove `local` è un array dichiarato nella funzione', 'Restituire da una funzione il risultato di `string::tformat`, e stamparlo nel `main`', 'Salvare in una variabile esterna una stringa creata con `tformat` dentro un `@pool`, e usarla dopo il blocco', 'Scrivere `name[0] = \'J\';` con `String name = "john";`']} answer={1}>
+
+La memoria temporanea sopravvive alla funzione che l'ha usata: resta valida fino alla fine del `@pool` che la contiene (o del programma). Le altre tre sono i tre errori di memoria del modulo: una slice su un array locale sparito (lezione 3), una stringa usata dopo il suo `@pool` (lezione 6), e una scrittura in un letterale in sola lettura (lezione 5).
+
+</Quiz>
+
+## La sfida: la classifica
+
+Un programma che legge dati grezzi, li interpreta e presenta un risultato: è la forma di una quantità enorme di software vero. Qui i dati arrivano come un'unica stringa, un registro di partite con il nome del giocatore e i punti fatti.
+
+<Exercise title="La classifica" expected={`Entries: 7, players: 4
+Ada       72 #######
+Grace     42 ####
+Linus     20 ##
+Barbara   55 #####
+Winner: Ada with 72 points`}>
+
+Scrivi `scores.c3` partendo da questa costante:
+
+```c3
+const String LOG = "ada:42,grace:17,linus:8,ada:30,barbara:55,grace:25,linus:12";
+```
+
+**1. Da testo a numero.** Scrivi `fn int parse_number(String digits)` che trasforma una stringa di cifre nel numero corrispondente, **senza** funzioni della libreria: scorri le cifre e, per ognuna, moltiplica per 10 quello che hai già e aggiungi il valore della cifra (ricordi `c - '0'`?). `"42"` diventa 4, poi 4 × 10 + 2 = 42.
+
+**2. Iniziale maiuscola.** Scrivi `fn String capitalize(String word)` che restituisce la parola con l'iniziale maiuscola, usando `string::tformat` con i segnaposto `%c` e `%s`.
+
+**3. Sommare per giocatore.** Spezza il registro nelle singole voci (separate da `,`) e ogni voce in nome e punti (separati da `:`). Tieni due liste "parallele": `List{String} names` e `List{int} totals`, dove `totals[i]` è il totale di `names[i]`. Per ogni voce cerca il nome in `names`: se c'è, aggiungi i punti al totale corrispondente; se non c'è, aggiungi il nome in fondo a `names` e i punti in fondo a `totals`.
+
+**4. La classifica.** Stampa `Entries: ` con il numero di voci e `, players: ` con il numero di giocatori. Poi, per ogni giocatore nell'ordine in cui è comparso, una riga con il nome con l'iniziale maiuscola allineato a sinistra su 8 caratteri, il totale su 3, e una barra di `#`, uno ogni 10 punti interi (72 punti, 7 `#`), costruita con un `DString`. Infine `Winner: ` con il giocatore con più punti, `with`, i punti e `points`.
+
+L'output atteso, carattere per carattere:
+
+```output
+Entries: 7, players: 4
+Ada       72 #######
+Grace     42 ####
+Linus     20 ##
+Barbara   55 #####
+Winner: Ada with 72 points
+```
+
+</Exercise>
+
+<Solution>
+
+```c3 title="scores.c3"
+import std::io;
+import std::collections::list;
+
+const String LOG = "ada:42,grace:17,linus:8,ada:30,barbara:55,grace:25,linus:12";
+
+fn int parse_number(String digits)
+{
+	int value = 0;
+	foreach (c : digits)
+	{
+		value = value * 10 + (c - '0');
+	}
+	return value;
+}
+
+fn String capitalize(String word)
+{
+	return string::tformat("%c%s", word[0].to_upper(), word[1..]);
+}
+
+fn void main()
+{
+	List{String} names;
+	List{int} totals;
+
+	String[] entries = LOG.tsplit(",");
+	foreach (entry : entries)
+	{
+		String[] parts = entry.tsplit(":");
+		String name = parts[0];
+		int points = parse_number(parts[1]);
+
+		bool found = false;
+		for (sz i = 0; i < names.len(); i++)
+		{
+			if (names[i] == name)
+			{
+				totals[i] += points;
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+		{
+			names.push(name);
+			totals.push(points);
+		}
+	}
+
+	io::printfn("Entries: %d, players: %d", entries.len, names.len());
+
+	sz best = 0;
+	for (sz i = 0; i < names.len(); i++)
+	{
+		DString bar;
+		for (int j = 0; j < totals[i] / 10; j++) bar.append('#');
+		io::printfn("%-8s %3d %s", capitalize(names[i]), totals[i], bar);
+		if (totals[i] > totals[best]) best = i;
+	}
+
+	io::printfn("Winner: %s with %d points", capitalize(names[best]), totals[best]);
+}
+```
+
+I punti delicati:
+- **`parse_number`:** il trucco `value * 10 + cifra` "fa scorrere" a sinistra le cifre già lette. È lo stesso algoritmo che usano le funzioni di conversione della libreria (che in più gestiscono segni, spazi ed errori, come una stringa `"4x2"`: la nostra versione si fiderebbe ciecamente).
+- **Le liste parallele:** funzionano finché le tieni allineate, cioè ogni `push` su una va accompagnato da un `push` sull'altra. È fragile, e nel prossimo modulo vedrai lo strumento giusto: una `struct` che tiene nome e totale insieme, in una sola `List`.
+- **`totals[i] += points`:** una lista si modifica per indice come un array, anche con gli operatori composti.
+- **`totals[i] / 10`:** divisione intera, quindi 72 diventa 7 e 55 diventa 5. Qui è proprio quello che vogliamo.
+- **Niente `free`:** `tsplit`, `tformat`, le liste e i `DString` usano la memoria temporanea, che se ne va con il programma.
+
+</Solution>
+
+<Callout type="fun" title="Se ci sei riuscito">
+
+Ordina la classifica dal punteggio più alto al più basso prima di stamparla. Le liste hanno un metodo `swap(i, j)` che scambia due elementi: con due cicli annidati, confronta ogni totale con quelli che lo seguono e, se uno successivo è più grande, scambia **sia** i totali **sia** i nomi (le liste parallele devono restare allineate!). Barbara salirà al secondo posto. Poi aggiungi al registro qualche partita con numeri a tre cifre e guarda le barre allungarsi.
+
+</Callout>
+
+## Cosa succede nel Modulo 4
+
+Le liste parallele della sfida ti hanno fatto sentire il limite: un giocatore è un nome **e** un punteggio, e tenerli in due collezioni separate è scomodo e rischioso. Nel prossimo modulo impari a creare **tipi tuoi**: le `struct`, che raccolgono valori diversi sotto un nome solo, e gli `enum`, per i valori che possono essere solo uno tra pochi (un seme delle carte, un giorno della settimana, lo stato di una partita). Con loro, i tuoi programmi cominceranno a descrivere il mondo con le sue parole.
+
+Segna questa lezione come completata. Hai appena scritto un piccolo interprete di dati: non è poco.

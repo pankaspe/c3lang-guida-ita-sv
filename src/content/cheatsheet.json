@@ -345,6 +345,152 @@
 					"code": "scores[0]        // the first one\nscores[1] = 28;\nscores.len       // 4",
 					"text": "Gli indici partono da 0 e arrivano a `.len - 1`. Fuori da lì è un errore.",
 					"lesson": "decisioni-cicli-funzioni/foreach"
+				},
+				{
+					"term": "int[5] a; · { [i] = x }",
+					"code": "int[5] points;                    // all zero\nint[8] seats = { [2] = 1, [5] = 1 };",
+					"text": "Un array dichiarato senza valori nasce azzerato. Tra graffe vanno **tutti** i valori, oppure solo alcuni indicati per indice.",
+					"lesson": "array-slice-stringhe/array"
+				},
+				{
+					"term": "int[4]::len · int[4]::size",
+					"code": "const int DAYS = 7;\nint[DAYS] steps;\nint[DAYS]::len     // 7",
+					"text": "La lunghezza fa parte del tipo: `::len` conta gli elementi, `::size` i byte. La dimensione deve essere una costante.",
+					"lesson": "array-slice-stringhe/array"
+				},
+				{
+					"term": "array = valore",
+					"code": "int[3] b = a;   // a copy\na == b          // same contents?",
+					"text": "Assegnare o passare un array fisso lo **copia**; `==` confronta il contenuto.",
+					"lesson": "array-slice-stringhe/array"
+				},
+				{
+					"term": "int[] (slice)",
+					"code": "int[] all = &temps;   // or temps[..]",
+					"text": "Una finestra su un array: indirizzo + lunghezza, niente valori suoi. Scriverci modifica l'array.",
+					"lesson": "array-slice-stringhe/slice"
+				},
+				{
+					"term": "a[1..3] · a[1:3] · ^",
+					"code": "temps[1..3]   // indexes 1, 2, 3\ntemps[1:3]    // 3 items from index 1\ntemps[..2]    temps[3..]\ntemps[^2..]   // the last two\ntemps[^1]     // the last one",
+					"text": "`..` con la fine **inclusa**, `:` con inizio e quantità; gli estremi si possono omettere, `^n` conta dalla fine.",
+					"lesson": "array-slice-stringhe/slice"
+				},
+				{
+					"term": "riempire e copiare a pezzi",
+					"code": "temps[0..2] = 20;\ntemps[3..] = backup[..];",
+					"text": "Un valore assegnato a un intervallo riempie tutte le caselle; tra due slice della stessa lunghezza copia gli elementi.",
+					"lesson": "array-slice-stringhe/slice"
+				},
+				{
+					"term": "parametro slice",
+					"code": "fn int sum(int[] values) { ... }\n\nsum(&scores);\nsum(scores[..2]);",
+					"text": "Accetta array e pezzi di array di qualsiasi lunghezza. Per passare un array serve `&arr` o `arr[..]`. Mai restituire una slice di un array locale.",
+					"lesson": "array-slice-stringhe/slice-e-funzioni"
+				},
+				{
+					"term": "int[4][3] (griglia)",
+					"code": "int[4][3] grid;\ngrid[1][2] = 5;\ngrid.len      // 3 rows\ngrid[0].len   // 4 columns",
+					"text": "3 righe da 4: il tipo si legge da sinistra, al contrario del C. Accesso `g[riga][colonna]`.",
+					"lesson": "array-slice-stringhe/griglie"
+				}
+			]
+		},
+		{
+			"id": "strings",
+			"title": "Stringhe",
+			"icon": "scroll",
+			"entries": [
+				{
+					"term": "String = char[]",
+					"code": "String file = \"report.txt\";\nfile[:6]     // \"report\"\nfile[^3..]   // \"txt\"",
+					"text": "Una `String` è una slice di `char`: `.len`, indici, intervalli e `foreach` funzionano come sulle slice. `s[0]` è un numero: si stampa con `%c`.",
+					"lesson": "array-slice-stringhe/stringhe"
+				},
+				{
+					"term": "== · compare_to",
+					"code": "a == \"hello\"\n\"apple\".compare_to(\"banana\")   // -1",
+					"text": "`==` confronta il testo; `compare_to` dà negativo, zero o positivo secondo l'ordine alfabetico.",
+					"lesson": "array-slice-stringhe/stringhe"
+				},
+				{
+					"term": "cercare e ripulire",
+					"code": "s.starts_with(\"re\")   s.ends_with(\".txt\")\ns.contains(\"20\")      s.count(\"an\")\ns.trim()   s.strip_prefix(\"x\")   s.strip_suffix(\"y\")",
+					"text": "Non modificano la stringa: rispondono, o restituiscono una slice più corta.",
+					"lesson": "array-slice-stringhe/stringhe"
+				},
+				{
+					"term": "metodi di char",
+					"code": "c.is_upper()   c.is_lower()   c.is_digit()\nc.is_alpha()   c.is_space()   c.to_upper()",
+					"text": "Esaminano o convertono un carattere (lettere inglesi). `'7' - '0'` vale 7.",
+					"lesson": "array-slice-stringhe/stringhe"
+				},
+				{
+					"term": "letterali in sola lettura",
+					"code": "char[*] buffer = \"hello\";\nbuffer[0] = 'j';\nString edited = (String)&buffer;",
+					"text": "Il testo tra virgolette non si può modificare: copialo in un array di `char`.",
+					"lesson": "array-slice-stringhe/stringhe"
+				},
+				{
+					"term": ".utf8_codepoints()",
+					"code": "\"café\".len                 // 5\n\"café\".utf8_codepoints()   // 4",
+					"text": "Indici e `.len` contano **byte**; questo conta i caratteri.",
+					"lesson": "array-slice-stringhe/stringhe"
+				},
+				{
+					"term": "string::tformat",
+					"code": "String label = string::tformat(\"%s (level %d)\", name, level);",
+					"text": "Come `printf`, ma restituisce una `String` nella memoria temporanea.",
+					"lesson": "array-slice-stringhe/costruire-stringhe"
+				},
+				{
+					"term": "tsplit · tjoin · tconcat · treplace",
+					"code": "String[] parts = \"a,b,c\".tsplit(\",\");\nstring::tjoin(parts, \" + \")\n\"snake\".tconcat(\"_case\")\n\"a-b\".treplace(\"-\", \"/\")\n\"hi\".to_upper_tcopy()",
+					"text": "Le funzioni con la `t` creano testo nuovo nella memoria temporanea, senza toccare l'originale.",
+					"lesson": "array-slice-stringhe/costruire-stringhe"
+				},
+				{
+					"term": "DString",
+					"code": "DString text;\ntext.append(\"Hello\");\ntext.appendf(\" %d\", 42);\ntext.len()\ntext.str_view()",
+					"text": "Una stringa che cresce. Per i numeri usa `appendf`; `str_view()` la guarda come `String`.",
+					"lesson": "array-slice-stringhe/costruire-stringhe"
+				}
+			]
+		},
+		{
+			"id": "collections",
+			"title": "Liste e memoria",
+			"icon": "list",
+			"entries": [
+				{
+					"term": "List{int}",
+					"code": "import std::collections::list;\n\nList{int} numbers;\nnumbers.push(3);\nnumbers[0]\nnumbers.len()",
+					"text": "Una collezione che cresce, da `std::collections::list`. `len()` con le parentesi.",
+					"lesson": "array-slice-stringhe/liste"
+				},
+				{
+					"term": "metodi di List",
+					"code": "l.insert_at(0, x)   l.remove_at(1)\nl.remove_item(x)    l.contains(x)\nl.is_empty()        l.clear()\nl.array_view()",
+					"text": "Inserire, togliere e interrogare. `array_view()` dà una slice degli elementi.",
+					"lesson": "array-slice-stringhe/liste"
+				},
+				{
+					"term": "sort::quicksort",
+					"code": "import std::sort;\n\nsort::quicksort(&names);",
+					"text": "Ordina sul posto una lista o un array (numeri crescenti, stringhe in ordine alfabetico).",
+					"lesson": "array-slice-stringhe/liste"
+				},
+				{
+					"term": "@pool",
+					"code": "@pool()\n{\n\tString s = string::tformat(\"%d\", n);\n};",
+					"text": "Alla fine del blocco libera tutta la memoria temporanea usata dentro. Mai usare dopo quello che ci è nato.",
+					"lesson": "array-slice-stringhe/costruire-stringhe"
+				},
+				{
+					"term": "mem · free",
+					"code": "String s = string::format(mem, \"%d\", n);\nfree(s);\n\nList{int} l;\nl.init(mem);\nl.free();",
+					"text": "Per i dati a lunga vita: lo heap, da liberare a mano.",
+					"lesson": "array-slice-stringhe/costruire-stringhe"
 				}
 			]
 		},
@@ -402,6 +548,13 @@
 					"code": "c3c init first_project\nc3c run\nc3c build\nc3c clean",
 					"text": "Crea un progetto; poi, dalla sua cartella, compila e lancia, solo compila, o svuota `build/`.",
 					"lesson": "primi-passi/progetti"
+				},
+				{
+					"term": "--sanitize=address",
+					"lang": "bash",
+					"code": "c3c compile-run --sanitize=address file.c3",
+					"text": "Aggiunge controlli sulla memoria mentre il programma gira: scova slice su variabili sparite e simili.",
+					"lesson": "array-slice-stringhe/slice-e-funzioni"
 				}
 			]
 		}

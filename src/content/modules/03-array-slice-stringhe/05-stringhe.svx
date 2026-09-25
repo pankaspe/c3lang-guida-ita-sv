@@ -1,0 +1,327 @@
+---
+title: Le stringhe da vicino
+description: String è una slice di char, e tutto quello che sai sulle slice vale anche per il testo. Tagliare, confrontare, cercare, ripulire, esaminare i caratteri uno per uno, e perché una stringa tra virgolette non si può modificare.
+minutes: 20
+---
+
+## Una fila di byte con un nome
+
+Nella lezione «Slice e funzioni» hai scoperto il segreto: `String` è una **slice di `char`**. Nella libreria standard di C3 è definita proprio così, in una riga:
+
+```c3
+typedef String = inline char[];
+```
+
+Non serve capire ogni parola (`typedef` crea un tipo nuovo, `inline` gli permette di comportarsi come quello da cui deriva). Il succo è: una `String` è una finestra su una fila di byte che contengono testo. E quindi tutto quello che hai imparato sulle slice funziona anche sulle stringhe.
+
+```c3
+String file = "report_2026.txt";
+io::printn(file.len);        // how many bytes
+io::printn(file[0]);         // the first char... as a number!
+io::printf("%c\n", file[0]); // the first char, as a character
+```
+
+```output
+15
+114
+r
+```
+
+`file[0]` è un `char`, cioè un byte, cioè un numero: 114 è il codice della lettera `r`. `printn` stampa il numero; per vedere la lettera serve il segnaposto `%c`, come nel modulo 1.
+
+## Tagliare il testo
+
+Gli intervalli delle slice funzionano pari pari:
+
+```c3
+io::printn(file[:6]);      // the first six characters
+io::printn(file[7:4]);     // four characters from index 7
+io::printn(file[^3..]);    // the last three
+```
+
+```output
+report
+2026
+txt
+```
+
+Nessuna copia: `file[:6]` è una finestra sui primi 6 byte della stringa. Tagliare testo in C3 costa praticamente zero, qualsiasi sia la lunghezza.
+
+## Confrontare
+
+`==` confronta il **contenuto**, carattere per carattere, come per le slice di numeri. Maiuscole e minuscole contano:
+
+```c3
+String a = "hello";
+String b = "hello world";
+io::printn(a == b[:5]);      // "hello" == "hello"
+io::printn(a == "Hello");
+```
+
+```output
+true
+false
+```
+
+Per mettere in ordine due stringhe (come in un dizionario) c'è `compare_to`: restituisce un numero negativo se la prima viene prima, positivo se viene dopo, zero se sono uguali.
+
+```c3
+io::printn("apple".compare_to("banana"));   // apple comes first
+io::printn("pear".compare_to("apple"));     // pear comes after
+io::printn("kiwi".compare_to("kiwi"));      // same
+```
+
+```output
+-1
+1
+0
+```
+
+<Callout type="c" title="Niente più strcmp">
+
+In C `a == b` tra due stringhe confronta gli indirizzi, non il testo, ed è uno degli errori più classici dei principianti: bisogna usare `strcmp(a, b) == 0`. In C3 `==` fa quello che ti aspetti. E `switch` sulle stringhe, che hai visto nel modulo 2, funziona per lo stesso motivo.
+
+</Callout>
+
+## Cercare e ripulire
+
+Il tipo `String` ha una serie di **metodi**: funzioni che si chiamano con il punto dopo la stringa, come `.len`. Ecco i più utili per cominciare:
+
+```c3
+io::printn(file.starts_with("report"));
+io::printn(file.ends_with(".txt"));
+io::printn(file.contains("2026"));
+io::printn("banana".count("an"));
+io::printfn("[%s]", "   spaces   ".trim());
+io::printn(file.strip_suffix(".txt"));
+io::printn(file.strip_prefix("report_"));
+```
+
+```output
+true
+true
+true
+2
+[spaces]
+report_2026
+2026.txt
+```
+
+| Metodo | Cosa fa |
+|---|---|
+| `s.starts_with(x)` / `s.ends_with(x)` | `s` comincia / finisce con `x`? |
+| `s.contains(x)` | `x` compare da qualche parte in `s`? |
+| `s.count(x)` | quante volte compare `x` (senza sovrapposizioni) |
+| `s.trim()` | toglie spazi, tab e a capo all'inizio e alla fine |
+| `s.strip_prefix(x)` / `s.strip_suffix(x)` | toglie `x` dall'inizio / dalla fine, se c'è |
+
+Una cosa che hanno tutti in comune: **non modificano** la stringa. `trim`, `strip_prefix` e `strip_suffix` restituiscono una slice più corta sulla stessa memoria: tolgono qualcosa dai bordi della finestra, non dal testo.
+
+<Quiz question={'Cosa stampa `io::printn("  a b  ".trim().len);`?'} options={['`2`', '`3`', '`5`', '`7`']} answer={1}>
+
+`trim` toglie gli spazi solo ai **bordi**: resta `"a b"`, che è lungo 3. Lo spazio in mezzo non viene toccato.
+
+</Quiz>
+
+## Un carattere alla volta
+
+Molte domande sul testo si risolvono guardando i caratteri uno per uno con `foreach`. Anche il tipo `char` ha qualche metodo comodo per chiedergli che tipo di carattere è:
+
+```c3
+char c = 'g';
+io::printn(c.is_lower());           // is it a-z?
+io::printn(c.is_digit());           // is it 0-9?
+io::printf("%c\n", c.to_upper());   // the uppercase version
+```
+
+```output
+true
+false
+G
+```
+
+Ci sono anche `is_upper`, `is_alpha` (una lettera), `is_alnum` (lettera o cifra), `is_space` (spazio, tab, a capo) e `to_lower`. Tutti lavorano sulle lettere inglesi, dalla `a` alla `z`: le lettere accentate non sono un singolo `char`, come vedrai tra poco.
+
+Un esempio che conta maiuscole e cifre:
+
+```c3
+int upper = 0;
+int digits = 0;
+foreach (ch : "C3 was born in 2019, by Christoffer")
+{
+	if (ch.is_upper()) upper++;
+	if (ch.is_digit()) digits++;
+}
+io::printfn("upper: %d, digits: %d", upper, digits);
+```
+
+```output
+upper: 2, digits: 5
+```
+
+<Callout type="tip" title="Da cifra a numero">
+
+Le cifre da `'0'` a `'9'` hanno codici consecutivi (da 48 a 57). Quindi, per sapere quanto vale un carattere-cifra, basta sottrarre `'0'`: `'7' - '0'` vale 7. È il trucco con cui, per secoli di programmazione, si è trasformato il testo `"2026"` nel numero 2026, una cifra alla volta. Lo userai nella sfida finale.
+
+</Callout>
+
+## Le stringhe tra virgolette non si toccano
+
+Visto che `String` è una slice, potresti pensare di cambiare una lettera così:
+
+```c3 title="readonly.c3"
+import std::io;
+
+fn void main()
+{
+	String name = "hello";
+	name[0] = 'j';
+	io::printn(name);
+}
+```
+
+Il compilatore non si lamenta, ma il programma si schianta:
+
+```output
+ERROR: 'Out of bounds memory access.'
+  in readonly.main (source unavailable) [readonly] [inline]
+```
+
+Il testo tra virgolette (un *letterale*) non vive in una variabile: fa parte del programma stesso, ed è memoria in **sola lettura**. La slice `name` guarda proprio lì, e scriverci è vietato.
+
+<Callout type="nerd" title="Perché il testo tra virgolette è in sola lettura?">
+
+Quando il compilatore crea l'eseguibile, lo divide in zone: una per le istruzioni, una per le variabili globali, una per i dati costanti come i letterali. Quando il programma parte, il sistema operativo carica queste zone in memoria e segna quelle costanti come "solo lettura". Se il programma prova a scriverci, è il processore stesso a bloccarlo e il sistema operativo interrompe il programma (su Linux e macOS si chiama *segmentation fault*); C3 intercetta l'interruzione e ti mostra un messaggio.
+
+Perché complicarsi la vita così? Perché lo stesso letterale può essere usato in dieci punti del programma, e il compilatore ne tiene una copia sola. Se un punto potesse modificarlo, cambierebbe il testo anche negli altri nove.
+
+</Callout>
+
+Se ti serve un testo da modificare, copialo in un **array** di `char`, che è una variabile tua:
+
+```c3
+char[*] buffer = "hello";         // a copy of the literal, in a variable
+buffer[0] = 'j';
+String edited = (String)&buffer;  // look at it as a String
+io::printn(edited);
+```
+
+```output
+jello
+```
+
+Il cast `(String)` serve perché, per C3, `char[]` e `String` sono tipi distinti (è l'effetto del `typedef`): una fila di byte qualsiasi diventa "testo" solo se lo dici tu. Nella prossima lezione vedrai un modo molto più comodo per costruire e modificare testo.
+
+## Byte non sono caratteri
+
+Nel modulo 1 lo avevamo anticipato con il riquadro «Byte, caratteri e UTF-8»: le lettere accentate occupano **più di un byte**. Ora che sai tagliare le stringhe, ecco cosa comporta:
+
+```c3
+String word = "café";
+io::printn(word.len);                // bytes
+io::printn(word.utf8_codepoints());  // characters
+io::printn(word[:4]);                // the first four bytes...
+```
+
+```output
+5
+4
+caf�
+```
+
+`é` occupa due byte, quindi `café` ne ha 5 per 4 caratteri, e `utf8_codepoints()` conta i caratteri veri. Tagliando ai primi 4 byte hai preso la `c`, la `a`, la `f` e **metà** della `é`: il terminale non sa che farsene di mezzo carattere e mostra `�`.
+
+Morale: indici, `.len` e intervalli contano **byte**. Con il testo inglese, dove ogni carattere è un byte, non te ne accorgi; con il testo che contiene accenti o emoji, taglia solo in punti che conosci (per esempio subito dopo uno spazio o un carattere trovato con una ricerca).
+
+<Callout type="c" title="Dov'è finito lo \0?">
+
+In C una stringa è un puntatore a `char` che finisce con un byte zero (`'\0'`): per sapere quanto è lunga, `strlen` la scorre tutta finché non lo trova. Una `String` di C3 invece si porta dietro la lunghezza, come ogni slice: `.len` è immediato, e una stringa può contenere anche il byte zero. Per parlare con le librerie C esiste `ZString`, la stringa "alla C" terminata da zero; la incontrerai quando collegheremo C3 al C.
+
+</Callout>
+
+<Exercise title="Il buttafuori delle password" expected={`cat            too short
+correct horse  contains spaces
+sunshine42     no uppercase letter
+Sunshine       no digit
+123Password    too predictable
+Tr0ub4dor      ok`}>
+
+Scrivi `passwords.c3` con una funzione `fn String check(String password)` che restituisce il **primo** problema trovato, controllando in quest'ordine:
+
+1. meno di 8 byte: `"too short"`;
+2. contiene uno spazio: `"contains spaces"`;
+3. nessuna lettera maiuscola: `"no uppercase letter"`;
+4. nessuna cifra: `"no digit"`;
+5. comincia con `123`: `"too predictable"`;
+6. altrimenti: `"ok"`.
+
+Per i punti 3 e 4 scrivi due funzioni di supporto, `has_upper` e `has_digit`, che scorrono la stringa con `foreach` e restituiscono `true` appena trovano quello che cercano.
+
+Nel `main`, prova la funzione su queste password, stampando ogni password allineata a sinistra su 14 caratteri (`%-14s`) seguita dal verdetto:
+
+```c3
+String[*] passwords = { "cat", "correct horse", "sunshine42", "Sunshine", "123Password", "Tr0ub4dor" };
+```
+
+Sì, un array di `String` si scrive così: un array i cui elementi sono slice.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="passwords.c3"
+import std::io;
+
+fn bool has_upper(String s)
+{
+	foreach (c : s)
+	{
+		if (c.is_upper()) return true;
+	}
+	return false;
+}
+
+fn bool has_digit(String s)
+{
+	foreach (c : s)
+	{
+		if (c.is_digit()) return true;
+	}
+	return false;
+}
+
+fn String check(String password)
+{
+	if (password.len < 8) return "too short";
+	if (password.contains(" ")) return "contains spaces";
+	if (!has_upper(password)) return "no uppercase letter";
+	if (!has_digit(password)) return "no digit";
+	if (password.starts_with("123")) return "too predictable";
+	return "ok";
+}
+
+fn void main()
+{
+	String[*] passwords = { "cat", "correct horse", "sunshine42", "Sunshine", "123Password", "Tr0ub4dor" };
+	foreach (p : passwords)
+	{
+		io::printfn("%-14s %s", p, check(p));
+	}
+}
+```
+
+Due dettagli. Il `return` dentro il `foreach` esce subito dalla funzione, senza guardare il resto della stringa: appena trovi una maiuscola, la risposta è sì. E `check` restituisce una `String` che guarda un letterale: va benissimo, perché i letterali vivono per tutta la durata del programma (a differenza degli array locali della lezione precedente).
+
+</Solution>
+
+## Ricapitolando
+
+- `String` è una slice di `char`: `.len`, indici, intervalli e `foreach` funzionano come sulle slice.
+- `s[i]` è un `char`, cioè un numero: si stampa come lettera con `%c`.
+- `==` confronta il testo; `compare_to` dice quale viene prima in ordine alfabetico.
+- `starts_with`, `ends_with`, `contains`, `count`, `trim`, `strip_prefix`, `strip_suffix` non modificano niente: rispondono o restituiscono una slice più corta.
+- `c.is_upper()`, `c.is_digit()`, `c.to_upper()` e compagni esaminano un carattere; `'7' - '0'` vale 7.
+- I letterali sono in **sola lettura**: per modificare testo, copialo in un `char[*]`.
+- Indici e lunghezze contano **byte**; `utf8_codepoints()` conta i caratteri.
+
+Finora hai tagliato e guardato testo che esisteva già. Ma come si crea una stringa nuova, per esempio mettendo insieme pezzi e numeri? Serve memoria nuova: prossima lezione.

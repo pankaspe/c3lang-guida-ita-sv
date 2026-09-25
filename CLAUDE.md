@@ -152,9 +152,12 @@ surfaces, indigo accent, mono for small labels; don't hard-code colours in compo
   operatori, stampare-e-formattare, sfida-finale; nerd callouts added to lessons 1–6.
 - Module 2 "Decisioni, cicli e funzioni" done (7 lessons): if-else, switch, while, for, foreach
   (with a first taste of fixed arrays), funzioni, sfida-finale.
-- Next: Module 3 — arrays, slices and strings (lesson 2.5 only introduced `int[*]`, `.len`, indexing,
-  bounds errors and `foreach (&x : a)` as a teaser; pointers were promised a module of their own).
-  Planned later modules: structs/enums, optionals & error handling, modules, memory & pointers,
+- Module 3 "Array, slice e stringhe" done (8 lessons): array, slice, slice-e-funzioni, griglie,
+  stringhe, costruire-stringhe (temp memory, `tformat`, `DString`, `@pool`, a first taste of
+  `mem`/`free`), liste (`List`, `sort::quicksort`), sfida-finale. Optionals (`pop`, `to_int`) were
+  deliberately avoided; the final challenge's parallel lists set up structs.
+- Next: Module 4 — structs and enums (promised at the end of module 3).
+  Planned later modules: optionals & error handling, modules, memory & pointers,
   defer/contracts, generics/macros, C interop.
 - Idea under evaluation (not started, don't build unasked): a `/play` section with an android the
   learner names (`const NAME`) and assembles as the course goes on. Parts appear with completed lessons,

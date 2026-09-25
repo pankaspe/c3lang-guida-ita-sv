@@ -1,0 +1,255 @@
+---
+title: Array da vicino
+description: Array a dimensione fissa senza segreti. Come nascono, come si inizializzano a pezzi, perché la lunghezza fa parte del tipo e perché, a differenza del C, un array si copia come un numero.
+minutes: 18
+---
+
+## Dove eravamo rimasti
+
+Nel modulo 2 hai conosciuto l'array: una fila di valori dello stesso tipo, sotto un solo nome, numerati da 0.
+
+```c3
+int[*] scores = { 18, 25, 30, 27 };
+io::printn(scores[0]);    // 18
+io::printn(scores.len);   // 4
+```
+
+Era un assaggio. In questo modulo gli array diventano il centro della scena, insieme ai loro parenti stretti: le **slice**, che li guardano a pezzi, le **stringhe**, che (sorpresa) sono anche loro una fila di valori, e le **liste**, che crescono quanto serve. Si comincia dalle fondamenta: cosa sa fare davvero un array a dimensione fissa.
+
+## Un array vuoto non è mai vuoto
+
+Puoi dichiarare un array senza dargli valori, scrivendo la dimensione tra quadre:
+
+```c3
+int[5] points;
+double[3] prices;
+bool[4] done;
+io::printn(points);
+io::printn(prices);
+io::printn(done);
+```
+
+```output
+[0, 0, 0, 0, 0]
+[0.000000, 0.000000, 0.000000]
+[false, false, false, false]
+```
+
+Ricordi la regola del modulo 1? In C3 le variabili nascono **azzerate**. Vale anche per gli array, casella per casella: gli `int` a 0, i `double` a 0.0, i `bool` a `false`.
+
+La dimensione deve essere nota **mentre compili**: un numero scritto nel codice, oppure una costante.
+
+```c3
+const int DAYS = 7;
+
+int[DAYS] steps;      // fine: DAYS is a constant
+steps[0] = 8000;
+io::printn(steps);
+```
+
+```output
+[8000, 0, 0, 0, 0, 0, 0]
+```
+
+Con una variabile normale, invece, il compilatore si ferma:
+
+```c3
+int n = 5;
+int[n] numbers;
+// error: Expected a constant value as length.
+```
+
+Il motivo è che il compilatore deve sapere quanto spazio riservare all'array **prima** che il programma parta. Per le collezioni che non sai quanto saranno grandi fino all'ultimo, ci sono le liste: arrivano a fine modulo.
+
+## Tutti o nessuno
+
+Quando elenchi i valori tra graffe, C3 vuole che siano **tutti**:
+
+```c3
+int[5] partial = { 1, 2 };
+// error: Too few (2) elements in initializer, expected 5.
+```
+
+In C questa riga è valida e riempie il resto di zeri. C3 la considera più probabilmente una svista (hai dimenticato tre valori? hai sbagliato la dimensione?) e te lo chiede. Se vuoi davvero un array quasi tutto a zero con qualche valore qua e là, dillo esplicitamente indicando **quali** caselle riempire:
+
+```c3
+int[8] seats = { [2] = 1, [5] = 1 };   // only seats 2 and 5 are taken
+io::printn(seats);
+```
+
+```output
+[0, 0, 1, 0, 0, 1, 0, 0]
+```
+
+`[2] = 1` si legge "la casella di indice 2 vale 1". Tutte quelle non nominate restano a zero. E se vuoi che siano *tutte* a zero, ma vuoi scriverlo in modo esplicito, bastano due graffe vuote: `int[100] big = {};`.
+
+## La lunghezza fa parte del tipo
+
+`int[3]` e `int[4]` non sono lo stesso tipo con dimensioni diverse: sono proprio **due tipi diversi**, come `int` e `bool`. Per questo non puoi assegnare l'uno all'altro:
+
+```c3
+int[3] a = { 1, 2, 3 };
+int[4] b = a;
+// error: Arrays of different lengths may not be converted.
+```
+
+Dato che la lunghezza è scritta nel tipo, la puoi chiedere anche al tipo stesso, senza avere un array a portata di mano:
+
+```c3
+io::printn(int[DAYS]::len);   // 7
+io::printn(int[4]::size);     // 16: four ints of 4 bytes each
+```
+
+`::len` è il numero di elementi, `::size` lo spazio che occupano in byte. Il `::` è lo stesso che usi per `io::printn`: qui chiede un'informazione al tipo `int[4]`.
+
+<Quiz question="Quale di queste righe viene rifiutata dal compilatore?" options={['`int[4] a;`', '`int[4] b = { 0, 0, 0, 0 };`', '`int[4] c = { 1, 2 };`', '`int[4] d = { [3] = 9 };`']} answer={2}>
+
+`{ 1, 2 }` elenca solo due valori su quattro: C3 vuole tutti i valori, oppure le caselle indicate per indice come in `{ [3] = 9 }`. Le altre tre righe sono valide e danno rispettivamente `[0, 0, 0, 0]`, `[0, 0, 0, 0]` e `[0, 0, 0, 9]`.
+
+</Quiz>
+
+## Un array è un valore
+
+Ecco la differenza più importante rispetto al C. In C3 un array a dimensione fissa si comporta **come un numero**: se lo assegni a un'altra variabile, viene **copiato**.
+
+```c3
+int[3] a = { 1, 2, 3 };
+int[3] b = a;        // b is a copy
+b[0] = 100;
+io::printn(a);
+io::printn(b);
+```
+
+```output
+[1, 2, 3]
+[100, 2, 3]
+```
+
+Cambiare `b` non tocca `a`: sono due array distinti, ognuno con le sue tre caselle. Allo stesso modo `==` confronta il **contenuto**, casella per casella:
+
+```c3
+int[3] c = { 1, 2, 3 };
+io::printfn("a == b: %s", a == b);
+io::printfn("a == c: %s", a == c);
+```
+
+```output
+a == b: false
+a == c: true
+```
+
+`a` e `c` sono due array diversi, ma contengono le stesse cose: per C3 sono uguali.
+
+<Callout type="c" title="In C un array non è un valore">
+
+In C non puoi scrivere `b = a` tra due array (errore), e `a == c` compila ma confronta gli **indirizzi** in memoria, non il contenuto: è sempre falso per due array distinti, anche se identici. Peggio: appena passi un array a una funzione, "decade" in un puntatore e perde la sua lunghezza. In C3 un `int[3]` resta un `int[3]` ovunque vada, e si comporta come ti aspetteresti da un valore.
+
+</Callout>
+
+## Array come parametri
+
+Anche le funzioni seguono la regola: un parametro `int[3]` riceve una **copia** dell'array, esattamente come un parametro `int` riceve una copia del numero.
+
+```c3 title="copies.c3"
+import std::io;
+
+fn void bump(int[3] values)
+{
+	values[0] = 99;
+	io::printn(values);
+}
+
+fn void main()
+{
+	int[3] a = { 1, 2, 3 };
+	bump(a);
+	io::printn(a);
+}
+```
+
+```output
+[99, 2, 3]
+[1, 2, 3]
+```
+
+Dentro `bump` la copia cambia; fuori, `a` è intatto. E una funzione può anche **restituire** un array: `fn int[6] rotate_left(int[6] a)` riceve un array e ne restituisce uno nuovo. Lo scrivi tu nell'esercizio.
+
+C'è però un limite evidente: `bump` accetta **solo** array di 3 `int`. Con un `int[4]` il compilatore direbbe `Arrays of different lengths may not be converted.` Scrivere una funzione diversa per ogni lunghezza sarebbe assurdo. La soluzione ha un nome, **slice**, ed è la protagonista della prossima lezione.
+
+<Callout type="nerd" title="Se copiare è comodo, perché non usare array enormi?">
+
+Una copia di 3 `int` sono 12 byte, un'inezia. Ma un `int[10_000]` sono 40 000 byte, e passarlo a una funzione significa copiarli tutti, a ogni chiamata.
+
+C'è anche un limite più concreto. Le variabili locali vivono nello **stack** (ricordi il riquadro «Lo stack delle chiamate» nella lezione sulle funzioni?), una zona di memoria veloce ma piccola: su Linux, di solito 8 MB in tutto. Per non esaurirla per sbaglio, `c3c` rifiuta le variabili locali più grandi di 64 KB:
+
+```c3
+int[20_000] numbers;
+// error: The size of this local variable (over 78 Kb) exceeds the maximum
+// allowed stack object size (64 Kb), ...
+```
+
+Per le grandi quantità di dati si usa un'altra zona di memoria, lo *heap*, che incontrerai con le liste e le stringhe costruite.
+
+</Callout>
+
+<Exercise title="La giostra" expected={`Original: [1, 2, 3, 4, 5, 6]
+Rotated:  [2, 3, 4, 5, 6, 1]
+Same? false
+After 6 rotations: [1, 2, 3, 4, 5, 6]
+Same? true`}>
+
+Scrivi `carousel.c3` con una funzione `fn int[6] rotate_left(int[6] a)` che restituisce un **nuovo** array con gli elementi spostati di un posto a sinistra: il primo finisce in fondo. Per esempio `{ 1, 2, 3, 4, 5, 6 }` diventa `{ 2, 3, 4, 5, 6, 1 }`.
+
+Nel `main`:
+
+1. crea `int[*] original = { 1, 2, 3, 4, 5, 6 };`;
+2. crea `rotated` come rotazione di `original`, e stampa entrambi con `Original: ` e `Rotated:  ` (due spazi, per allinearli);
+3. stampa `Same? ` e il risultato di `original == rotated`;
+4. ruota `rotated` altre **5** volte con un ciclo, stampa `After 6 rotations: ` e l'array, e di nuovo `Same? `.
+
+Suggerimento: l'elemento che finisce in posizione `i` è quello che stava in posizione `i + 1`, "facendo il giro" in fondo. Quale operatore del modulo 1 fa ricominciare da capo i numeri?
+
+</Exercise>
+
+<Solution>
+
+```c3 title="carousel.c3"
+import std::io;
+
+fn int[6] rotate_left(int[6] a)
+{
+	int[6] result;
+	for (int i = 0; i < 6; i++)
+	{
+		result[i] = a[(i + 1) % 6];
+	}
+	return result;
+}
+
+fn void main()
+{
+	int[*] original = { 1, 2, 3, 4, 5, 6 };
+	int[6] rotated = rotate_left(original);
+	io::printfn("Original: %s", original);
+	io::printfn("Rotated:  %s", rotated);
+	io::printfn("Same? %s", original == rotated);
+
+	for (int i = 0; i < 5; i++) rotated = rotate_left(rotated);
+	io::printfn("After 6 rotations: %s", rotated);
+	io::printfn("Same? %s", original == rotated);
+}
+```
+
+Il resto `% 6` fa il giro: per `i = 5`, `(5 + 1) % 6` vale 0, quindi l'ultimo posto riceve il primo elemento. E `original` non è mai cambiato: `rotate_left` lavora su una copia e restituisce un array nuovo. Sei rotazioni riportano tutto al punto di partenza, e `==` lo conferma confrontando il contenuto.
+
+</Solution>
+
+## Ricapitolando
+
+- `int[5] a;` crea un array **azzerato**. La dimensione deve essere un numero o una costante.
+- Tra graffe si elencano **tutti** i valori, oppure solo alcuni **per indice**: `{ [2] = 1, [5] = 1 }`. `{}` azzera tutto.
+- La lunghezza fa parte del tipo: `int[3]` e `int[4]` sono tipi diversi. `int[4]::len` e `int[4]::size` chiedono lunghezza e byte al tipo.
+- Un array è un **valore**: assegnarlo o passarlo a una funzione lo copia, e `==` confronta il contenuto.
+- Le variabili locali non possono superare i 64 KB: per i dati grandi servirà un'altra memoria.
+
+Un array fisso è solido ma rigido. Nella prossima lezione impari a guardarlo a pezzi, senza copiarlo, e a scrivere funzioni che accettano array di qualsiasi lunghezza.

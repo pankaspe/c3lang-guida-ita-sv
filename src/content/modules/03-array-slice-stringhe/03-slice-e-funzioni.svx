@@ -1,0 +1,271 @@
+---
+title: Slice e funzioni
+description: Una funzione, qualsiasi lunghezza. Passare slice come parametri, modificare l'array di chi chiama, restituire un pezzo di slice, e la trappola della slice che guarda una variabile ormai sparita.
+minutes: 16
+---
+
+## Una funzione per tutte le lunghezze
+
+Nella prima lezione del modulo ci eravamo fermati qui: una funzione con un parametro `int[3]` accetta solo array di 3 elementi. Con le slice il problema sparisce. Basta dichiarare il parametro come `int[]`:
+
+```c3 title="sum.c3"
+import std::io;
+
+fn int sum(int[] values)
+{
+	int total = 0;
+	foreach (v : values) total += v;
+	return total;
+}
+
+fn void main()
+{
+	int[3] small = { 1, 2, 3 };
+	int[*] big = { 10, 20, 30, 40, 50, 60 };
+	io::printn(sum(&small));
+	io::printn(sum(&big));
+	io::printn(sum(big[..2]));
+	io::printn(sum({ 4, 5, 6 }));
+}
+```
+
+```output
+6
+210
+60
+15
+```
+
+La stessa `sum` somma un array di 3 elementi, uno di 6, un pezzo di array e perfino una lista di valori scritta al volo tra graffe. La funzione non sa (e non le interessa) da dove vengano i numeri: riceve una finestra, e la finestra conosce la propria lunghezza.
+
+È per questo che in C3 le funzioni che lavorano su collezioni prendono quasi sempre una **slice**. Un parametro `int[4]` si usa solo quando la lunghezza fa davvero parte del significato: un colore RGBA ha sempre quattro componenti, una settimana sette giorni.
+
+### Ricordati la &
+
+Se passi l'array senza `&`, il compilatore ti ferma con un messaggio che contiene già la soluzione:
+
+```c3
+io::printn(sum(small));
+// error: Conversions from arrays or vectors to slices are only permitted
+// on constant arrays, use `&arr` or `arr[..]` instead.
+```
+
+C3 non trasforma un array in slice alle tue spalle: vuole che tu scriva `&small` o `small[..]`, così leggendo il codice si vede subito che la funzione riceverà una finestra sull'array, e non una copia.
+
+<Callout type="c" title="Addio al parametro «lunghezza»">
+
+In C, una funzione che somma un array si scrive `int sum(int *values, size_t count)`: il puntatore e la lunghezza viaggiano separati, e nulla impedisce di chiamarla con la lunghezza sbagliata. In C3 la slice li tiene insieme, e `values[i]` è controllato: se sbagli, il programma si ferma invece di leggere memoria a caso.
+
+</Callout>
+
+## La funzione può modificare l'array
+
+Nel modulo 2 abbiamo detto che i parametri sono **copie**. Vale anche per le slice, ma attenzione a cosa viene copiato: la slice, cioè la finestra (indirizzo e lunghezza), non i valori che guarda. La copia della finestra guarda sempre lo stesso array. Quindi una funzione che scrive in una slice modifica l'array di chi l'ha chiamata:
+
+```c3
+fn void double_all(int[] values)
+{
+	for (sz i = 0; i < values.len; i++)
+	{
+		values[i] *= 2;
+	}
+}
+
+fn void main()
+{
+	int[3] small = { 1, 2, 3 };
+	int[*] big = { 10, 20, 30, 40, 50, 60 };
+	double_all(&small);
+	io::printn(small);
+	double_all(big[^2..]);     // only the last two
+	io::printn(big);
+}
+```
+
+```output
+[2, 4, 6]
+[10, 20, 30, 40, 100, 120]
+```
+
+L'indice è di tipo `sz`, come `.len`: così il confronto `i < values.len` è tra due numeri dello stesso tipo. E con una slice puoi decidere con precisione quale parte dell'array la funzione può toccare: `double_all` ha cambiato solo gli ultimi due elementi di `big`, perché gli altri non li vedeva nemmeno.
+
+Ricapitolando, la stessa funzione si comporta in modo diverso a seconda del tipo del parametro:
+
+| Parametro | La funzione riceve | Può modificare l'originale? |
+|---|---|---|
+| `int[3] values` | una copia dei 3 valori | No |
+| `int[] values` | una finestra sui valori veri | Sì |
+
+<Quiz question={'Con `fn void clear(int[] v) { v[0] = 0; }` e `int[*] a = { 5, 6, 7 };`, cosa stampa `clear(a[1..]); io::printn(a);`?'} options={['`[0, 6, 7]`', '`[5, 0, 7]`', '`[5, 6, 7]`', '`[0, 0, 0]`']} answer={1}>
+
+La slice `a[1..]` comincia dall'indice 1 dell'array: per la funzione, `v[0]` è il 6. Viene azzerato quello, e `a` diventa `[5, 0, 7]`. Gli indici di una slice contano sempre dal suo inizio, non da quello dell'array.
+
+</Quiz>
+
+## Le stringhe erano già slice
+
+Ecco una piccola rivelazione. Nel modulo 2 hai scritto:
+
+```c3
+fn void print_banner(String title)
+```
+
+Anche quello era un parametro slice. `String` è definito nella libreria standard come una **slice di `char`**: una finestra su una fila di byte che contengono del testo. È per questo che una `String` ha `.len`, che si scorre con `foreach`, e che `print_banner` accetta testi di qualsiasi lunghezza. Alle stringhe dedichiamo due lezioni tra poco; ora sai già cosa sono.
+
+## Restituire una slice
+
+Una funzione può anche restituire una slice. Per esempio un pezzo di quella che ha ricevuto:
+
+```c3
+fn int[] without_first(int[] values) => values[1..];
+```
+
+```c3
+int[] rest = without_first(&big);
+io::printn(rest);
+```
+
+```output
+[20, 30, 40, 100, 120]
+```
+
+Nessuna copia: `rest` è una finestra su `big`, che comincia un elemento più in là.
+
+### La trappola: guardare una variabile sparita
+
+Questo codice invece compila senza un lamento, ma è **sbagliato**:
+
+```c3 title="dangling.c3"
+import std::io;
+
+fn int[] first_three()
+{
+	int[5] local = { 1, 2, 3, 4, 5 };
+	return local[:3];     // a window on a local array...
+}
+
+fn void main()
+{
+	io::printn(first_three());
+}
+```
+
+```output
+[547720639, 23810, 2]
+```
+
+(I numeri che vedi tu saranno diversi, ed è proprio questo il problema.)
+
+`local` è una variabile **locale** di `first_three`: vive nello stack e sparisce appena la funzione finisce. La slice restituita guarda una zona di memoria che nel frattempo è stata riusata per altro, in questo caso dalla stessa `printn`. Si chiama *dangling slice*, una finestra "penzolante" su qualcosa che non c'è più.
+
+La regola: una funzione può restituire una slice di ciò che **ha ricevuto**, mai di un array che ha creato lei. Quando una funzione deve creare una collezione nuova e consegnarla a chi chiama, serve memoria che sopravviva alla funzione: la vedrai con le stringhe costruite e le liste.
+
+<Callout type="deep" title="Farsi aiutare: --sanitize=address">
+
+Il compilatore non riesce a scovare tutti questi errori mentre compila, ma può aggiungere al programma dei controlli extra sull'uso della memoria. Lancia lo stesso file con:
+
+```sh
+c3c compile-run --sanitize=address dangling.c3
+```
+
+Invece dei numeri a caso ottieni un rapporto lungo e un po' intimidatorio, che comincia con `ERROR: AddressSanitizer: stack-buffer-overflow`: il programma ha letto una zona dello stack che non doveva. I programmi compilati così sono più lenti, ma quando qualcosa si comporta in modo inspiegabile è un ottimo alleato.
+
+</Callout>
+
+<Exercise title="La centralina" expected={`Max: 99
+Average: 23.75
+Above 20: 3
+Max of first half: 42
+Clamped: [3, 17, 42, 0, 25, 50, 12, 0]
+Max: 50
+Above 20 in last three: 1`}>
+
+Una centralina ha registrato otto letture, alcune sballate:
+
+```c3
+int[*] readings = { 3, 17, 42, -8, 25, 99, 12, 0 };
+```
+
+Scrivi `sensors.c3` con quattro funzioni, tutte con un parametro slice:
+
+- `fn int max_of(int[] values)`: il valore più grande;
+- `fn double average(int[] values)`: la media;
+- `fn int count_above(int[] values, int limit)`: quanti valori sono **strettamente** maggiori di `limit`;
+- `fn void clamp_all(int[] values, int low, int high)`: riporta nell'intervallo ogni valore che ne esce (quelli sotto `low` diventano `low`, quelli sopra `high` diventano `high`).
+
+Nel `main` stampa, nell'ordine: `Max: `, `Average: ` (due decimali), `Above 20: ` (con limite 20) e `Max of first half: ` (il massimo dei primi quattro valori). Poi porta **tutte** le letture tra 0 e 50 con `clamp_all`, e stampa `Clamped: ` con l'array, di nuovo `Max: `, e `Above 20 in last three: ` contando solo gli ultimi tre valori.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="sensors.c3"
+import std::io;
+
+fn int max_of(int[] values)
+{
+	int max = values[0];
+	foreach (v : values)
+	{
+		if (v > max) max = v;
+	}
+	return max;
+}
+
+fn double average(int[] values)
+{
+	int total = 0;
+	foreach (v : values) total += v;
+	return (double)total / values.len;
+}
+
+fn int count_above(int[] values, int limit)
+{
+	int count = 0;
+	foreach (v : values)
+	{
+		if (v > limit) count++;
+	}
+	return count;
+}
+
+fn void clamp_all(int[] values, int low, int high)
+{
+	foreach (i, v : values)
+	{
+		if (v < low) values[i] = low;
+		if (v > high) values[i] = high;
+	}
+}
+
+fn void main()
+{
+	int[*] readings = { 3, 17, 42, -8, 25, 99, 12, 0 };
+
+	io::printfn("Max: %d", max_of(&readings));
+	io::printfn("Average: %.2f", average(&readings));
+	io::printfn("Above 20: %d", count_above(&readings, 20));
+	io::printfn("Max of first half: %d", max_of(readings[:4]));
+
+	clamp_all(&readings, 0, 50);
+	io::printfn("Clamped: %s", readings);
+	io::printfn("Max: %d", max_of(&readings));
+	io::printfn("Above 20 in last three: %d", count_above(readings[^3..], 20));
+}
+```
+
+In `clamp_all` la variabile `v` del `foreach` è una copia, quindi per scrivere si passa dall'indice: `values[i] = low`. (Con `foreach (&v : values)` e `*v` avresti ottenuto lo stesso risultato, ma i puntatori li vediamo più avanti.)
+
+E se `max_of` ricevesse una slice vuota? `values[0]` non esiste, e il programma si fermerebbe con `Array index out of bounds (array had size 0, index was 0)`. Più avanti nel corso vedrai come dichiarare che una funzione **pretende** una slice non vuota, e come segnalare un risultato che non c'è.
+
+</Solution>
+
+## Ricapitolando
+
+- Un parametro `int[]` accetta array e pezzi di array di **qualsiasi** lunghezza. È il modo normale di passare collezioni.
+- Per passare un array serve `&arr` o `arr[..]`: C3 non converte da solo.
+- La funzione riceve una copia della **finestra**, non dei valori: scrivendo nella slice modifica l'array di chi chiama.
+- `String` è una slice di `char`: le funzioni con parametri `String` usavano già le slice.
+- Si può restituire una slice di ciò che si è ricevuto, **mai** di un array locale: sparisce con la funzione.
+
+Hai usato array in fila. Ma il mondo è pieno di cose disposte a griglia: scacchiere, mappe, fogli di calcolo, schermi. Nella prossima lezione, gli array a due dimensioni.

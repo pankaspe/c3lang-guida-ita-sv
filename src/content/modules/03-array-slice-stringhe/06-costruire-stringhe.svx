@@ -1,0 +1,286 @@
+---
+title: Costruire stringhe
+description: Creare testo nuovo. La memoria temporanea e le funzioni con la t davanti, tformat, split e join, il costruttore di stringhe DString, e @pool per fare pulizia.
+minutes: 20
+---
+
+## Il testo nuovo deve stare da qualche parte
+
+Tutto quello che hai fatto con le stringhe finora lavorava su testo **già esistente**: tagliare, confrontare, cercare. Ma come si crea una stringa che prima non c'era, per esempio `"Ada (level 7)"` a partire dal nome e da un numero?
+
+Il problema non è il formato: `printfn` lo sa fare da sempre. Il problema è **dove mettere** il risultato. Una `String` è una finestra, e una finestra deve guardare dei byte che esistono da qualche parte. I letterali stanno nel programma, gli array locali nello stack (e spariscono con la funzione, come hai visto nella lezione sulle slice). Per il testo costruito mentre il programma gira serve un posto nuovo.
+
+<Callout type="nerd" title="Cos'è lo heap?">
+
+Lo **stack** è comodo ma rigido: ogni funzione ci riserva lo spazio per le sue variabili quando parte e lo restituisce quando finisce, e le dimensioni devono essere note in anticipo. Lo **heap** ("mucchio") è l'altra grande zona di memoria di un programma: un magazzino da cui puoi chiedere un blocco della dimensione che vuoi, **nel momento** in cui ti serve, e che resta tuo finché non lo restituisci esplicitamente.
+
+Il prezzo di questa libertà: qualcuno deve ricordarsi di restituire la memoria. Se non lo fai, il programma continua a chiederne di nuova e la sua occupazione cresce senza sosta (un *memory leak*, "perdita di memoria"). Se la restituisci e poi la usi ancora, leggi dati che ormai appartengono ad altro. Buona parte della fama "pericolosa" del C nasce da qui.
+
+</Callout>
+
+C3 ti offre due strade. La prima è quella classica del C: chiedi memoria allo heap e la restituisci tu. La seconda, molto più comoda per il lavoro di tutti i giorni, è la **memoria temporanea**. Cominciamo da questa.
+
+## La memoria temporanea e la t
+
+La libreria standard ha una zona di memoria pensata per i risultati "usa e getta": li crei, li usi per un po', e poi vengono buttati via **tutti insieme**, senza che tu debba pensarci uno per uno. Le funzioni che la usano si riconoscono dalla **`t`** davanti al nome (*temp*). La più usata è `string::tformat`, sorella di `printfn`, che invece di stampare restituisce la stringa:
+
+```c3
+String name = "Ada";
+int level = 7;
+String label = string::tformat("%s (level %d)", name, level);
+io::printn(label);
+io::printn(label.len);
+```
+
+```output
+Ada (level 7)
+13
+```
+
+Stessi segnaposto di `printf`, stesso modo di usarla. E siccome la memoria temporanea non sparisce alla fine della funzione, una funzione può restituire una stringa costruita così:
+
+```c3
+fn String greeting(String name, int age)
+{
+	return string::tformat("%s is %d years old", name, age);
+}
+```
+
+```c3
+io::printn(greeting("Grace", 85));
+```
+
+```output
+Grace is 85 years old
+```
+
+(Non serve nessun `import` in più: `string::` fa parte del cuore della libreria standard, come `io::`.)
+
+Altre funzioni con la `t`, tutte sulle stringhe, e tutte che restituiscono testo **nuovo** senza toccare l'originale:
+
+```c3
+io::printn("snake".tconcat("_case"));            // glue two strings
+io::printn("quiet please".to_upper_tcopy());     // uppercase copy
+io::printn("2026-09-25".treplace("-", "/"));     // replace every "-"
+```
+
+```output
+snake_case
+QUIET PLEASE
+2026/09/25
+```
+
+## Spezzare e riunire
+
+Due operazioni che userai di continuo: spezzare un testo in pezzi, e rimettere insieme dei pezzi.
+
+```c3
+String[] parts = "red,green,blue".tsplit(",");
+io::printfn("%d parts: %s", parts.len, parts);
+io::printn(string::tjoin(parts, " + "));
+```
+
+```output
+3 parts: [red, green, blue]
+red + green + blue
+```
+
+`tsplit` restituisce una **slice di `String`**, `String[]`: una fila di finestre, ognuna su un pezzo del testo originale. La fila stessa sta nella memoria temporanea (è stata creata ora, e la sua lunghezza non era nota prima). `tjoin` fa il contrario: prende i pezzi e li incolla in una stringa nuova, con un separatore in mezzo.
+
+<Quiz question={'Quanto vale `"a,,b".tsplit(",").len`?'} options={['`2`', '`3`', '`4`', 'Errore: due virgole di fila']} answer={1}>
+
+Tra le due virgole c'è un pezzo **vuoto**, e `tsplit` lo conta: i pezzi sono `"a"`, `""` e `"b"`, quindi 3. Se vuoi scartare i pezzi vuoti, `tsplit` ha un parametro apposta: `"a,,b".tsplit(",", skip_empty: true)` ne dà 2. (Hai visto gli argomenti con nome nel modulo 2.)
+
+</Quiz>
+
+## DString: il costruttore di stringhe
+
+Quando il testo si costruisce un pezzo alla volta, magari in un ciclo, `tformat` diventa scomodo. Per questo c'è **`DString`** (*dynamic string*): una stringa che **cresce** man mano che ci aggiungi roba.
+
+```c3
+DString text;
+text.append("Hello");
+text.append(", ");
+text.appendf("%s!", name);    // like printf, but into the string
+text.append('!');             // a single char works too
+io::printn(text);
+io::printn(text.len());
+```
+
+```output
+Hello, Ada!!
+12
+```
+
+`append` aggiunge in fondo un testo o un carattere; `appendf` aggiunge testo formattato, ed è quella da usare per i numeri. (Occhio: `text.append(42)` non scrive `42` ma il carattere con codice 42, cioè `*`. Un `char` è un numero, ricordi?) Nota le parentesi in `text.len()`: `DString` non è una slice, e la lunghezza gliela chiedi con un metodo.
+
+Il posto naturale di un `DString` è dentro un ciclo:
+
+```c3
+text.clear();                  // empty it, ready to reuse
+for (int i = 1; i <= 5; i++)
+{
+	if (i > 1) text.append(" - ");
+	text.appendf("%d", i * i);
+}
+io::printn(text);
+```
+
+```output
+1 - 4 - 9 - 16 - 25
+```
+
+Quando hai finito di costruire e vuoi usare il risultato come una normale `String` (per esempio per passarlo a una funzione che vuole una `String`), chiedi una finestra sul testo con `str_view()`:
+
+```c3
+String result = text.str_view();
+io::printn(result.ends_with("25"));
+```
+
+```output
+true
+```
+
+E la memoria? Un `DString` dichiarato così, senza altre indicazioni, usa automaticamente la memoria temporanea. Niente da liberare.
+
+<Callout type="c" title="Addio a sprintf e ai suoi buffer">
+
+In C, costruire una stringa formattata significa preparare un array "abbastanza grande" e chiamare `sprintf(buffer, ...)`. Se il risultato è più lungo del previsto, `sprintf` scrive oltre la fine dell'array, sopra altre variabili: uno dei *buffer overflow* più famosi della storia. `snprintf` limita i danni, ma tronca il testo. `tformat` e `DString` si procurano da soli tutto lo spazio che serve.
+
+</Callout>
+
+## @pool: fare pulizia
+
+La memoria temporanea non è infinita: cosa succede se crei stringhe in un ciclo che gira un milione di volte? Ognuna occupa un po' di spazio, e nessuna viene buttata. Qui entra in gioco **`@pool`**: un blocco che, quando finisce, libera **tutta** la memoria temporanea usata al suo interno.
+
+```c3
+for (int round = 0; round < 3; round++)
+{
+	@pool()
+	{
+		String line = string::tformat("round %d", round);
+		io::printn(line);
+	};   // everything temporary created in here is gone
+}
+```
+
+```output
+round 0
+round 1
+round 2
+```
+
+Nota il **punto e virgola** dopo la graffa di chiusura: `@pool` è una *macro* (la `@` lo indica), e le macro con un blocco si chiudono così. Delle macro parleremo a lungo più avanti; per ora trattala come una forma speciale da scrivere così com'è.
+
+A ogni giro del ciclo, `@pool` libera la stringa di quel giro. Il consumo di memoria resta piatto, per quanti giri tu faccia. E fuori da qualsiasi `@pool`? La memoria temporanea viene liberata quando il programma finisce: per i programmi piccoli di questo corso va benissimo così, ed è per questo che negli esempi precedenti non c'era.
+
+<Callout type="warning" title="Quello che nasce nel pool, muore nel pool">
+
+Una stringa temporanea creata dentro un `@pool` non deve essere usata **dopo** la fine del blocco:
+
+```c3
+String saved;
+@pool()
+{
+	saved = string::tformat("score: %d", 42);
+};
+io::printn(saved);   // the memory is gone!
+```
+
+```output
+���������
+```
+
+`saved` è una finestra su memoria ormai liberata: in modalità di sviluppo C3 la riempie di byte senza senso proprio per farti accorgere dell'errore. Regola pratica: dentro un `@pool` metti il **lavoro**, fuori tieni solo i risultati che non sono temporanei.
+
+</Callout>
+
+<Callout type="nerd" title="Perché la memoria temporanea è così veloce?">
+
+Chiedere memoria allo heap ha un costo: l'allocatore deve cercare un blocco libero della misura giusta e tenere nota di tutti i blocchi assegnati. La memoria temporanea di C3 funziona in modo molto più semplice, come un blocco per appunti: ogni richiesta prende le righe subito dopo l'ultima usata, e basta spostare un segnalibro. Liberare singoli pezzi non si può. Alla fine di un `@pool`, il segnalibro torna dov'era all'inizio del blocco: tutto quello che c'era dopo è "cancellato" con una sola operazione. Questo schema si chiama *arena allocator*, ed è uno dei trucchi preferiti di chi scrive videogiochi e server ad alte prestazioni.
+
+</Callout>
+
+<Callout type="deep" title="Quando il risultato deve restare: mem e free">
+
+Se una stringa deve vivere a lungo (per esempio fino alla fine di un `@pool` e oltre), la costruisci nello heap passando **l'allocatore** `mem` alla versione senza `t` della funzione, e la restituisci con `free` quando non serve più:
+
+```c3
+String kept = string::format(mem, "%s-%d", "id", 42);
+io::printn(kept);
+free(kept);   // give the memory back
+```
+
+```output
+id-42
+```
+
+Quasi ogni funzione con la `t` ha una sorella così: `tformat` / `format(mem, ...)`, `tsplit` / `split(mem, ...)`, `to_upper_tcopy` / `to_upper_copy(mem)`. Allocatori, heap e la parola chiave `defer` (che ti aiuta a non dimenticare il `free`) avranno un modulo dedicato.
+
+</Callout>
+
+<Exercise title="Titolo di giornale" expected={`Title: The Quick Brown Fox Jumps Over The Lazy Dog
+Initials: TQBFJOTLD
+Words: 9, longest: quick (5)
+Snake: the_quick_brown_fox_jumps_over_the_lazy_dog`}>
+
+Scrivi `headline.c3` partendo da una costante (sì, anche le stringhe possono essere costanti):
+
+```c3
+const String SENTENCE = "the quick brown fox jumps over the lazy dog";
+```
+
+1. Spezza la frase in parole con `tsplit`.
+2. Con un `DString` costruisci il **titolo**: ogni parola con l'iniziale maiuscola, separate da uno spazio. Suggerimento: `word[0].to_upper()` è l'iniziale maiuscola, `word[1..]` il resto della parola.
+3. Con un secondo `DString` costruisci le **iniziali** maiuscole di tutte le parole, attaccate.
+4. Trova la parola più lunga (a parità di lunghezza, vince la prima).
+5. Crea la versione *snake case*, con `_` al posto degli spazi, usando `treplace`.
+
+Stampa: `Title: `, `Initials: `, `Words: ` con il numero di parole e `, longest: ` con la parola più lunga e la sua lunghezza tra parentesi, e infine `Snake: `.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="headline.c3"
+import std::io;
+
+const String SENTENCE = "the quick brown fox jumps over the lazy dog";
+
+fn void main()
+{
+	String[] words = SENTENCE.tsplit(" ");
+
+	DString title;
+	DString initials;
+	String longest = words[0];
+	foreach (i, word : words)
+	{
+		if (i > 0) title.append(" ");
+		title.append(word[0].to_upper());
+		title.append(word[1..]);
+		initials.append(word[0].to_upper());
+		if (word.len > longest.len) longest = word;
+	}
+
+	io::printfn("Title: %s", title);
+	io::printfn("Initials: %s", initials);
+	io::printfn("Words: %d, longest: %s (%d)", words.len, longest, longest.len);
+	io::printfn("Snake: %s", SENTENCE.treplace(" ", "_"));
+}
+```
+
+Un solo `foreach` fa tutto il lavoro: il titolo, le iniziali e la ricerca della parola più lunga. Il confronto `word.len > longest.len` è **stretto** (`>`, non `>=`): così a parità di lunghezza resta la prima trovata, `quick`, e non `brown` o `jumps`. Nessun `free` da nessuna parte: `tsplit`, `treplace` e i due `DString` usano la memoria temporanea.
+
+</Solution>
+
+## Ricapitolando
+
+- Il testo nuovo ha bisogno di memoria nuova. La più comoda è la **memoria temporanea**, usata dalle funzioni con la **`t`**.
+- `string::tformat` è `printf` che restituisce una `String`; `tconcat`, `treplace`, `to_upper_tcopy` creano stringhe nuove.
+- `s.tsplit(",")` spezza in un `String[]`; `string::tjoin(parts, ", ")` riunisce.
+- `DString` cresce con `append` e `appendf`; `len()` ne dà la lunghezza, `str_view()` una `String`, `clear()` lo svuota.
+- `@pool() { ... };` libera tutta la memoria temporanea usata nel blocco: mai usare dopo quello che ci è nato dentro.
+- Per risultati a lunga vita: `string::format(mem, ...)` e poi `free`.
+
+Resta un ultimo tassello: una collezione di numeri (o di qualsiasi altra cosa) che cresce come un `DString`. Le liste.

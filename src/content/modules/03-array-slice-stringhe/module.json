@@ -1,0 +1,12 @@
+{
+	"title": "Array, slice e stringhe",
+	"subtitle": "Dalle singole variabili alle collezioni: file di valori, finestre che le guardano a pezzi, testo da tagliare e costruire, e liste che crescono quanto serve.",
+	"icon": "layers",
+	"level": "Base",
+	"goals": [
+		"Usare gli array a dimensione fissa, anche a due dimensioni, sapendo che sono valori",
+		"Tagliare array e stringhe con le slice e passarle alle funzioni",
+		"Confrontare, cercare, tagliare e costruire testo con String e DString",
+		"Raccogliere un numero variabile di elementi con List, e capire la memoria temporanea"
+	]
+}

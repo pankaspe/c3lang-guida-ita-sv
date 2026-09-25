@@ -1,0 +1,245 @@
+---
+title: Griglie, array a due dimensioni
+description: Array di array per scacchiere, mappe e tabelle. L'ordine delle dimensioni (al contrario del C), righe e colonne con due indici, cicli annidati e un campo minato da calcolare.
+minutes: 18
+---
+
+## Un array di array
+
+Una scacchiera, il tabellone del tris, una mappa di un videogioco, un foglio di calcolo: sono tutti **griglie**, righe e colonne. Per rappresentarle basta un'idea che conosci già: un array i cui elementi sono, a loro volta, array.
+
+```c3
+int[4][3] grid;
+```
+
+Il trucco per leggere questa dichiarazione è partire da **sinistra**, come si costruisce il tipo: `int[4]` è una riga di 4 interi; `int[4][3]` sono **3** di quelle righe. Quindi una griglia di 3 righe per 4 colonne.
+
+Per raggiungere una casella servono due indici: prima la **riga**, poi la **colonna**.
+
+```c3
+grid[1][2] = 5;    // row 1, column 2
+io::printn(grid);
+io::printfn("rows: %d, columns: %d", grid.len, grid[0].len);
+```
+
+```output
+[[0, 0, 0, 0], [0, 0, 5, 0], [0, 0, 0, 0]]
+rows: 3, columns: 4
+```
+
+`grid[1]` è la seconda riga, un `int[4]`; `grid[1][2]` è la terza casella di quella riga. E `grid.len` conta le righe, mentre `grid[0].len` conta le colonne (quanti elementi ha una riga).
+
+<Callout type="c" title="Le dimensioni sono al contrario">
+
+In C la stessa griglia si dichiara `int grid[3][4];`: prima le righe, poi le colonne, nello stesso ordine in cui si usano gli indici. In C3 la dichiarazione è `int[4][3]`, all'**inverso**, mentre l'accesso resta `grid[riga][colonna]` come in C.
+
+Sembra un dispetto, ma è coerente: in C3 il tipo si legge sempre da sinistra a destra, "array di 3 elementi di tipo `int[4]`", mentre in C le dimensioni stanno attaccate al nome della variabile e seguono un'altra logica. Ci farai l'abitudine; e se sbagli, il compilatore di solito se ne accorge (lo vedi tra poco).
+
+</Callout>
+
+## Inizializzare una griglia
+
+I valori si scrivono riga per riga, con un paio di graffe per ogni riga. Andare a capo aiuta a vedere la forma della griglia:
+
+```c3
+int[3][2] table = {
+	{ 1, 2, 3 },
+	{ 4, 5, 6 },
+};
+io::printn(table[1][0]);
+```
+
+```output
+4
+```
+
+`int[3][2]`: 2 righe da 3. Se inverti le dimensioni per abitudine dal C, il compilatore trova il numero di righe sbagliato:
+
+```c3
+int[3][2] bad = { { 1, 2 }, { 3, 4 }, { 5, 6 } };
+// error: Too many (3) elements in initializer, expected 2.
+```
+
+(La virgola dopo l'ultima riga, in `table`, è facoltativa: C3 la accetta, ed è comoda quando aggiungi righe.)
+
+<Quiz question="Con `int[5][2] m;`, quale di questi accessi è fuori dai limiti?" options={['`m[1][4]`', '`m[0][0]`', '`m[2][1]`', '`m[1][0]`']} answer={2}>
+
+`int[5][2]` sono **2** righe da **5** colonne: il primo indice va da 0 a 1, il secondo da 0 a 4. `m[2][1]` chiede la terza riga, che non esiste. `m[1][4]` invece è l'ultima casella della seconda riga, validissima.
+
+</Quiz>
+
+## Scorrere righe e colonne
+
+Una griglia si scorre con due cicli, uno dentro l'altro: quello esterno prende le righe, quello interno le caselle di ogni riga. Con `foreach` è quasi una traduzione della frase "per ogni riga, per ogni valore":
+
+```c3
+foreach (row : table)
+{
+	foreach (value : row) io::printf("%3d", value);
+	io::printn();
+}
+```
+
+```output
+  1  2  3
+  4  5  6
+```
+
+Ricordi `%3d` dal modulo 1? Larghezza minima 3, per incolonnare i numeri. L'`io::printn()` dopo il ciclo interno va a capo alla fine di ogni riga.
+
+Se ti servono le coordinate, usa la forma con l'indice, o un `for` classico. Nell'esercizio finale della lezione ti serviranno per guardare le caselle **vicine**, quindi lì il `for` con `r` e `c` sarà più comodo.
+
+<Callout type="nerd" title="Come sta una griglia in memoria?">
+
+La memoria del computer non ha righe e colonne: è una fila unica di byte. Una griglia viene quindi "srotolata": prima tutta la riga 0, poi subito dopo tutta la riga 1, e così via, senza spazi in mezzo. `int[4][3]` sono 12 `int` consecutivi, 48 byte (`int[4][3]::size` vale proprio 48).
+
+Per trovare `grid[r][c]` il computer calcola *inizio + (r × 4 + c) × 4 byte*: una moltiplicazione e una somma, come per l'array semplice. Questa disposizione ha un nome, *row-major* ("per righe"), e una conseguenza pratica: scorrere una griglia riga per riga, come fanno i nostri cicli, legge la memoria in ordine, ed è il modo più veloce. Scorrerla colonna per colonna salta avanti e indietro, e su griglie molto grandi si nota.
+
+</Callout>
+
+## Una griglia di caratteri
+
+Una riga di caratteri si può inizializzare con una stringa tra virgolette: è il modo più leggibile per disegnare una mappa.
+
+```c3
+char[3][3] board = {
+	"X.O",
+	".X.",
+	"O.X",
+};
+board[0][1] = 'O';
+foreach (row : board)
+{
+	foreach (cell : row) io::printf("%c", cell);
+	io::printn();
+}
+```
+
+```output
+XOO
+.X.
+O.X
+```
+
+Ogni stringa deve avere **esattamente** la lunghezza della riga, qui 3 caratteri. E le caselle si modificano come quelle di qualsiasi array, con un carattere tra apici singoli: `'O'`.
+
+## Passare una griglia a una funzione
+
+Anche qui le slice fanno il loro lavoro. Una funzione che riceve `int[3][]` accetta un numero qualsiasi di righe da 3:
+
+```c3
+fn int total(int[3][] rows)
+{
+	int sum = 0;
+	foreach (row : rows)
+	{
+		foreach (v : row) sum += v;
+	}
+	return sum;
+}
+```
+
+```c3
+io::printn(total(&table));       // 1 + 2 + ... + 6
+io::printn(total(table[1..]));   // only the second row
+```
+
+```output
+21
+15
+```
+
+Il numero di righe è libero, la lunghezza di ogni riga no: fa parte del tipo degli elementi.
+
+<Exercise title="Campo minato" expected={`*211..
+12*211
+1212*2
+*1.12*`}>
+
+Nel gioco del campo minato, ogni casella senza mina mostra quante mine ci sono nelle **otto** caselle che la circondano (sopra, sotto, ai lati e in diagonale). Scrivi `mines.c3` che parte da questa mappa, dove `*` è una mina:
+
+```c3
+const int ROWS = 4;
+const int COLS = 6;
+
+char[COLS][ROWS] field = {
+	"*.....",
+	"..*...",
+	"....*.",
+	"*....*",
+};
+```
+
+e stampa la griglia risolta: le mine restano `*`, le caselle con mine vicine mostrano il numero, quelle senza mine vicine restano `.`.
+
+Suggerimenti:
+- due `for` (`r` sulle righe, `c` sulle colonne) per ogni casella, e altri due (`dr` e `dc` da -1 a 1) per le vicine;
+- attenzione ai **bordi**: una casella nell'angolo ha solo 3 vicine, e `field[-1][0]` non esiste. Salta con `continue` le coordinate fuori dalla griglia;
+- la casella stessa (`dr` e `dc` entrambi 0) non è una mina, altrimenti non la staresti contando: non serve escluderla.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="mines.c3"
+import std::io;
+
+const int ROWS = 4;
+const int COLS = 6;
+
+fn void main()
+{
+	char[COLS][ROWS] field = {
+		"*.....",
+		"..*...",
+		"....*.",
+		"*....*",
+	};
+
+	for (int r = 0; r < ROWS; r++)
+	{
+		for (int c = 0; c < COLS; c++)
+		{
+			if (field[r][c] == '*')
+			{
+				io::print("*");
+				continue;
+			}
+			int count = 0;
+			for (int dr = -1; dr <= 1; dr++)
+			{
+				for (int dc = -1; dc <= 1; dc++)
+				{
+					int nr = r + dr;
+					int nc = c + dc;
+					if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+					if (field[nr][nc] == '*') count++;
+				}
+			}
+			if (count == 0)
+			{
+				io::print(".");
+			}
+			else
+			{
+				io::printf("%d", count);
+			}
+		}
+		io::printn();
+	}
+}
+```
+
+Quattro cicli annidati possono spaventare, ma leggili a coppie: i due esterni scelgono una casella, i due interni guardano il quadrato 3×3 attorno a lei. Il controllo dei bordi è il cuore dell'esercizio: senza, il programma si fermerebbe alla prima casella con `Array index out of bounds`. Le costanti `ROWS` e `COLS` servono sia per dichiarare la griglia sia nei cicli: cambia la mappa, e cambi due numeri.
+
+</Solution>
+
+## Ricapitolando
+
+- `int[4][3]` sono **3 righe da 4**: il tipo si legge da sinistra, al contrario della dichiarazione in C.
+- L'accesso è `grid[riga][colonna]`; `grid.len` conta le righe, `grid[0].len` le colonne.
+- Si inizializza riga per riga, con graffe annidate; le righe di `char` anche con stringhe della lunghezza giusta.
+- Si scorre con due cicli annidati; per le vicine di una casella, attenzione ai bordi.
+- In memoria una griglia è una fila unica, riga dopo riga. Una funzione può ricevere `int[4][]`: righe libere, colonne fisse.
+
+Nei `char` della mappa c'era un indizio: una stringa è una fila di byte. Nella prossima lezione guardiamo le stringhe da vicino.

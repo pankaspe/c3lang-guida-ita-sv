@@ -1,0 +1,285 @@
+---
+title: Liste che crescono
+description: Quando non sai in anticipo quanti elementi avrai. List dalla libreria standard, aggiungere, inserire e togliere, ordinare con sort, e come una lista si procura la memoria.
+minutes: 18
+---
+
+## Quanti saranno? Non lo so
+
+Un array fisso vuole la sua dimensione mentre compili. Ma spesso non la sai: quante parole ci sono in un testo? Quanti numeri primi sotto un milione? Quanti voti supereranno la sufficienza? Serve una collezione che parta vuota e **cresca** man mano, come il `DString` della lezione precedente, ma per valori di qualsiasi tipo. È la **lista**, `List`, e sta nella libreria standard:
+
+```c3 title="numbers.c3"
+import std::io;
+import std::collections::list;
+
+fn void main()
+{
+	List{int} numbers;
+	numbers.push(3);
+	numbers.push(7);
+	numbers.push(1);
+	io::printn(numbers);
+	io::printfn("len: %d, first: %d", numbers.len(), numbers[0]);
+}
+```
+
+```output
+[3, 7, 1]
+len: 3, first: 3
+```
+
+Tre novità:
+
+- serve un `import` in più, `std::collections::list`: le collezioni non fanno parte del nucleo della libreria come `io` e `string`;
+- `List{int}` si legge "lista di `int`". Il tipo degli elementi va tra graffe, e puoi metterci quello che vuoi: `List{String}`, `List{double}`, `List{bool}`. `List` è un tipo **generico**, uno stampo che diventa un tipo vero quando gli dici cosa contiene;
+- `push` aggiunge un elemento in fondo, e la lista si allunga di uno.
+
+Per il resto si usa quasi come un array: `numbers[0]` legge, `numbers[1] = 70;` scrive, `foreach` scorre, `printn` stampa tutto. Solo la lunghezza si chiede con un metodo, `len()`, con le parentesi, come per `DString`.
+
+```c3
+numbers[1] = 70;
+foreach (i, n : numbers) io::printfn("%d: %d", i, n);
+```
+
+```output
+0: 3
+1: 70
+2: 1
+```
+
+## Inserire, togliere, cercare
+
+```c3
+numbers.insert_at(0, 100);    // insert at index 0, the rest shifts right
+io::printn(numbers);
+numbers.remove_at(1);         // remove index 1, the rest shifts left
+io::printn(numbers);
+io::printn(numbers.contains(70));
+numbers.remove_item(70);      // remove every element equal to 70
+io::printn(numbers);
+numbers.clear();              // remove everything
+io::printfn("empty? %s", numbers.is_empty());
+```
+
+```output
+[100, 3, 70, 1]
+[100, 70, 1]
+true
+[100, 1]
+empty? true
+```
+
+| Metodo | Cosa fa |
+|---|---|
+| `push(x)` | aggiunge `x` in fondo |
+| `insert_at(i, x)` | inserisce `x` all'indice `i`, spostando avanti gli altri |
+| `remove_at(i)` | toglie l'elemento all'indice `i` |
+| `remove_item(x)` | toglie tutti gli elementi uguali a `x` |
+| `contains(x)` | c'è almeno un elemento uguale a `x`? |
+| `len()` / `is_empty()` | quanti elementi / nessun elemento? |
+| `clear()` | svuota la lista |
+
+Gli indici sono controllati come per gli array: `numbers[2]` su una lista di due elementi ferma il programma con `Access out of bounds`.
+
+<Callout type="note" title="E per togliere l'ultimo e leggerlo?">
+
+Esistono anche `pop()` (toglie l'ultimo elemento e lo restituisce), `first()` e `last()`. Ma hanno una particolarità: cosa dovrebbero restituire se la lista è **vuota**? C3 ha una risposta elegante, gli *optional*, a cui è dedicato un modulo intero. Fino ad allora, per l'ultimo elemento usa `list[list.len() - 1]` (dopo aver controllato che la lista non sia vuota).
+
+</Callout>
+
+<Quiz question={'Con `List{int} l;` a cui hai fatto `push` di 5, 6 e 7, cosa stampa `l.insert_at(1, 0); l.remove_at(0); io::printn(l);`?'} options={['`[0, 6, 7]`', '`[5, 6, 7]`', '`[0, 5, 6, 7]`', '`[6, 7]`']} answer={0}>
+
+Dopo `insert_at(1, 0)` la lista è `[5, 0, 6, 7]`: lo 0 si infila all'indice 1 e spinge avanti gli altri. Poi `remove_at(0)` toglie il 5, e resta `[0, 6, 7]`.
+
+</Quiz>
+
+## Una lista come slice
+
+Le funzioni che hai scritto nella lezione sulle slice ricevono un `int[]`. Per passargli il contenuto di una lista, chiedi alla lista una finestra sui suoi elementi con `array_view()`:
+
+```c3
+fn int sum(int[] values)
+{
+	int total = 0;
+	foreach (v : values) total += v;
+	return total;
+}
+```
+
+```c3
+List{int} evens;
+for (int i = 1; i <= 20; i++)
+{
+	if (i % 2 == 0) evens.push(i * i);
+}
+io::printn(evens);
+io::printn(sum(evens.array_view()));
+io::printn(sum(evens.array_view()[:3]));   // only the first three
+```
+
+```output
+[4, 16, 36, 64, 100, 144, 196, 256, 324, 400]
+1540
+56
+```
+
+Una volta ottenuta la slice, puoi anche tagliarla come sempre. Attenzione solo a una cosa: non tenere la slice da parte e poi continuare a fare `push` sulla lista. Quando la lista cresce potrebbe **traslocare** i suoi elementi in un'altra zona di memoria (lo vedi nel riquadro qui sotto), e la vecchia finestra guarderebbe il vuoto. Chiedi la slice, usala, e richiedila se la lista cambia.
+
+<Callout type="nerd" title="Come fa una lista a crescere?">
+
+Sotto il cofano, una lista è un normale array in memoria più due numeri: quanti elementi contiene (`len`) e quanti ce ne **starebbero** (la *capacità*). Al primo `push`, `List` riserva spazio per 16 elementi. Finché c'è posto, `push` scrive nella prima casella libera: velocissimo. Al diciassettesimo, la lista chiede un blocco di memoria **grande il doppio** (32), ci copia dentro i 16 elementi, e restituisce il vecchio. Poi 64, 128, e così via.
+
+Copiare tutto ogni tanto sembra uno spreco, ma raddoppiando le copie diventano sempre più rare: in media, ogni `push` costa comunque un tempo costante. Se sai già più o meno quanti elementi avrai, puoi evitare anche quei traslochi riservando lo spazio in anticipo con `reserve`.
+
+</Callout>
+
+## Mettere in ordine
+
+Ordinare è così comune che la libreria standard lo sa fare per te, nel modulo `std::sort`:
+
+```c3
+import std::sort;
+```
+
+```c3
+List{String} names;
+names.push("Grace");
+names.push("Ada");
+names.push("Linus");
+names.push("Barbara");
+sort::quicksort(&names);
+io::printn(names);
+
+int[*] scores = { 27, 18, 30, 22 };
+sort::quicksort(&scores);     // works on arrays too
+io::printn(scores);
+```
+
+```output
+[Ada, Barbara, Grace, Linus]
+[18, 22, 27, 30]
+```
+
+`quicksort` ordina **sul posto**: non crea una collezione nuova, riordina gli elementi di quella che gli passi. Per questo vuole la `&`: deve lavorare sull'originale, non su una copia. Numeri dal più piccolo al più grande, stringhe in ordine alfabetico (secondo i codici dei caratteri: le maiuscole vengono prima delle minuscole).
+
+<Callout type="fun" title="Quicksort ha più di sessant'anni">
+
+L'algoritmo *quicksort* fu inventato da Tony Hoare nel 1959, a Mosca, mentre cercava di ordinare le parole di un dizionario per un programma di traduzione automatica dal russo all'inglese. L'idea: scegli un elemento, metti a sinistra quelli più piccoli e a destra quelli più grandi, e ripeti su ciascuna metà. È ancora uno degli algoritmi di ordinamento più usati al mondo.
+
+</Callout>
+
+## Da dove viene la memoria?
+
+Una lista cresce, quindi ha bisogno di memoria nuova, come le stringhe costruite. E segue le stesse regole:
+
+- una lista dichiarata e usata così com'è, come negli esempi sopra, usa la **memoria temporanea**. Niente da liberare, ma vale la regola di `@pool`: una lista nata dentro un `@pool` muore con lui;
+
+```c3
+@pool()
+{
+	List{int} tmp;
+	tmp.push_all(&scores);   // push every element of an array
+	tmp.push(99);
+	io::printn(tmp);
+};   // tmp is gone
+```
+
+```output
+[18, 22, 27, 30, 99]
+```
+
+- se la lista deve vivere a lungo, la **inizializzi** con l'allocatore `mem` dello heap, e quando hai finito la liberi con `free()`:
+
+```c3
+List{int} kept;
+kept.init(mem);    // use the heap
+kept.push(1);
+kept.push(2);
+io::printn(kept);
+kept.free();       // give the memory back
+```
+
+```output
+[1, 2]
+```
+
+Per gli esercizi di questo corso la memoria temporanea basta e avanza. Nel modulo sulla memoria vedremo come scegliere con criterio.
+
+<Exercise title="Il registro dei voti" expected={`Passed: 8 of 10
+Average of passed: 24.4
+Unique: [24, 18, 30, 15, 27, 12, 26, 22]
+Sorted: [12, 15, 18, 22, 24, 26, 27, 30]
+Best three: [26, 27, 30]`}>
+
+Scrivi `grades.c3` partendo dai voti di dieci esami (in trentesimi, dove 18 è la sufficienza):
+
+```c3
+int[*] grades = { 24, 18, 30, 15, 27, 18, 30, 12, 26, 22 };
+```
+
+Con un **solo** `foreach` riempi due liste:
+
+- `passed`: i voti sufficienti (18 o più), ripetizioni comprese;
+- `unique`: ogni voto **una sola volta**, nell'ordine in cui compare per la prima volta. (Quale metodo ti dice se un voto è già nella lista?)
+
+Poi stampa:
+
+1. `Passed: ` con quanti sono i voti sufficienti, e ` of ` con il totale;
+2. `Average of passed: ` con la media dei sufficienti, un decimale. Riusa una funzione `fn double average(int[] values)`;
+3. `Unique: ` con la lista dei voti distinti;
+4. `Sorted: ` con la stessa lista, dopo averla ordinata;
+5. `Best three: ` con i tre voti distinti più alti, tagliando la slice della lista ordinata.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="grades.c3"
+import std::io;
+import std::collections::list;
+import std::sort;
+
+fn double average(int[] values)
+{
+	int total = 0;
+	foreach (v : values) total += v;
+	return (double)total / values.len;
+}
+
+fn void main()
+{
+	int[*] grades = { 24, 18, 30, 15, 27, 18, 30, 12, 26, 22 };
+
+	List{int} passed;
+	List{int} unique;
+	foreach (g : grades)
+	{
+		if (g >= 18) passed.push(g);
+		if (!unique.contains(g)) unique.push(g);
+	}
+
+	io::printfn("Passed: %d of %d", passed.len(), grades.len);
+	io::printfn("Average of passed: %.1f", average(passed.array_view()));
+	io::printfn("Unique: %s", unique);
+	sort::quicksort(&unique);
+	io::printfn("Sorted: %s", unique);
+	io::printfn("Best three: %s", unique.array_view()[^3..]);
+}
+```
+
+`unique.contains(g)` è la chiave: si aggiunge un voto solo se non c'è ancora. E dopo l'ordinamento i tre più alti sono gli ultimi tre: `[^3..]`, l'intervallo "dal terzultimo alla fine" della lezione sulle slice.
+
+`contains` però scorre tutta la lista ogni volta: con dieci voti non importa, con dieci milioni sì. Per domande del tipo "l'ho già visto?" esistono strutture pensate apposta (gli *insiemi* e le *mappe*), anche loro in `std::collections`.
+
+</Solution>
+
+## Ricapitolando
+
+- `List{int}` (con `import std::collections::list;`) è una collezione che **cresce**: parte vuota e si allunga con `push`.
+- Si legge e scrive con `l[i]`, si scorre con `foreach`, si stampa con `printn`; la lunghezza è `l.len()`.
+- `insert_at`, `remove_at`, `remove_item`, `contains`, `is_empty`, `clear` per modificare e interrogare.
+- `l.array_view()` dà una slice degli elementi, da passare alle funzioni. Non conservarla se la lista cresce.
+- `sort::quicksort(&x)` (con `import std::sort;`) ordina sul posto liste e array.
+- Senza inizializzazione una lista usa la memoria temporanea; con `init(mem)` usa lo heap, e va liberata con `free()`.
+
+Hai tutti gli strumenti del modulo. È il momento di metterli insieme.
