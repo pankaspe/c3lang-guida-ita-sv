@@ -1,0 +1,236 @@
+---
+title: try e catch, aprire la scatola
+description: if (try) per usare il risultato quando c'è, if (catch) per leggere il fault quando manca, l'uscita anticipata che rende la variabile un valore normale, e più optional nella stessa condizione.
+minutes: 17
+---
+
+## Due domande
+
+Davanti a un optional ti fai due domande: *c'è un risultato?* E se no, *perché?* `??` risponde alla prima nel modo più sbrigativo: se non c'è, usa un altro valore. Ma spesso vuoi fare **cose diverse** nei due casi: stampare il risultato se c'è, un messaggio se manca; oppure saltare un elemento; oppure fermarti. Per questo C3 ha due forme speciali di `if`: `if (try ...)` e `if (catch ...)`.
+
+In tutta la lezione useremo la `stock_of` della lezione precedente:
+
+```c3
+fn int? stock_of(String item)
+{
+	switch (item)
+	{
+		case "apples": return 12;
+		case "pears": return 0;
+	}
+	return NOT_FOUND~;
+}
+```
+
+## if (try): se c'è un risultato
+
+```c3
+String[] wanted = { "apples", "kiwis", "pears" };
+foreach (item : wanted)
+{
+	if (try n = stock_of(item))
+	{
+		io::printfn("%-7s %2d in stock", item, n);
+	}
+	else
+	{
+		io::printfn("%-7s we don't sell it", item);
+	}
+}
+```
+
+```output
+apples  12 in stock
+kiwis   we don't sell it
+pears    0 in stock
+```
+
+`if (try n = stock_of(item))` vuol dire: "chiama la funzione; se c'è un risultato, mettilo in `n` ed esegui il blocco". Dentro il blocco `n` è un `int` **normale**, non un optional: lo puoi stampare e usare nei calcoli. Se la scatola è vuota si passa all'`else` (che, come sempre, è facoltativo), e lì `n` non esiste.
+
+Se l'optional è già in una variabile, puoi anche non dare un nome nuovo:
+
+```c3
+int? s = stock_of("apples");
+if (try s)
+{
+	io::printn(s * 2);    // inside here, s is a plain int
+}
+```
+
+```output
+24
+```
+
+## if (catch): se manca, e perché
+
+Il rovescio della medaglia: `if (catch err = ...)` entra nel blocco solo se la scatola è **vuota**, e mette il fault nella variabile `err`.
+
+```c3
+if (catch err = stock_of("kiwis"))
+{
+	io::printfn("kiwis: %s", err);
+}
+```
+
+```output
+kiwis: builtin::NOT_FOUND
+```
+
+Un fault si stampa con `%s` (o con `printn`), e il suo nome completo dice anche **dove** è stato definito: `builtin::NOT_FOUND` viene dal modulo `builtin` della libreria standard. Il tipo di `err` è `fault`, e nella lezione 3 vedrai come confrontarlo per distinguere un errore dall'altro. Se il fault non ti interessa, puoi omettere il nome: `if (catch stock_of("kiwis"))`.
+
+<Quiz question={'Cosa stampa? `int? s = stock_of("pears"); if (catch err = s) { io::printn("missing"); } else { io::printn("found"); }`'} options={['`missing`', '`found`', '`0`', 'Niente: non compila']} answer={1}>
+
+Le pere hanno il risultato 0: la scatola è piena, anche se il numero è zero. `catch` entra solo con un fault, quindi si passa all'`else`. Non confondere "zero" con "vuoto": è proprio la confusione che gli optional eliminano.
+
+</Quiz>
+
+## Uscire presto
+
+Lo schema più comune, nei programmi veri, è questo: **gestisci subito il caso vuoto e togliti di mezzo**, poi continua con il caso buono senza annidare niente.
+
+```c3
+foreach (item : wanted)
+{
+	int? n = stock_of(item);
+	if (catch err = n)
+	{
+		io::printfn("skip %s (%s)", item, err);
+		continue;
+	}
+	io::printfn("%s: %d, doubled %d", item, n, n * 2);
+}
+```
+
+```output
+apples: 12, doubled 24
+skip kiwis (builtin::NOT_FOUND)
+pears: 0, doubled 0
+```
+
+Guarda l'ultima riga del ciclo: `n * 2` compila, anche se `n` è dichiarata `int?`. Il compilatore ragiona così: "se `n` fosse vuota, il blocco `catch` avrebbe fatto `continue`, e qui non ci saremmo arrivati. Quindi qui `n` ha per forza un risultato". Da quel punto fino alla fine del blocco, `n` è un `int` normale. Funziona con qualsiasi istruzione che esce dal blocco: `continue`, `break`, `return`.
+
+Se invece il blocco `catch` non esce, `n` resta un optional, e usarla come `int` è ancora un errore:
+
+```c3
+int? n = stock_of("kiwis");
+if (catch err = n)
+{
+	io::printfn("%s", err);    // no return: we fall through
+}
+int m = n;
+// error: It is not possible to cast from 'int?' to 'int'.
+```
+
+Il compilatore ha ragione: dopo quell'`if` la scatola potrebbe ancora essere vuota.
+
+<Callout type="deep" title="Un tipo che cambia strada facendo">
+
+Una variabile che è `int?` in una riga e `int` in quella dopo sembra una magia, ma è un ragionamento che il compilatore fa sul **flusso** del programma: segue le strade possibili fino a quella riga e controlla che tutte passino da un risultato. Si chiama *flow typing* (tipi che dipendono dal flusso). Il vantaggio è che il controllo lo scrivi una volta sola, all'inizio, e il resto della funzione resta pulito, senza `if` annidati.
+
+</Callout>
+
+## Più optional nella stessa condizione
+
+Un `if (try ...)` può aprire più scatole insieme, unite da `&&`: il blocco viene eseguito solo se sono **tutte** piene.
+
+```c3
+if (try x = stock_of("apples") && try y = stock_of("pears"))
+{
+	io::printfn("total %d", x + y);
+}
+```
+
+```output
+total 12
+```
+
+E dopo un `try` puoi aggiungere condizioni normali, che possono già usare il valore aperto:
+
+```c3
+if (try x = stock_of("apples") && x > 10)
+{
+	io::printn("plenty of apples");
+}
+```
+
+```output
+plenty of apples
+```
+
+Con `||`, invece, non si può: `if (try a || try b)` non compila, perché dentro il blocco non si saprebbe quale delle due scatole è piena. E un optional non può nemmeno fare da condizione "da solo": `if (stock_of("kiwis") > 3)` dà `The expression may not be an optional, but was 'bool?'.` Il confronto con un optional è a sua volta un optional (un `bool`, forse), e l'`if` vuole un sì o un no.
+
+<Quiz question={'Dopo `if (catch err = n) { break; }`, dentro un ciclo, di che tipo è `n` nelle righe successive del ciclo (se era `int? n`)?'} options={['Sempre `int?`', '`int`: il compilatore sa che se era vuota si è usciti', '`fault`', 'Dipende dal valore a runtime']} answer={1}>
+
+Il blocco `catch` termina con `break`: le righe dopo si raggiungono solo se `n` aveva un risultato. Il compilatore lo sa e tratta `n` come un `int` normale.
+
+</Quiz>
+
+<Exercise title="Lo scontrino" expected={`bread     3
+milk      2
+caviar   not found, skipped
+cheese    7
+Total: 12`}>
+
+Scrivi `receipt.c3` con una funzione `price_of` che riceve il nome di un prodotto e restituisce il prezzo in euro: `"bread"` 3, `"milk"` 2, `"cheese"` 7; per qualsiasi altro prodotto, `NOT_FOUND~`.
+
+Nel `main`, scorri il carrello
+
+```c3
+String[] cart = { "bread", "milk", "caviar", "cheese" };
+```
+
+e per ogni prodotto stampa nome (a sinistra su 8 caratteri) e prezzo (su 2), sommandolo al totale. Se il prodotto non ha un prezzo, stampa `not found, skipped` e passa al successivo **usando `if (catch ...)` e `continue`**, così che dopo l'`if` il prezzo si possa usare come un `int` normale. Alla fine stampa il totale.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="receipt.c3"
+import std::io;
+
+fn int? price_of(String item)
+{
+	switch (item)
+	{
+		case "bread": return 3;
+		case "milk": return 2;
+		case "cheese": return 7;
+	}
+	return NOT_FOUND~;
+}
+
+fn void main()
+{
+	String[] cart = { "bread", "milk", "caviar", "cheese" };
+	int total;
+	foreach (item : cart)
+	{
+		int? price = price_of(item);
+		if (catch price)
+		{
+			io::printfn("%-8s not found, skipped", item);
+			continue;
+		}
+		io::printfn("%-8s %2d", item, price);
+		total += price;
+	}
+	io::printfn("Total: %d", total);
+}
+```
+
+Il fault qui non serve (sappiamo già che l'unico possibile è `NOT_FOUND`), quindi `if (catch price)` non gli dà un nome. Dopo il `continue`, `price` è un `int`: `total += price` compila senza cast né `??`.
+
+Con `if (try p = price_of(item)) { ... } else { ... }` avresti ottenuto lo stesso output, ma la parte "buona" sarebbe finita dentro le graffe. Con un solo `if` non cambia molto; con tre o quattro optional da controllare uno dopo l'altro, l'uscita anticipata tiene il codice piatto e leggibile.
+
+</Solution>
+
+## Ricapitolando
+
+- `if (try n = f())` esegue il blocco solo se c'è un risultato, e dentro `n` è un valore normale. Con una variabile già esistente basta `if (try n)`.
+- `if (catch err = f())` esegue il blocco solo se la scatola è vuota, con il fault in `err` (tipo `fault`). Il nome si può omettere.
+- Un fault si stampa con `%s`: `builtin::NOT_FOUND`, modulo e nome.
+- Se il blocco `catch` esce (`return`, `break`, `continue`), dopo l'`if` la variabile è un valore normale. Se non esce, resta un optional.
+- `if (try a = f() && try b = g() && a > b)`: più scatole e condizioni con `&&`, mai con `||`.
+- Un optional non può fare da condizione di un `if` normale.
+
+Finora l'unico fault che hai usato è `NOT_FOUND`. Ma "non trovato" non basta a descrivere tutto quello che può andare storto: un prelievo può fallire perché mancano i soldi, o perché l'importo è negativo. Nella prossima lezione crei i **tuoi** fault.

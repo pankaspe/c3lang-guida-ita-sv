@@ -1,0 +1,13 @@
+{
+	"title": "Optional ed errori",
+	"subtitle": "Cosa fa una funzione quando non ha una risposta? In C3 lo dice con il tipo che restituisce, e il compilatore non ti lascia far finta di niente: niente più -1 magici, niente errori dimenticati.",
+	"icon": "shield",
+	"level": "Intermedio",
+	"goals": [
+		"Restituire un risultato oppure un fault con i tipi optional (int?, void?)",
+		"Aprire un optional con if (try), if (catch) e il valore di riserva ??",
+		"Definire errori tuoi con faultdef e distinguerli con uno switch",
+		"Passare un errore a chi ti ha chiamato con !, e fermarti con !! solo quando non può succedere",
+		"Usare gli optional della libreria standard: to_int, pop, index_of e la lettura dalla tastiera"
+	]
+}

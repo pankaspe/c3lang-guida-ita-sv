@@ -43,8 +43,9 @@ leggendo la documentazione ufficiale su [c3-lang.org](https://c3-lang.org).
 | 2 | [Decisioni, cicli e funzioni](https://c3-tutorial.pages.dev/modules/decisioni-cicli-funzioni) | `if`, `switch`, `while`, `for`, `foreach` e le prime funzioni |
 | 3 | [Array, slice e stringhe](https://c3-tutorial.pages.dev/modules/array-slice-stringhe) | Collezioni di valori, slice, testo da tagliare e costruire, liste che crescono |
 | 4 | [Struct ed enum](https://c3-tutorial.pages.dev/modules/struct-ed-enum) | Tipi tuoi: struct, metodi, enum con dati associati, alias e typedef |
+| 5 | [Optional ed errori](https://c3-tutorial.pages.dev/modules/optional-ed-errori) | Risultati che potrebbero mancare, fault, `try`/`catch`, `!` e `!!`, leggere dalla tastiera |
 
-In arrivo: optional e gestione degli errori, moduli, memoria e puntatori, `defer` e contratti,
+In arrivo: moduli, memoria e puntatori, `defer` e contratti,
 generics e macro, interoperabilità con il C.
 
 ## Scorciatoie da tastiera

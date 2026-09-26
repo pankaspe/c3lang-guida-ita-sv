@@ -1,0 +1,225 @@
+---
+title: Gli optional della libreria standard
+description: Trasformare testo in numeri con to_int e to_double (e i loro fault), pop, first e last sulle liste vuote, index_of per cercare nel testo. Le promesse dei moduli precedenti, finalmente mantenute.
+minutes: 16
+---
+
+## Promesse mantenute
+
+Nei moduli precedenti abbiamo rimandato più di una cosa "a quando avremo gli optional": `list.pop()` su una lista vuota, la conversione di un testo come `"12x"` in un numero. Il motivo è che nella libreria standard di C3 **tutte** le operazioni che possono non avere un risultato restituiscono un optional. Adesso che sai aprirli, sono tue.
+
+## Dal testo ai numeri: to_int
+
+Un testo che contiene cifre non è un numero: `"42"` è una `String` di due caratteri, e `"42" + 1` non ha senso. Per convertirlo c'è `to_int()`, che restituisce un `int?`: il testo potrebbe non essere affatto un numero.
+
+```c3 title="parse.c3"
+import std::io;
+
+fn void show(String text)
+{
+	int? n = text.to_int();
+	if (catch err = n)
+	{
+		io::printfn("%-13s -> %s", text, err);
+		return;
+	}
+	io::printfn("%-13s -> %d", text, n);
+}
+
+fn void main()
+{
+	String[] inputs = { "42", " 42 ", "-7", "+7", "007", "0x1F", "3.5", "12x", "4 2", "", "99999999999" };
+	foreach (text : inputs) show(text);
+}
+```
+
+```output
+42            -> 42
+ 42           -> 42
+-7            -> -7
++7            -> 7
+007           -> 7
+0x1F          -> 31
+3.5           -> string::MALFORMED_INTEGER
+12x           -> string::MALFORMED_INTEGER
+4 2           -> string::MALFORMED_INTEGER
+              -> string::EMPTY_STRING
+99999999999   -> string::INTEGER_OVERFLOW
+```
+
+Leggi l'output con calma, perché dice molto su come ragiona `to_int`:
+
+- gli **spazi** all'inizio e alla fine vengono ignorati, ma uno spazio in mezzo (`"4 2"`) no;
+- il segno `+` o `-` davanti va bene, e gli zeri iniziali pure;
+- `"0x1F"` vale **31**: con `0x` davanti il testo viene letto in esadecimale, come nel codice C3 (ricordi il riquadro sull'esadecimale nel modulo 1?). Allo stesso modo `0b` legge in binario e `0o` in ottale;
+- `"3.5"` non è un intero: `to_int` non arrotonda, rifiuta;
+- i fault sono tre, tutti del modulo `string`: **`MALFORMED_INTEGER`** (c'è qualcosa che non è una cifra), **`EMPTY_STRING`** (non c'è niente) e **`INTEGER_OVERFLOW`** (il numero non sta in un `int`, che arriva a poco più di 2 miliardi).
+
+Per i numeri più grandi c'è `to_long()` (`"99999999999".to_long()` funziona), e c'è una versione per ogni tipo intero: `to_uint()`, `to_short()`, `to_char()`... Con i tipi senza segno c'è anche un quarto fault: `"-3".to_uint()` dà `string::NEGATIVE_VALUE`.
+
+<Quiz question={'Quanto vale `" 17 ".to_int() ?? 0`?'} options={['`0`, per colpa degli spazi', '`17`', '`" 17 "`', 'Niente: non compila']} answer={1}>
+
+`to_int` ignora gli spazi all'inizio e alla fine: il risultato è 17, e `??` non interviene. Uno spazio **in mezzo** alle cifre, invece, darebbe `MALFORMED_INTEGER`.
+
+</Quiz>
+
+## Numeri con la virgola: to_double
+
+Per i decimali ci sono `to_double()` e `to_float()`, con il loro fault `string::MALFORMED_FLOAT`:
+
+```c3
+io::printn("3.5".to_double() ?? -1);
+io::printn("1e3".to_double() ?? -1);
+io::printn(@catch("3,5".to_double()));
+```
+
+```output
+3.500000
+1000.000000
+string::MALFORMED_FLOAT
+```
+
+`"1e3"` è la notazione scientifica, 1 × 10³. E `"3,5"`, come scriviamo noi in Italia, **non** è un numero per `to_double`.
+
+<Callout type="note" title="La virgola italiana">
+
+I linguaggi di programmazione usano il punto come separatore dei decimali, sempre, indipendentemente dal paese. Se il testo viene da una persona (un modulo compilato, un file scritto a mano), aspettati delle virgole. Una soluzione semplice è sostituirle prima di convertire, con `text.treplace(",", ".")`: è una delle funzioni con la `t` davanti del modulo 3, che crea una stringa nuova nella memoria temporanea.
+
+</Callout>
+
+## Liste vuote: pop, first e last
+
+Nel modulo 3 `pop()` era rimasto in sospeso: cosa restituisce se la lista è vuota? Adesso la risposta è semplice: un optional vuoto, con il fault `NO_MORE_ELEMENT`. Lo stesso vale per `first()` e `last()`, che leggono il primo e l'ultimo elemento senza toglierli.
+
+```c3
+List{String} todo;
+todo.push("write");
+todo.push("test");
+io::printn(todo.last() ?? "-");
+io::printn(todo.pop() ?? "-");
+io::printn(todo.pop() ?? "-");
+io::printn(todo.pop() ?? "nothing left");
+if (catch err = todo.first()) io::printn(err);
+```
+
+```output
+test
+test
+write
+nothing left
+builtin::NO_MORE_ELEMENT
+```
+
+`pop` toglie l'ultimo elemento e lo restituisce: le cose da fare escono al contrario di come sono entrate, come una pila di piatti. Al terzo `pop` la lista è vuota, e nessun crash: solo una scatola vuota, gestita da `??`. Addio `list[list.len() - 1]` con il controllo della lunghezza scritto a mano.
+
+<Callout type="tip" title="Svuotare una lista, un elemento alla volta">
+
+`pop` e `try` insieme formano un ciclo molto naturale: "finché riesci a togliere un elemento, lavoraci".
+
+```c3
+while (try task = todo.pop())
+{
+	io::printfn("doing: %s", task);
+}
+```
+
+`while (try ...)` funziona come `if (try ...)`: il ciclo continua finché la scatola è piena, e si ferma alla prima vuota.
+
+</Callout>
+
+## Cercare nel testo: index_of
+
+Nel modulo 3 hai usato `contains` per sapere **se** un testo ne contiene un altro. `index_of` ti dice anche **dove**: restituisce la posizione della prima occorrenza, come `sz?`, oppure `NOT_FOUND` se non c'è.
+
+```c3
+String email = "ada@example.com";
+if (try at = email.index_of("@"))
+{
+	io::printfn("user: %s, domain: %s", email[0:at], email[at + 1..]);
+}
+```
+
+```output
+user: ada, domain: example.com
+```
+
+La chiocciola è in posizione 3: il nome utente è la slice dei primi 3 caratteri, `email[0:at]`, e il dominio va dal carattere dopo la chiocciola fino alla fine, `email[at + 1..]`. Senza il `try`, cioè senza la certezza che la chiocciola ci sia, quelle slice non si potrebbero nemmeno scrivere: `at` sarebbe un optional.
+
+Esistono anche `rindex_of` (l'ultima occorrenza invece della prima) e `index_of_char`, che cerca un singolo carattere: `email.index_of_char('@')`.
+
+<Quiz question={'Cosa stampa `io::printn(@ok("example.com".index_of("@")));`?'} options={['`true`', '`false`', '`-1`', '`NOT_FOUND`']} answer={1}>
+
+Non c'è nessuna chiocciola: `index_of` restituisce una scatola vuota (con `NOT_FOUND`), e `@ok` risponde `false`.
+
+</Quiz>
+
+<Exercise title="Il libretto dei voti" expected={`'28' ok
+'thirty' skipped: string::MALFORMED_INTEGER
+'' skipped: string::EMPTY_STRING
+'30' ok
+'31' skipped: out of range
+'27' ok
+Average: 28.33`}>
+
+Un modulo online raccoglie i voti degli esami come testo, e qualcuno ha scritto cose strane. Scrivi `grades.c3` che parte da questi dati:
+
+```c3
+String[] form = { "28", "thirty", "", "30", "31", "27" };
+```
+
+Per ogni voto:
+
+- se non è un numero, stampa `skipped:` seguito dal fault;
+- se è un numero ma è fuori dall'intervallo da 18 a 30, stampa `skipped: out of range`;
+- altrimenti stampa `ok` e usalo per la media.
+
+Ogni voto va stampato tra apici, come nell'output atteso. Alla fine stampa la media dei voti validi con due decimali (attenzione alla divisione intera).
+
+</Exercise>
+
+<Solution>
+
+```c3 title="grades.c3"
+import std::io;
+
+fn void main()
+{
+	String[] form = { "28", "thirty", "", "30", "31", "27" };
+	int sum;
+	int count;
+	foreach (text : form)
+	{
+		int? grade = text.to_int();
+		if (catch err = grade)
+		{
+			io::printfn("'%s' skipped: %s", text, err);
+			continue;
+		}
+		if (grade < 18 || grade > 30)
+		{
+			io::printfn("'%s' skipped: out of range", text);
+			continue;
+		}
+		io::printfn("'%s' ok", text);
+		sum += grade;
+		count++;
+	}
+	io::printfn("Average: %.2f", (double)sum / count);
+}
+```
+
+Dopo il primo `continue`, `grade` è un `int`: il secondo controllo e la somma lo usano direttamente. I due "scarti" sono di natura diversa: il primo lo decide `to_int` (non è un numero), il secondo lo decidi tu (è un numero, ma non è un voto). Nella prossima lezione vedrai come trasformare anche il secondo in un fault vero, `OUT_OF_RANGE`, e farlo viaggiare insieme agli altri.
+
+`(double)sum / count` converte prima di dividere: 85 / 3 tra interi darebbe 28. E se tutti i voti fossero sbagliati? `count` sarebbe 0: prova a gestire anche quel caso.
+
+</Solution>
+
+## Ricapitolando
+
+- Nella libreria standard, ogni operazione che può non avere un risultato restituisce un optional.
+- `text.to_int()` dà un `int?`: ignora gli spazi ai bordi, capisce segno e prefissi `0x`/`0b`/`0o`, e fallisce con `string::MALFORMED_INTEGER`, `EMPTY_STRING` o `INTEGER_OVERFLOW`. C'è una versione per ogni tipo intero (`to_long`, `to_uint`, ...).
+- `to_double()` e `to_float()` vogliono il **punto** decimale; altrimenti `MALFORMED_FLOAT`.
+- `list.pop()`, `first()` e `last()` su una lista vuota danno `NO_MORE_ELEMENT`. `while (try x = list.pop())` svuota una lista.
+- `text.index_of("@")` dà la posizione come `sz?`, oppure `NOT_FOUND`.
+
+Nell'esercizio ogni fault veniva gestito subito, riga per riga. Ma pensa a una funzione `parse_time("09:15")` che chiama `to_int` due volte: se una delle due fallisce, non è compito suo decidere cosa dire all'utente. Deve solo **passare l'errore in su**. Nella prossima lezione, un solo carattere per farlo: `!`.

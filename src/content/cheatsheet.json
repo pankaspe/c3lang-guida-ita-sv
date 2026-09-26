@@ -623,6 +623,85 @@
 			]
 		},
 		{
+			"id": "optionals",
+			"title": "Optional ed errori",
+			"icon": "shield",
+			"entries": [
+				{
+					"term": "T? · ~",
+					"code": "fn int? stock_of(String item)\n{\n\tif (item == \"apples\") return 12;\n\treturn NOT_FOUND~;\n}",
+					"text": "Un *optional*: un risultato oppure un fault che spiega perché manca. La tilde trasforma un fault in un optional vuoto.",
+					"lesson": "optional-ed-errori/optional"
+				},
+				{
+					"term": "??",
+					"code": "int n = stock_of(\"kiwis\") ?? 0;",
+					"text": "Il risultato, oppure il valore di riserva se l'optional è vuoto. La riserva può essere anche un fault: `?? MY_FAULT~`.",
+					"lesson": "optional-ed-errori/optional"
+				},
+				{
+					"term": "if (try)",
+					"code": "if (try n = stock_of(item))\n{\n\tio::printn(n);\n}",
+					"text": "Esegue il blocco solo se c'è un risultato; dentro, `n` è un valore normale. Più optional si uniscono con `&&`.",
+					"lesson": "optional-ed-errori/try-e-catch"
+				},
+				{
+					"term": "if (catch)",
+					"code": "int? n = stock_of(item);\nif (catch err = n)\n{\n\tio::printfn(\"error: %s\", err);\n\treturn;\n}\nio::printn(n * 2);",
+					"text": "Esegue il blocco solo se l'optional è vuoto, con il fault in `err`. Se il blocco esce, dopo `n` è un valore normale.",
+					"lesson": "optional-ed-errori/try-e-catch"
+				},
+				{
+					"term": "faultdef · fault",
+					"code": "faultdef INVALID_AMOUNT, INSUFFICIENT_FUNDS;\n\nswitch (err)\n{\n\tcase INVALID_AMOUNT: io::printn(\"bad amount\");\n\tdefault: io::printn(err);\n}",
+					"text": "Crea fault tuoi, in maiuscolo. Si confrontano con `==` o in uno `switch`, sempre con un `default`.",
+					"lesson": "optional-ed-errori/i-tuoi-errori"
+				},
+				{
+					"term": "void?",
+					"code": "fn void? Account.withdraw(&self, int amount)\n{\n\tif (amount > self.balance) return INSUFFICIENT_FUNDS~;\n\tself.balance -= amount;\n}",
+					"text": "Niente se va bene, un fault se va male. Va gestito anche lui; `(void)f()` scarta l'errore di proposito.",
+					"lesson": "optional-ed-errori/i-tuoi-errori"
+				},
+				{
+					"term": "@catch · @ok",
+					"code": "fault f = @catch(acc.withdraw(10));\nbool done = @ok(acc.withdraw(10));",
+					"text": "Il fault di un optional (vuoto e falso se è andato bene), oppure `true`/`false`. Entrambi eseguono la chiamata.",
+					"lesson": "optional-ed-errori/i-tuoi-errori"
+				},
+				{
+					"term": "to_int · to_double",
+					"code": "int? n = \"42\".to_int();\nlong? big = \"99999999999\".to_long();\ndouble? d = \"3.5\".to_double();",
+					"text": "Dal testo al numero. Fault: `string::MALFORMED_INTEGER`, `EMPTY_STRING`, `INTEGER_OVERFLOW`, `MALFORMED_FLOAT`.",
+					"lesson": "optional-ed-errori/optional-nella-libreria"
+				},
+				{
+					"term": "pop · first · last · index_of",
+					"code": "String? task = todo.pop();\nwhile (try t = todo.pop()) io::printn(t);\nsz? at = email.index_of(\"@\");",
+					"text": "Su una lista vuota danno `NO_MORE_ELEMENT`; `index_of` dà la posizione oppure `NOT_FOUND`.",
+					"lesson": "optional-ed-errori/optional-nella-libreria"
+				},
+				{
+					"term": "! (rethrow)",
+					"code": "fn int? cart_total(String[] cart)\n{\n\tint total;\n\tforeach (item : cart) total += price_of(item)!;\n\treturn total;\n}",
+					"text": "Apre l'optional; se è vuoto esce dalla funzione restituendo lo stesso fault. Solo in funzioni optional, mai nel `main`.",
+					"lesson": "optional-ed-errori/rilanciare"
+				},
+				{
+					"term": "!! (force unwrap)",
+					"code": "int port = \"8080\".to_int()!!;",
+					"text": "Apre l'optional o ferma il programma. Solo per errori che sarebbero un bug, mai per l'input di una persona.",
+					"lesson": "optional-ed-errori/rilanciare"
+				},
+				{
+					"term": "io::treadline",
+					"code": "String? line = io::treadline();\nif (catch line) return;    // io::EOF",
+					"text": "Legge una riga dallo standard input, senza l'a capo. A fine input (Ctrl+D) il fault è `io::EOF`.",
+					"lesson": "optional-ed-errori/leggere-la-tastiera"
+				}
+			]
+		},
+		{
 			"id": "compiler",
 			"title": "Il compilatore c3c",
 			"icon": "terminal",

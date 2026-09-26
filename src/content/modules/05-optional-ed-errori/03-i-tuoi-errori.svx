@@ -1,0 +1,241 @@
+---
+title: I tuoi errori, con faultdef
+description: Creare fault con un nome che spiega il problema, funzioni void? che non restituiscono niente ma possono fallire, uno switch per distinguere gli errori, il tipo fault con @catch e @ok, e come sostituire un fault con uno più preciso.
+minutes: 18
+---
+
+## Un nome per ogni problema
+
+`NOT_FOUND` va benissimo per una ricerca. Ma pensa a un conto in banca: un prelievo può fallire perché l'importo non ha senso (zero, o negativo) oppure perché sul conto non ci sono abbastanza soldi. Sono due problemi diversi, e chi chiama vorrà reagire in modo diverso: nel primo caso "hai sbagliato a scrivere", nel secondo "ti mancano 30 euro".
+
+I fault si creano con **`faultdef`**, fuori dalle funzioni, di solito in cima al file:
+
+```c3
+faultdef INVALID_AMOUNT, INSUFFICIENT_FUNDS;
+```
+
+Da qui in poi `INVALID_AMOUNT` e `INSUFFICIENT_FUNDS` sono due fault come `NOT_FOUND`: si usano con la tilde per restituire una scatola vuota. I nomi vanno **tutti in maiuscolo**, come le costanti (`faultdef not_found;` dà `Names of faults must be all uppercase.`). Scegli nomi che spiegano il problema a chi legge: `INSUFFICIENT_FUNDS` dice molto più di `ERROR_2`.
+
+Ogni fault è **unico** in tutto il programma: due fault con nomi diversi non sono mai uguali, nemmeno per caso. Non c'è il rischio del C, dove l'errore 3 di una libreria e l'errore 3 di un'altra sono lo stesso numero.
+
+## Funzioni che non restituiscono niente, ma possono fallire
+
+Un prelievo non ha un risultato da restituire: o riesce (e il saldo cambia), o fallisce. Per questo esiste **`void?`**: "niente, forse", cioè "niente se va bene, un fault se va male".
+
+```c3
+struct Account
+{
+	String owner;
+	int balance;
+}
+
+fn void? Account.withdraw(&self, int amount)
+{
+	if (amount <= 0) return INVALID_AMOUNT~;
+	if (amount > self.balance) return INSUFFICIENT_FUNDS~;
+	self.balance -= amount;
+}
+```
+
+Se la funzione arriva alla fine (o fa `return;`), è andato tutto bene. E anche una `void?` va gestita: chiamarla e ignorare il risultato non compila.
+
+```c3
+acc.withdraw(30);
+// error: The function returns 'void?', which is an optional and must be handled. ...
+```
+
+Il compilatore ti ricorda che quel prelievo potrebbe non essere avvenuto, e che forse ti interessa saperlo.
+
+<Callout type="warning" title="Ignorare un errore, apposta">
+
+Se sei davvero sicuro che l'errore non ti interessa, puoi scartarlo in modo esplicito con `(void)`: `(void)acc.withdraw(30);`. Compila, e se il prelievo fallisce nessuno lo saprà mai. Usalo raramente: è l'equivalente di buttare una lettera senza aprirla. Il vantaggio rispetto al C è che almeno **si vede**: chi legge il codice trova scritto che l'errore è stato ignorato di proposito.
+
+</Callout>
+
+## Distinguere i fault
+
+Un `fault` si può confrontare con `==` e, soprattutto, usare in uno `switch`. Ecco il programma completo:
+
+```c3 title="bank.c3"
+import std::io;
+
+faultdef INVALID_AMOUNT, INSUFFICIENT_FUNDS;
+
+struct Account
+{
+	String owner;
+	int balance;
+}
+
+fn void? Account.withdraw(&self, int amount)
+{
+	if (amount <= 0) return INVALID_AMOUNT~;
+	if (amount > self.balance) return INSUFFICIENT_FUNDS~;
+	self.balance -= amount;
+}
+
+fn void main()
+{
+	Account acc = { "Ada", 100 };
+	int[] requests = { 30, -5, 200, 70 };
+	foreach (amount : requests)
+	{
+		if (catch err = acc.withdraw(amount))
+		{
+			switch (err)
+			{
+				case INVALID_AMOUNT:
+					io::printfn("%4d: not a valid amount", amount);
+				case INSUFFICIENT_FUNDS:
+					io::printfn("%4d: only %d left", amount, acc.balance);
+				default:
+					io::printfn("%4d: unexpected %s", amount, err);
+			}
+			continue;
+		}
+		io::printfn("%4d: ok, balance %d", amount, acc.balance);
+	}
+}
+```
+
+```output
+  30: ok, balance 70
+  -5: not a valid amount
+ 200: only 70 left
+  70: ok, balance 0
+```
+
+Ogni richiesta fallita riceve la sua spiegazione. Il `default` sembra inutile, visto che `withdraw` restituisce solo due fault, ma tienilo: a differenza di un enum, l'insieme dei fault **non è chiuso** (chiunque può aggiungerne con un `faultdef`), quindi il compilatore non può controllare che tu li abbia gestiti tutti. Se un giorno `withdraw` imparasse a restituire anche `ACCOUNT_FROZEN`, il `default` sarebbe la tua rete di sicurezza.
+
+E se stampi il fault con `%s`? Esce il nome completo, `bank::INSUFFICIENT_FUNDS`. `bank` è il nome del **modulo**, che per ora coincide con il nome del file: un fault definito in `bank.c3` si chiama `bank::...`, uno della libreria standard `builtin::...`. Dei moduli parleremo in un modulo tutto loro.
+
+<Quiz question={'Se in `bank.c3` scrivi `io::printfn("%s", err)` e `err` vale `INVALID_AMOUNT`, cosa esce?'} options={['`INVALID_AMOUNT`', '`bank::INVALID_AMOUNT`', '`builtin::INVALID_AMOUNT`', 'Un numero']} answer={1}>
+
+Il nome di un fault stampato porta con sé il modulo in cui è stato definito, e un file senza dichiarazione di modulo ha il nome del file. `builtin::` è solo per i fault della libreria standard, come `NOT_FOUND`.
+
+</Quiz>
+
+## Il tipo fault
+
+Un fault è un valore come un altro, di tipo `fault`, e si può mettere in una variabile. La macro **`@catch`** prende un optional e restituisce il suo fault, oppure un fault "vuoto" se c'era un risultato:
+
+```c3
+Account bob = { "Bob", 50 };
+fault f = @catch(bob.withdraw(1000));
+io::printn(f);
+fault g = @catch(bob.withdraw(10));
+io::printn(g);
+if (!g) io::printn("no fault: withdrawal done");
+if (f == INSUFFICIENT_FUNDS) io::printn("Bob is short of money");
+```
+
+```output
+bank::INSUFFICIENT_FUNDS
+(empty-fault)
+no fault: withdrawal done
+Bob is short of money
+```
+
+Il fault vuoto si stampa `(empty-fault)` e in una condizione vale **falso**: `if (!g)` si legge "se non c'è stato nessun errore". C'è anche **`@ok`**, che risponde con un `bool` alla domanda "è andato tutto bene?": `@ok(bob.withdraw(15))` vale `true` (e il prelievo viene **fatto**: `@catch` e `@ok` eseguono davvero la chiamata, non si limitano a guardarla).
+
+`@catch` è utile soprattutto con le funzioni `void?`, perché un `void?` non può stare in una variabile: `void? x = bob.withdraw(10);` dà `The use of 'void?' as a variable type is not permitted, ...`. Non c'è nessun risultato da conservare, solo l'eventuale errore: per quello c'è il tipo `fault`.
+
+## Un fault più preciso
+
+A volte il fault che ricevi è giusto ma troppo generico. Immagina un ordine in cui cerchi prima il cliente e poi il prodotto, con due ricerche che falliscono entrambe con `NOT_FOUND`: alla fine, come fai a sapere **cosa** non è stato trovato? Con `??` puoi mettere al posto del fault originale uno tuo, più preciso. Il valore di riserva, infatti, può essere a sua volta un fault con la tilde:
+
+```c3
+faultdef UNKNOWN_CUSTOMER, UNKNOWN_PRODUCT;
+```
+
+```c3
+int? customer = find_customer("Zoe") ?? UNKNOWN_CUSTOMER~;
+int? product = find_product("kiwis") ?? UNKNOWN_PRODUCT~;
+```
+
+Se la ricerca riesce, `customer` contiene il risultato; se fallisce, contiene `UNKNOWN_CUSTOMER` invece di un anonimo `NOT_FOUND`. Nota che a sinistra ci sono ancora variabili `int?`: la riserva è un fault, quindi il risultato di `??` resta un optional.
+
+<Quiz question={'Quale riga NON compila, con `fn void? save()`?'} options={['`(void)save();`', '`fault f = @catch(save());`', '`void? r = save();`', '`if (catch err = save()) io::printn(err);`']} answer={2}>
+
+Un `void?` non ha niente da conservare oltre all'eventuale errore, quindi non può stare in una variabile. Per tenere l'errore si usa `@catch`, che restituisce un `fault`.
+
+</Quiz>
+
+<Exercise title="Il nome utente" expected={`ada_lovelace: ok
+al: too short
+grace hopper: contains a space
+1linus: starts with a digit
+barbara_liskov_1939: too long`}>
+
+Scrivi `username.c3` con quattro fault, `TOO_SHORT`, `TOO_LONG`, `HAS_SPACE` e `STARTS_WITH_DIGIT`, e una funzione `check_username` che riceve un nome e **non restituisce niente** se va bene, oppure il primo problema che trova, controllando in questo ordine:
+
+1. meno di 3 caratteri: `TOO_SHORT`;
+2. più di 12 caratteri: `TOO_LONG`;
+3. contiene uno spazio: `HAS_SPACE`;
+4. il primo carattere è una cifra: `STARTS_WITH_DIGIT`.
+
+Nel `main`, controlla questi nomi:
+
+```c3
+String[] names = { "ada_lovelace", "al", "grace hopper", "1linus", "barbara_liskov_1939" };
+```
+
+e stampa per ognuno `ok` oppure una spiegazione in inglese scelta con uno `switch` sul fault, come nell'output atteso.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="username.c3"
+import std::io;
+
+faultdef TOO_SHORT, TOO_LONG, HAS_SPACE, STARTS_WITH_DIGIT;
+
+fn void? check_username(String name)
+{
+	if (name.len < 3) return TOO_SHORT~;
+	if (name.len > 12) return TOO_LONG~;
+	if (name.contains(" ")) return HAS_SPACE~;
+	if (name[0].is_digit()) return STARTS_WITH_DIGIT~;
+}
+
+fn void main()
+{
+	String[] names = { "ada_lovelace", "al", "grace hopper", "1linus", "barbara_liskov_1939" };
+	foreach (name : names)
+	{
+		if (catch err = check_username(name))
+		{
+			String reason;
+			switch (err)
+			{
+				case TOO_SHORT: reason = "too short";
+				case TOO_LONG: reason = "too long";
+				case HAS_SPACE: reason = "contains a space";
+				case STARTS_WITH_DIGIT: reason = "starts with a digit";
+				default: reason = "unknown problem";
+			}
+			io::printfn("%s: %s", name, reason);
+			continue;
+		}
+		io::printfn("%s: ok", name);
+	}
+}
+```
+
+L'ordine dei controlli conta. `name[0]` è sicuro solo perché il controllo sulla lunghezza viene prima: con un nome vuoto, `TOO_SHORT` esce prima di guardare il primo carattere. "grace hopper" ha esattamente 12 caratteri, quindi supera il controllo sulla lunghezza e si ferma sullo spazio.
+
+Nota la separazione dei compiti: `check_username` dice **cosa** non va con un fault, il `main` decide **come** dirlo all'utente. Domani potresti tradurre i messaggi in italiano, o mostrarli in rosso, senza toccare la funzione di controllo.
+
+</Solution>
+
+## Ricapitolando
+
+- `faultdef NAME_ONE, NAME_TWO;` crea fault tuoi, fuori dalle funzioni e tutti in maiuscolo. Ogni fault è unico nel programma.
+- `void?` è il tipo di una funzione che non restituisce niente ma può fallire. Anche la sua chiamata va gestita; `(void)f()` scarta l'errore di proposito.
+- I fault si confrontano con `==` e si distinguono con uno `switch`; tieni sempre un `default`, perché i fault non sono un insieme chiuso.
+- Stampato, un fault mostra modulo e nome: `bank::INSUFFICIENT_FUNDS`.
+- `@catch(x)` restituisce il fault di `x` (o il fault vuoto, falso in una condizione); `@ok(x)` restituisce `true` se c'era un risultato. Entrambi eseguono la chiamata.
+- `f() ?? MY_FAULT~` sostituisce il fault originale con uno più preciso.
+
+Finora ogni optional veniva aperto nella funzione che lo riceveva. Ma a volte chi riceve l'errore non è la persona giusta per gestirlo, e la cosa più sensata è **passarlo a chi l'ha chiamato**. Prima, però, una lezione per scoprire che la libreria standard è piena di optional, e che alcuni li aspettavi da tempo.

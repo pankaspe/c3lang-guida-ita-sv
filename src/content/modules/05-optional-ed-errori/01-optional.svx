@@ -1,0 +1,218 @@
+---
+title: Optional, un risultato che potrebbe non esserci
+description: Il problema del -1 magico, i tipi con il punto interrogativo, il fault che spiega perché manca il risultato, il compilatore che non ti lascia dimenticarlo e il piano B con ??.
+minutes: 16
+---
+
+## Il problema del -1
+
+Nel modulo 4 la funzione `find` restituiva l'indice del giocatore cercato, oppure **-1** se non c'era. Funzionava perché nessun indice vale -1. Ma prova con un'altra domanda: *quante mele ci sono in magazzino?*
+
+```c3
+fn int stock_of(String item)
+{
+	switch (item)
+	{
+		case "apples": return 12;
+		case "pears": return 0;
+	}
+	return -1;    // we don't sell it
+}
+```
+
+Qui 0 non può voler dire "non lo vendiamo": 0 pere è una risposta vera, le abbiamo finite. Allora -1. E se domani servisse una funzione che restituisce una temperatura, dove -1 è un valore normalissimo? -9999? E chi chiama la funzione deve **ricordarsi** di controllare, ogni volta: se dimentica, il -1 finisce in una somma e il totale del magazzino diventa sbagliato, in silenzio.
+
+Il vero problema è che `int` promette sempre un numero, e la funzione non ha un modo onesto per dire "stavolta un numero non ce l'ho".
+
+## Un tipo con il punto interrogativo
+
+In C3 quel modo c'è. Basta un `?` dopo il tipo restituito:
+
+```c3
+fn int? stock_of(String item)
+{
+	switch (item)
+	{
+		case "apples": return 12;
+		case "pears": return 0;
+	}
+	return NOT_FOUND~;
+}
+```
+
+`int?` si legge "un `int`, forse". È un **optional**: una scatola che contiene **un risultato** (un `int` vero, anche 0 o -1) oppure è **vuota**. Quando è vuota non è muta: al posto del risultato contiene un **fault**, un valore che spiega *perché* il risultato manca. La documentazione ufficiale lo chiama anche *Excuse*, la scusa.
+
+Ci sono due modi per uscire da una funzione `int?`:
+
+- `return 12;` restituisce un risultato, come sempre;
+- `return NOT_FOUND~;` restituisce una scatola vuota con dentro il fault `NOT_FOUND`. È la **tilde** `~` dopo il fault che lo trasforma in un optional vuoto.
+
+`NOT_FOUND` è uno dei fault già pronti della libreria standard, disponibile ovunque senza `import`: vuol dire "l'elemento che cerchi non c'è". Nella lezione 3 imparerai a crearne di tuoi.
+
+<Quiz question="Cosa può restituire una funzione dichiarata `fn int? f()`?" options={['Solo un `int`', 'Un `int` oppure `null`', 'Un `int` qualsiasi (anche 0 o -1) oppure un fault che spiega perché non c\'è', 'Un fault e un `int` insieme']} answer={2}>
+
+Un optional contiene **una** delle due cose: il risultato (qualsiasi `int`, nessun valore è "riservato") oppure un fault. Mai entrambi, e mai nessuno dei due.
+
+</Quiz>
+
+## Il compilatore non ti lascia dimenticare
+
+Qui sta la differenza con il -1. Prova a usare il risultato come se fosse un `int` normale:
+
+```c3
+int kiwis = stock_of("kiwis");
+// error: It is not possible to cast from 'int?' to 'int'.
+```
+
+E nemmeno stamparlo va:
+
+```c3
+io::printn(stock_of("kiwis"));
+// error: The result of this call is optional due to its argument(s). This optional result may not be implicitly discarded. ...
+```
+
+Un `int?` **non è** un `int`: prima di usarlo devi decidere cosa fare se la scatola è vuota. Il -1 si poteva dimenticare; l'optional no, perché il programma non compila finché non ci pensi. È lo stesso spirito dello `switch` sugli enum del modulo 4: un errore che il compilatore ti mostra oggi è un errore che non cercherai domani.
+
+<Callout type="c" title="Se vieni dal C">
+
+In C gli errori viaggiano per convenzione: -1, `NULL`, un `bool` restituito con il risultato vero scritto in un parametro, oppure la variabile globale `errno` da controllare subito dopo la chiamata. Tutte funzionano, e tutte si possono ignorare senza che il compilatore dica niente. In C3 l'errore fa parte del **tipo**. Curiosità: visto dal C, `fn int? stock_of(String item)` diventa proprio una funzione che restituisce il codice d'errore e scrive l'`int` in un puntatore ricevuto come parametro. C3 scrive per te il codice che in C scrivevi a mano, e in più ti obbliga a controllarlo.
+
+</Callout>
+
+## Il piano B: ??
+
+Il modo più semplice di aprire un optional è dargli un **valore di riserva** con l'operatore `??`: "prendi il risultato, oppure, se la scatola è vuota, usa questo".
+
+```c3 title="stock.c3"
+import std::io;
+
+fn int? stock_of(String item)
+{
+	switch (item)
+	{
+		case "apples": return 12;
+		case "pears": return 0;
+	}
+	return NOT_FOUND~;
+}
+
+fn void main()
+{
+	int apples = stock_of("apples") ?? 0;
+	int kiwis = stock_of("kiwis") ?? 0;
+	io::printfn("apples: %d, kiwis: %d", apples, kiwis);
+	io::printfn("pears: %d", stock_of("pears") ?? -1);
+	io::printfn("kiwis: %d", stock_of("kiwis") ?? -1);
+}
+```
+
+```output
+apples: 12, kiwis: 0
+pears: 0
+kiwis: -1
+```
+
+Il risultato di `stock_of("kiwis") ?? 0` è un `int` normale, e si può assegnare, sommare e stampare. Ma guarda la differenza con il -1 di prima: il valore di riserva non lo sceglie più la funzione, lo sceglie **chi la chiama**, ogni volta, ed è scritto lì nel codice dove tutti lo vedono. Per contare la merce da ordinare, "non lo vendiamo" vale 0; per un messaggio di errore, magari serve altro. Il valore a destra di `??` viene calcolato solo se serve, cioè solo se la scatola è vuota.
+
+<Quiz question={'Cosa stampa `io::printn(stock_of("pears") ?? 5);` con la `stock_of` di questa lezione?'} options={['`5`', '`0`', '`12`', 'Niente: non compila']} answer={1}>
+
+Le pere ci sono nel listino: `stock_of("pears")` restituisce il **risultato** 0 (le abbiamo finite, ma è una risposta). `??` usa il valore di riserva solo se la scatola è vuota, e questa non lo è.
+
+</Quiz>
+
+## Optional anche nelle variabili
+
+Un optional non esiste solo come tipo restituito: puoi dichiarare una variabile `int?` e metterci dentro un risultato o un fault.
+
+```c3
+int? a = 5;
+int? b = NOT_FOUND~;
+io::printn(a ?? -1);
+io::printn(b ?? -1);
+```
+
+```output
+5
+-1
+```
+
+Serve soprattutto per conservare quello che restituisce una funzione e decidere dopo cosa farne, come vedrai nella prossima lezione.
+
+<Callout type="warning" title="Un optional appena dichiarato non è vuoto">
+
+`int? c;` senza valore iniziale non è una scatola vuota: come tutte le variabili di C3 parte da zero, quindi contiene il **risultato** 0. `c ?? -1` vale 0, non -1. Una scatola vuota si ottiene solo con un fault e la tilde.
+
+</Callout>
+
+<Callout type="nerd" title="Come sta un optional in memoria?">
+
+Un `int?` non è un `int` più grande: il risultato occupa lo stesso spazio di un `int` normale, e accanto il programma tiene l'informazione "piena o vuota". Un fault, sotto sotto, è un numero grande quanto un indirizzo di memoria (8 byte su un computer a 64 bit), diverso per ogni fault del programma; il valore speciale 0 vuol dire "nessun fault". Quando una funzione `int?` ritorna, consegna nel registro del processore che di solito contiene il valore di ritorno il **fault** (oppure 0 se è andato tutto bene), e scrive il risultato in una posizione di memoria preparata da chi l'ha chiamata. Controllare se c'è stato un errore costa quindi un confronto con zero: praticamente niente.
+
+</Callout>
+
+<Exercise title="Il mese che non esiste" expected={`march      3
+june       6
+smarch     0
+december  12`}>
+
+Scrivi `months.c3` con una funzione `month_number` che riceve il nome di un mese in inglese, tutto minuscolo (`"january"`, `"february"`, ...), e restituisce il suo numero da 1 a 12, oppure `NOT_FOUND~` se il nome non corrisponde a nessun mese.
+
+Nel `main`, per ognuno di questi nomi:
+
+```c3
+String[] names = { "march", "june", "smarch", "december" };
+```
+
+stampa il nome allineato a sinistra su 9 caratteri e il numero su 2, usando **0** come valore di riserva.
+
+</Exercise>
+
+<Solution>
+
+```c3 title="months.c3"
+import std::io;
+
+fn int? month_number(String name)
+{
+	switch (name)
+	{
+		case "january": return 1;
+		case "february": return 2;
+		case "march": return 3;
+		case "april": return 4;
+		case "may": return 5;
+		case "june": return 6;
+		case "july": return 7;
+		case "august": return 8;
+		case "september": return 9;
+		case "october": return 10;
+		case "november": return 11;
+		case "december": return 12;
+	}
+	return NOT_FOUND~;
+}
+
+fn void main()
+{
+	String[] names = { "march", "june", "smarch", "december" };
+	foreach (name : names)
+	{
+		io::printfn("%-9s %2d", name, month_number(name) ?? 0);
+	}
+}
+```
+
+Qui 0 va bene come riserva perché nessun mese ha il numero 0. Ma nota chi l'ha deciso: il `main`, non `month_number`. Un altro programma potrebbe usare la stessa funzione e comportarsi in modo diverso davanti a "smarch" (il mese maledetto dei Simpson).
+
+</Solution>
+
+## Ricapitolando
+
+- Un **optional** `int?` contiene un risultato (qualsiasi `int`) **oppure** un fault che spiega perché il risultato manca.
+- `return 12;` restituisce un risultato, `return NOT_FOUND~;` una scatola vuota: la **tilde** trasforma un fault in un optional vuoto.
+- `NOT_FOUND` è un fault già pronto della libreria standard.
+- Un `int?` non si usa come un `int`: il compilatore rifiuta assegnamenti e stampe finché non decidi cosa fare se è vuoto.
+- `x ?? riserva` dà il risultato, oppure il valore di riserva se la scatola è vuota. La riserva la sceglie chi chiama.
+- `int? c;` senza valore contiene il risultato 0, non un fault.
+
+`??` butta via il fault e tira dritto. Ma spesso vuoi sapere **se** c'è un risultato e comportarti in modo diverso nei due casi, o leggere il fault per capire cosa è andato storto. È il lavoro di `try` e `catch`.

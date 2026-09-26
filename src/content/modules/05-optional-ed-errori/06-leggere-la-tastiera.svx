@@ -1,0 +1,226 @@
+---
+title: Leggere dalla tastiera
+description: Il programma impara a chiedere. io::treadline() legge una riga come String?, la fine dell'input arriva come fault io::EOF, un gioco per indovinare un numero, e come dare l'input a un programma senza scriverlo a mano.
+minutes: 17
+---
+
+## Un programma che chiede
+
+Tutti i programmi del corso, finora, avevano i dati scritti nel codice: il carrello, i voti, i turni. Per cambiarli bisognava modificare il sorgente e ricompilare. Un programma vero, invece, **chiede**: legge quello che scrivi mentre è in esecuzione.
+
+Per leggere una riga dalla tastiera c'è `io::treadline()`. E, visto il modulo in cui siamo, avrai già indovinato il tipo che restituisce: `String?`.
+
+```c3 title="hello_you.c3"
+import std::io;
+
+fn void main()
+{
+	io::print("What's your name? ");
+	String? name = io::treadline();
+	if (catch name)
+	{
+		io::printn("\nNo name, no party.");
+		return;
+	}
+	io::printfn("Hello, %s! Your name has %d letters.", name, name.len);
+}
+```
+
+```output
+What's your name? Ada
+Hello, Ada! Your name has 3 letters.
+```
+
+Il programma si ferma sulla riga di `treadline`, **aspetta** che tu scriva qualcosa e prema Invio, e poi riparte con il testo in `name`. Nell'output qui sopra `Ada` è quello che hai scritto tu: il terminale mostra i tasti che premi mentre li premi. La riga che ricevi non contiene l'Invio finale, solo il testo.
+
+Due dettagli:
+
+- la `t` di `treadline` è quella del modulo 3: la stringa viene creata nella **memoria temporanea**, e non c'è niente da liberare. Se la tua funzione dovesse leggere migliaia di righe, un `@pool` dentro il ciclo terrebbe la memoria sotto controllo;
+- `io::print` (senza la `n`) scrive la domanda senza andare a capo, così la risposta compare sulla stessa riga.
+
+<Callout type="nerd" title="Da dove arriva quello che scrivi?">
+
+Ogni programma, quando parte, riceve dal sistema operativo tre canali già aperti: lo **standard output** (dove scrive `printn`, lo hai visto nel modulo 1), lo **standard error** (per i messaggi di errore) e lo **standard input**, da cui legge `treadline`. Di solito lo standard input è collegato alla tastiera, attraverso il terminale: mentre scrivi, i caratteri si accumulano in un buffer del terminale (è lui che ti permette di cancellare con Backspace), e solo quando premi Invio la riga intera viene consegnata al programma. Per questo `treadline` riceve sempre righe complete.
+
+</Callout>
+
+## Quando l'input finisce
+
+Perché la riga letta è un optional? Perché l'input può **finire**. Quando il programma chiede un'altra riga e non ce ne sono più, `treadline` restituisce il fault **`io::EOF`**, da *End Of File*, fine del file. Dalla tastiera la fine dell'input si "scrive" con una combinazione di tasti: **Ctrl+D** su Linux e macOS, **Ctrl+Z** seguito da Invio su Windows.
+
+Prova a lanciare `hello_you.c3` e, invece di scrivere un nome, premi Ctrl+D:
+
+```output
+What's your name?
+No name, no party.
+```
+
+Il `catch` ha ricevuto `io::EOF`, e il programma ha salutato con garbo invece di proseguire con un nome che non c'è.
+
+<Callout type="nerd" title="Perché «fine del file», se è una tastiera?">
+
+Perché per il programma non c'è differenza. Lo standard input è un flusso di byte, e da dove arrivino (la tastiera, un file, un altro programma) lo decide chi lancia il programma, non il programma stesso. Il nome EOF viene dai file, dove la fine è ovvia: i byte finiscono. Con la tastiera Ctrl+D è un modo per dire al terminale "consegna quello che c'è e poi dichiara chiuso il flusso". Non è un carattere che arriva al programma: è il terminale che smette di mandare dati, e `treadline` se ne accorge.
+
+</Callout>
+
+<Quiz question={'Cosa restituisce `io::treadline()` se l\'utente preme subito Invio, senza scrivere niente?'} options={['Il fault `io::EOF`', 'Una stringa vuota `""`', 'Il fault `EMPTY_STRING`', 'Il carattere di a capo `"\\n"`']} answer={1}>
+
+Una riga vuota è comunque una riga: il risultato è la stringa vuota, lunga 0. `io::EOF` arriva solo quando l'input è **finito** (Ctrl+D), e l'a capo non fa parte della riga restituita.
+
+</Quiz>
+
+## Indovina il numero
+
+Mettiamo tutto insieme in un piccolo gioco: il programma pensa un numero, tu provi a indovinarlo, lui ti dice se è più alto o più basso. Ogni riga letta passa per **due** optional: quello di `treadline` (l'input è finito?) e quello di `to_int` (è un numero?).
+
+```c3 title="guess.c3"
+import std::io;
+
+const int SECRET = 37;
+
+fn void main()
+{
+	io::printn("Guess the number between 1 and 100.");
+	int attempts;
+	while (true)
+	{
+		io::print("> ");
+		String? line = io::treadline();
+		if (catch line)
+		{
+			io::printn("\nBye!");
+			return;
+		}
+		int? guess = line.to_int();
+		if (catch guess)
+		{
+			io::printfn("'%s' is not a number", line);
+			continue;
+		}
+		attempts++;
+		if (guess < SECRET)
+		{
+			io::printn("Higher!");
+		}
+		else if (guess > SECRET)
+		{
+			io::printn("Lower!");
+		}
+		else
+		{
+			io::printfn("Got it in %d attempts.", attempts);
+			return;
+		}
+	}
+}
+```
+
+Una partita, con le risposte scritte da te dopo il `>`:
+
+```output
+Guess the number between 1 and 100.
+> 50
+Lower!
+> 25
+Higher!
+> forty
+'forty' is not a number
+> 37
+Got it in 3 attempts.
+```
+
+La struttura è quella dell'uscita anticipata della lezione 2, due volte di fila. Se l'input finisce, `return`: dopo quel blocco `line` è una `String` normale. Se non è un numero, `continue`: dopo quel blocco `guess` è un `int` normale, e il resto del ciclo non ha nessun optional di cui preoccuparsi. I tentativi non validi non vengono contati, perché `attempts++` viene dopo il `continue`.
+
+<Callout type="fun" title="Il numero segreto è sempre 37">
+
+Un numero fisso rovina un po' il gioco. I numeri casuali arriveranno più avanti; per ora puoi divertirti a trovare la strategia migliore. Se parti sempre da metà dell'intervallo rimasto (50, poi 25 o 75, e così via), ti bastano al massimo **7** tentativi per qualsiasi numero da 1 a 100, perché ogni risposta dimezza i candidati e 2⁷ = 128. È la *ricerca binaria*, uno degli algoritmi più famosi dell'informatica.
+
+</Callout>
+
+## Dare l'input senza scriverlo
+
+Provare un programma scrivendo sempre le stesse risposte a mano diventa noioso in fretta. Visto che lo standard input può arrivare da qualsiasi parte, puoi dirgli di leggere da un altro programma o da un file. Su Linux e macOS:
+
+```sh
+printf '50\n25\n37\n' | c3c compile-run guess.c3
+```
+
+`printf` scrive le tre righe, e la barra verticale `|` le manda allo standard input di `guess`, che le legge come se le avessi scritte tu. Oppure, con le risposte in un file di testo, una per riga:
+
+```sh
+c3c compile-run guess.c3 < answers.txt
+```
+
+Il simbolo `<` collega il file allo standard input. In entrambi i casi, quando le righe finiscono, `treadline` restituisce `io::EOF`: esattamente come premere Ctrl+D.
+
+<Callout type="nerd" title="Cos'è una pipe?">
+
+La `|` si chiama *pipe*, tubo: collega lo standard output di un programma allo standard input di un altro, e i due programmi girano **insieme**, uno che scrive e l'altro che legge, con il sistema operativo che fa da tubo in mezzo. È una delle idee più potenti di Unix: tanti piccoli programmi, ognuno bravo a fare una cosa, che si passano il testo in catena. `ls | sort | head -3` elenca i file, li ordina e ne mostra i primi tre. Ogni programma C3 che legge con `treadline` e scrive con `printn` può essere un anello di queste catene.
+
+</Callout>
+
+Una cosa curiosa: con la pipe, nell'output non compaiono le risposte, perché nessuno le scrive sul terminale. Compaiono solo i `>` seguiti subito dai messaggi del programma.
+
+<Exercise title="La media" expected={`Line 3: 'twenty' is not a number (string::MALFORMED_INTEGER)
+Line 5: '' is not a number (string::EMPTY_STRING)
+Numbers: 4, sum: 99, average: 24.75`}>
+
+Scrivi `average.c3`, un programma che legge numeri interi dallo standard input, una riga alla volta, **finché l'input non finisce**. Le righe che non contengono un numero vanno segnalate con il loro numero di riga e il fault, e saltate. Alla fine stampa quanti numeri ha letto, la somma e la media con due decimali. Se non ha letto nessun numero, stampa `No numbers.` invece della media.
+
+Il programma non stampa nessuna domanda: è pensato per ricevere l'input da una pipe. Provalo così (la quinta riga è vuota):
+
+```sh
+printf '18\n27\ntwenty\n30\n\n24\n' | c3c compile-run average.c3
+```
+
+</Exercise>
+
+<Solution>
+
+```c3 title="average.c3"
+import std::io;
+
+fn void main()
+{
+	int line_number;
+	int count;
+	int sum;
+	while (true)
+	{
+		String? line = io::treadline();
+		if (catch line) break;
+		line_number++;
+		int? n = line.to_int();
+		if (catch err = n)
+		{
+			io::printfn("Line %d: '%s' is not a number (%s)", line_number, line, err);
+			continue;
+		}
+		count++;
+		sum += n;
+	}
+	if (count == 0)
+	{
+		io::printn("No numbers.");
+		return;
+	}
+	io::printfn("Numbers: %d, sum: %d, average: %.2f", count, sum, (double)sum / count);
+}
+```
+
+`if (catch line) break;` esce dal ciclo alla fine dell'input: nessun contatore di righe da conoscere in anticipo, il programma legge finché ce n'è. La riga vuota non è la fine dell'input, è una riga lunga 0, e `to_int` la rifiuta con `EMPTY_STRING`.
+
+Provalo anche scrivendo i numeri a mano (lancia `c3c compile-run average.c3` senza pipe, scrivi qualche numero e chiudi con Ctrl+D), e con `printf '' | c3c compile-run average.c3`, cioè senza nessuna riga: deve rispondere `No numbers.` invece di dividere per zero.
+
+</Solution>
+
+## Ricapitolando
+
+- `io::treadline()` legge una riga dallo standard input e restituisce una `String?`, senza l'a capo finale e nella memoria temporanea.
+- Quando l'input finisce, il fault è `io::EOF`. Dalla tastiera: Ctrl+D (Linux e macOS), Ctrl+Z e Invio (Windows).
+- Una riga vuota non è la fine dell'input: è la stringa `""`.
+- `io::print` scrive senza andare a capo, utile per le domande.
+- Schema tipico: `while (true)`, leggi, `if (catch line) break;`, converti, `if (catch n) continue;`, e poi lavora con valori normali.
+- `printf '...' | c3c compile-run file.c3` e `c3c compile-run file.c3 < input.txt` danno l'input senza scriverlo.
+
+Hai tutti i pezzi: optional, fault tuoi, `try` e `catch`, `!` e `!!`, e un programma che parla con chi lo usa. Nell'ultima lezione del modulo li metti insieme in un piccolo bancomat a riga di comando.

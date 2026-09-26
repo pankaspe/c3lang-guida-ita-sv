@@ -1,0 +1,340 @@
+---
+title: Passare la palla con ! (e fermarsi con !!)
+description: Il rethrow ! che restituisce l'errore a chi ti ha chiamato, le catene di funzioni che falliscono insieme, gli optional contagiosi nelle espressioni, e il force unwrap !! per quando un errore non può proprio succedere.
+minutes: 18
+---
+
+## Chi deve occuparsi dell'errore?
+
+Riprendi lo scontrino della lezione 2 e prova a metterlo in una funzione che calcola il totale di un carrello:
+
+```c3
+fn int? price_of(String item)
+{
+	switch (item)
+	{
+		case "bread": return 3;
+		case "milk": return 2;
+		case "cheese": return 7;
+	}
+	return NOT_FOUND~;
+}
+```
+
+Se nel carrello c'è un prodotto senza prezzo, qual è il totale? Non 0, e nemmeno "il totale degli altri": un totale sbagliato è peggio di nessun totale. E `cart_total` non sa nemmeno se deve stampare un messaggio, scriverlo in un file o mostrarlo in una finestra: dipende da chi la usa. La cosa giusta da fare è **fallire anche lei**, con lo stesso fault, e lasciare la decisione a chi l'ha chiamata.
+
+Con quello che sai già, si scrive così:
+
+```c3
+fn int? cart_total(String[] cart)
+{
+	int total;
+	foreach (item : cart)
+	{
+		int? price = price_of(item);
+		if (catch err = price) return err~;
+		total += price;
+	}
+	return total;
+}
+```
+
+`return err~;` restituisce lo stesso fault ricevuto: la palla passa in su. Funziona, ma è una riga di cerimonia per ogni chiamata, e nei programmi veri le chiamate che possono fallire sono tante.
+
+## Il punto esclamativo
+
+Quelle due righe si scrivono con un carattere solo, il **rethrow** `!`:
+
+```c3
+fn int? cart_total(String[] cart)
+{
+	int total;
+	foreach (item : cart)
+	{
+		total += price_of(item)!;
+	}
+	return total;
+}
+```
+
+`price_of(item)!` vuol dire: "se c'è un risultato, eccolo, come valore normale; se la scatola è vuota, **esci subito** dalla funzione restituendo lo stesso fault". È esattamente l'`if (catch err = ...) return err~;` di prima, senza il rumore.
+
+Il `!` ha una condizione: la funzione in cui lo usi deve poter restituire un fault, cioè essere a sua volta un optional (`int?`, `void?`, ...). Altrimenti, dove andrebbe a finire la palla?
+
+```c3
+fn void main()
+{
+	String[] cart = { "bread", "milk" };
+	int total = cart_total(cart)!;
+}
+// error: This expression is doing a rethrow, but 'main' returns 'void', which isn't an optional type. Did you intend to use '!!' instead?
+```
+
+Del `!!` suggerito dal messaggio parliamo tra poco.
+
+<Quiz question={'In una funzione `fn int? f()`, cosa fa `int x = g()!;` se `g()` restituisce il fault `NOT_FOUND`?'} options={['Mette 0 in `x` e continua', 'Ferma il programma con un errore', 'Esce da `f` restituendo `NOT_FOUND` a chi l\'ha chiamata', 'Non compila: `x` non è un optional']} answer={2}>
+
+Il `!` non gestisce l'errore: lo **rilancia**, cioè esce dalla funzione corrente e restituisce lo stesso fault al chiamante. Se invece `g()` ha un risultato, `x` lo riceve come `int` normale.
+
+</Quiz>
+
+## Una catena di funzioni
+
+Il bello del `!` è che si compone: una funzione rilancia gli errori di quelle che chiama, e aggiunge i suoi.
+
+```c3 title="cart.c3"
+import std::io;
+
+faultdef OVER_BUDGET;
+
+fn int? price_of(String item)
+{
+	switch (item)
+	{
+		case "bread": return 3;
+		case "milk": return 2;
+		case "cheese": return 7;
+	}
+	return NOT_FOUND~;
+}
+
+fn int? cart_total(String[] cart)
+{
+	int total;
+	foreach (item : cart)
+	{
+		total += price_of(item)!;
+	}
+	return total;
+}
+
+fn int? checkout(String[] cart, int budget)
+{
+	int total = cart_total(cart)!;
+	if (total > budget) return OVER_BUDGET~;
+	return budget - total;
+}
+
+fn void main()
+{
+	String[] ok = { "bread", "milk", "cheese" };
+	String[] odd = { "bread", "caviar", "milk" };
+	io::printn(cart_total(ok) ?? -1);
+	if (catch err = cart_total(odd)) io::printfn("odd cart: %s", err);
+
+	String[][] carts = { ok, odd, { "cheese", "cheese" } };
+	foreach (i, cart : carts)
+	{
+		int? change = checkout(cart, 13);
+		if (catch err = change)
+		{
+			io::printfn("cart %d: %s", i + 1, err);
+			continue;
+		}
+		io::printfn("cart %d: paid, change %d", i + 1, change);
+	}
+}
+```
+
+```output
+12
+odd cart: builtin::NOT_FOUND
+cart 1: paid, change 1
+cart 2: builtin::NOT_FOUND
+cart 3: cart::OVER_BUDGET
+```
+
+Segui il caviale del secondo carrello: `price_of` restituisce `NOT_FOUND`, il `!` in `cart_total` lo rilancia, il `!` in `checkout` lo rilancia ancora, e il `main` lo riceve e lo stampa. Tre livelli, e **nessuna** delle funzioni in mezzo ha dovuto scrivere una riga per gestirlo. `checkout`, in più, ha i suoi errori (`OVER_BUDGET`), e il `main` li riceve dallo stesso canale.
+
+Nota anche `String[][] carts`: una slice di slice, cioè una lista di carrelli, ognuno una lista di prodotti.
+
+<Callout type="c" title="Se vieni dal C">
+
+In C lo stesso schema si scrive a mano a ogni chiamata: `int err = cart_total(cart, &total); if (err) return err;`, e basta dimenticarlo una volta perché un errore sparisca nel nulla. Nei linguaggi con le *eccezioni* (Java, Python, C++) l'errore risale da solo, ma in modo invisibile: guardando una chiamata non sai se può fallire. Il `!` di C3 sta nel mezzo: risale con un carattere, e quel carattere **si vede**.
+
+</Callout>
+
+## Gli optional sono contagiosi
+
+Cosa succede se usi un optional in un'espressione, senza aprirlo? Il risultato diventa a sua volta un optional:
+
+```c3
+int? sum = price_of("bread") + price_of("caviar");
+io::printn(sum ?? -1);
+```
+
+```output
+-1
+```
+
+Se uno qualsiasi degli operandi è vuoto, l'intera espressione è vuota, con il suo fault. E vale anche per le chiamate di funzione, con un dettaglio sorprendente:
+
+```c3
+fn int double_it(int x)
+{
+	io::printn("double_it is running");
+	return x * 2;
+}
+```
+
+```c3
+int? a = double_it(price_of("bread"));
+int? b = double_it(price_of("caviar"));
+io::printn(a ?? -1);
+io::printn(b ?? -1);
+```
+
+```output
+double_it is running
+6
+-1
+```
+
+`double_it` riceve un `int`, non un `int?`. Quando le passi un optional, C3 la chiama **solo se** la scatola è piena; se è vuota, la funzione non viene proprio eseguita (la frase compare una volta sola) e il risultato è un optional vuoto con lo stesso fault. Per questo nella lezione 1 `io::printn(stock_of("kiwis"))` non compilava: la stampa sarebbe potuta non avvenire, e il compilatore voleva che tu lo sapessi.
+
+## !!: sono sicuro, altrimenti fermati
+
+A volte sai che un errore **non può** succedere. Il testo `"42"` è sempre un numero valido; il prezzo del latte è scritto nel programma stesso. Scrivere un `if (catch ...)` per un caso impossibile è rumore. Per queste situazioni c'è il **force unwrap** `!!`: apre la scatola, e se la trova vuota ferma il programma.
+
+```c3 title="force.c3"
+import std::io;
+
+fn int? price_of(String item)
+{
+	switch (item)
+	{
+		case "bread": return 3;
+		case "milk": return 2;
+		case "cheese": return 7;
+	}
+	return NOT_FOUND~;
+}
+
+fn void main()
+{
+	int milk = price_of("milk")!!;
+	io::printn(milk);
+	int caviar = price_of("caviar")!!;
+	io::printn(caviar);
+}
+```
+
+```output
+2
+
+ERROR: 'Unexpected fault 'builtin::NOT_FOUND' was unwrapped!'
+  in force.main (force.c3:18) [force] [inline]
+```
+
+Il latte ha un prezzo, e `milk` vale 2. Il caviale no: il programma si ferma sul posto, dicendoti quale fault ha trovato, e in quale file e riga. È lo stesso tipo di arresto che hai visto con gli indici fuori dall'array: il programma preferisce fermarsi piuttosto che continuare con un valore inventato.
+
+<Callout type="warning" title="!! è una promessa">
+
+Usa `!!` solo quando l'errore sarebbe un **bug** del tuo programma, non un evento normale. Un prodotto sconosciuto scritto da un utente, un file che non c'è, un testo che non è un numero: sono cose che succedono, e vanno gestite con `try`, `catch`, `??` o `!`. `"42".to_int()!!` va bene; `user_input.to_int()!!` no: il primo utente che scrive "ciao" farà crollare il programma.
+
+</Callout>
+
+Il `main` è un caso speciale: non può restituire un optional (`fn void? main()` dà `The return type of 'main' cannot be an optional.`), quindi è il capolinea di tutte le palle rilanciate. Lì ogni errore va gestito oppure, se davvero non può succedere, fermato con `!!`.
+
+<Callout type="nerd" title="Perché il programma finisce con il codice 132?">
+
+Se lanci il programma con `c3c compile-run`, dopo l'errore leggi `Program completed with exit code 132.` Ricordi il codice di uscita del modulo 1? 0 vuol dire "tutto bene". Quando un programma viene fermato dal sistema operativo con un **segnale**, invece, per convenzione la shell riporta 128 più il numero del segnale. Per fermarsi, un programma C3 esegue apposta un'istruzione che il processore si rifiuta di eseguire, una *trappola*: su Linux, con un processore x86, il processore la segnala come istruzione illegale, il sistema operativo manda al programma il segnale numero 4 (`SIGILL`), e 128 + 4 = 132. Su altri sistemi o processori il segnale, e quindi il numero, può essere diverso.
+
+</Callout>
+
+<Quiz question={'Quale di questi usi di `!!` è ragionevole?'} options={['`int age = line.to_int()!!;` con `line` scritta dall\'utente', '`int port = "8080".to_int()!!;`', '`int price = price_of(customer_choice)!!;`', 'Nessuno: `!!` non si usa mai']} answer={1}>
+
+`"8080"` è scritto nel programma e sarà sempre un numero valido: se non lo fosse, sarebbe un bug da scoprire subito. Negli altri due casi l'errore dipende da quello che scrive o sceglie una persona, ed è un evento normale da gestire.
+
+</Quiz>
+
+<Exercise title="Il foglio ore" expected={`09:15 -> 10:45: 90 min
+22:00 -> 23:59: 119 min
+12:60 -> 13:00: timesheet::OUT_OF_RANGE
+noon -> 13:00: timesheet::BAD_FORMAT
+7:3x -> 8:00: string::MALFORMED_INTEGER`}>
+
+Scrivi `timesheet.c3` (il nome del file conta: finisce nei nomi dei fault) con due fault, `BAD_FORMAT` e `OUT_OF_RANGE`, e due funzioni:
+
+- `parse_time`, che riceve un orario come `"09:15"` e restituisce i minuti dalla mezzanotte (`9 * 60 + 15 = 555`). Se il testo non è formato da **due** parti separate da `:` restituisce `BAD_FORMAT`; se le ore non sono tra 0 e 23 o i minuti tra 0 e 59, `OUT_OF_RANGE`. Gli errori di `to_int` vanno **rilanciati** con `!`.
+- `duration`, che riceve due orari e restituisce i minuti tra il primo e il secondo, rilanciando gli errori di `parse_time`.
+
+Per dividere il testo usa `tsplit(":")` del modulo 3. Nel `main`, con una `struct Shift` con i campi `from` e `to` (`String`), calcola la durata di questi turni e stampa il risultato o il fault:
+
+```c3
+Shift[*] shifts = {
+	{ "09:15", "10:45" },
+	{ "22:00", "23:59" },
+	{ "12:60", "13:00" },
+	{ "noon", "13:00" },
+	{ "7:3x", "8:00" },
+};
+```
+
+</Exercise>
+
+<Solution>
+
+```c3 title="timesheet.c3"
+import std::io;
+
+faultdef BAD_FORMAT, OUT_OF_RANGE;
+
+struct Shift
+{
+	String from;
+	String to;
+}
+
+fn int? parse_time(String text)
+{
+	String[] parts = text.tsplit(":");
+	if (parts.len != 2) return BAD_FORMAT~;
+	int hours = parts[0].to_int()!;
+	int minutes = parts[1].to_int()!;
+	if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return OUT_OF_RANGE~;
+	return hours * 60 + minutes;
+}
+
+fn int? duration(String from, String to)
+{
+	return parse_time(to)! - parse_time(from)!;
+}
+
+fn void main()
+{
+	Shift[*] shifts = {
+		{ "09:15", "10:45" },
+		{ "22:00", "23:59" },
+		{ "12:60", "13:00" },
+		{ "noon", "13:00" },
+		{ "7:3x", "8:00" },
+	};
+	foreach (s : shifts)
+	{
+		int? minutes = duration(s.from, s.to);
+		if (catch err = minutes)
+		{
+			io::printfn("%s -> %s: %s", s.from, s.to, err);
+			continue;
+		}
+		io::printfn("%s -> %s: %d min", s.from, s.to, minutes);
+	}
+}
+```
+
+Tre fonti di errore diverse (la forma del testo, i numeri, l'intervallo), due livelli di funzioni, e il `main` le riceve tutte dallo stesso canale, con il loro nome. `"noon"` non contiene `:`, quindi `tsplit` restituisce una sola parte: `BAD_FORMAT`. In `"7:3x"` la forma è giusta, ma `"3x"` non è un numero, e l'errore che arriva al `main` è quello originale di `to_int`, `string::MALFORMED_INTEGER`.
+
+In `duration` i due `!` stanno nella stessa espressione: se il primo orario è sbagliato, il secondo non viene nemmeno letto. Anche `return parse_time(to) - parse_time(from);` senza `!` avrebbe compilato, grazie agli optional contagiosi: il risultato della sottrazione sarebbe stato un `int?`, restituito così com'è. Con i `!` l'intenzione è più chiara.
+
+</Solution>
+
+## Ricapitolando
+
+- `f()!` apre l'optional; se è vuoto, **esce** dalla funzione corrente restituendo lo stesso fault. È la forma corta di `if (catch err = f()) return err~;`.
+- Il `!` si usa solo in funzioni che restituiscono un optional; `main` non può, quindi è il capolinea degli errori.
+- Con `!` gli errori risalgono una catena di funzioni senza codice in mezzo, e ogni livello può aggiungere i suoi.
+- Un optional in un'espressione rende optional l'intera espressione; una funzione che riceve un optional vuoto **non viene eseguita**.
+- `f()!!` apre l'optional o ferma il programma con un messaggio. Solo per errori che sarebbero un bug, mai per l'input di una persona.
+
+Parlando di input delle persone: finora tutti i dati dei tuoi programmi erano scritti nel codice. Nella prossima lezione il programma impara a **chiedere**, e a leggere quello che scrivi sulla tastiera. Indovina che tipo restituisce la funzione che legge una riga?

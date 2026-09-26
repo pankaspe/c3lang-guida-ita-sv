@@ -1,0 +1,236 @@
+---
+title: Riepilogo e sfida finale
+description: Il modulo in una tabella, gli errori del compilatore da riconoscere, tre quiz di controllo e una sfida con un bancomat a riga di comando che legge i comandi dall'input e non si lascia sfuggire nessun errore.
+minutes: 22
+---
+
+## Errori che non si perdono
+
+All'inizio del modulo una funzione senza risposta aveva solo un modo per dirlo: un valore "speciale" come -1, sperando che chi la chiamava se ne ricordasse. Adesso sai:
+
+- dichiarare che una funzione **potrebbe** non avere un risultato, con un **optional** (`int?`, `String?`, `void?`), e restituire un fault con la tilde;
+- aprire un optional con `??` (un valore di riserva), `if (try ...)` (se c'è) e `if (catch ...)` (se manca, e perché), sfruttando l'uscita anticipata che trasforma la variabile in un valore normale;
+- creare **fault tuoi** con `faultdef`, distinguerli con uno `switch` e tenerli in variabili di tipo `fault`;
+- usare gli optional della libreria standard: `to_int`, `to_double`, `pop`, `first`, `last`, `index_of`;
+- **rilanciare** un errore a chi ti ha chiamato con `!`, e fermare il programma con `!!` quando un errore sarebbe un bug;
+- leggere dalla tastiera con `io::treadline()`, fino a `io::EOF`.
+
+Il filo che lega tutto: **un errore è un valore, e il suo posto è nel tipo**. Il compilatore sa quali chiamate possono fallire e non ti lascia usarne il risultato finché non hai deciso cosa fare. Non puoi dimenticare un errore; al massimo puoi ignorarlo **apposta**, e allora sta scritto nel codice.
+
+## La pagina da tenere accanto
+
+| Cosa | Come si scrive |
+|---|---|
+| Funzione che può fallire | `fn int? stock_of(String item)` |
+| Restituire un risultato / un fault | `return 12;` / `return NOT_FOUND~;` |
+| Può fallire, senza risultato | `fn void? Account.withdraw(&self, int amount)` |
+| Variabile optional | `int? n = stock_of("kiwis");` (appena dichiarata vale 0, non vuota) |
+| Valore di riserva | `int n = stock_of("kiwis") ?? 0;` |
+| Se c'è un risultato | `if (try n = stock_of(item)) { ... }` |
+| Se manca | `if (catch err = stock_of(item)) { ... }` |
+| Uscita anticipata | `if (catch n) continue;` e dopo `n` è un `int` |
+| Più condizioni | `if (try a = f() && try b = g() && a > b)` |
+| Fault tuoi | `faultdef INVALID_AMOUNT, INSUFFICIENT_FUNDS;` |
+| Distinguere | `switch (err) { case INVALID_AMOUNT: ... default: ... }` |
+| Il fault come valore | `fault f = @catch(x);` e `@ok(x)` |
+| Un fault più preciso | `f() ?? UNKNOWN_CUSTOMER~` |
+| Rilanciare | `int n = f()!;` (solo in funzioni optional) |
+| Sono sicuro | `int port = "8080".to_int()!!;` |
+| Ignorare apposta | `(void)acc.withdraw(30);` |
+| Testo in numero | `text.to_int()`, `text.to_long()`, `text.to_double()` |
+| Liste vuote | `list.pop()`, `list.first()`, `list.last()` danno `NO_MORE_ELEMENT` |
+| Cercare nel testo | `text.index_of("@")` dà un `sz?` |
+| Leggere una riga | `String? line = io::treadline();` (fault `io::EOF` a fine input) |
+
+## Errori che ormai riconosci
+
+| Messaggio | Cosa hai fatto |
+|---|---|
+| `It is not possible to cast from 'int?' to 'int'.` | Hai usato un optional come valore normale, senza aprirlo |
+| `The result of this call is optional due to its argument(s)...` | Hai passato un optional a una funzione (come `printn`) senza gestire il caso vuoto |
+| `The function returns 'void?', which is an optional and must be handled...` | Hai chiamato una funzione `void?` ignorando l'errore |
+| `This expression is doing a rethrow, but 'main' returns 'void'...` | Un `!` in una funzione che non restituisce un optional |
+| `The return type of 'main' cannot be an optional.` | `fn void? main()`: il `main` deve gestire tutto |
+| `The expression may not be an optional, but was 'bool?'.` | Un confronto con un optional come condizione di un `if` |
+| `Names of faults must be all uppercase.` | Un `faultdef` con un nome minuscolo |
+| `The use of 'void?' as a variable type is not permitted...` | `void? x = f();`: usa `@catch` |
+
+E uno che arriva solo quando il programma gira: `Unexpected fault '...' was unwrapped!`, un `!!` che ha trovato la scatola vuota.
+
+## Quiz di controllo
+
+<Quiz question={'Cosa stampa? `int? a = f(-1); int b = a ?? f(3) ?? 0; io::printn(b);` con `fn int? f(int x)` che restituisce `x` se è positivo e `NOT_FOUND~` altrimenti'} options={['`0`', '`3`', '`-1`', 'Non compila']} answer={1}>
+
+`a` è vuota, quindi si passa alla prima riserva, `f(3)`, che è a sua volta un optional: pieno, con 3. La seconda riserva, `0`, non serve. I `??` si possono mettere in fila: vince il primo valore disponibile. (Lezioni 1 e 3.)
+
+</Quiz>
+
+<Quiz question={'Con la stessa `f`, cosa contiene `int? c = f(2) + f(-2);`?'} options={['Il risultato `2`', 'Il risultato `0`', 'Il fault `NOT_FOUND`', 'Non compila: non si sommano optional']} answer={2}>
+
+Gli optional sono contagiosi: se uno degli operandi è vuoto, l'intera somma è vuota, con il suo fault. Il 2 del primo operando va perso. (Lezione 5.)
+
+</Quiz>
+
+<Quiz question={'Hai scritto `fn int? load()` che chiama `parse()!`. Chi riceve il fault se `parse` fallisce?'} options={['Nessuno: il `!` lo scarta', 'Chi ha chiamato `load`', 'Il `main`, direttamente', 'Il programma si ferma']} answer={1}>
+
+Il `!` esce da `load` restituendo lo stesso fault a **chi ha chiamato `load`**, che a sua volta può gestirlo o rilanciarlo. Arriva al `main` solo se tutti quelli in mezzo lo rilanciano. A fermare il programma è `!!`, non `!`. (Lezione 5.)
+
+</Quiz>
+
+## La sfida: il bancomat
+
+Costruisci un piccolo bancomat a riga di comando. Il programma legge dei comandi dallo standard input, uno per riga, e li esegue su un conto. Ogni comando sbagliato va segnalato con il numero di riga e una spiegazione, **senza** fermare il programma.
+
+<Exercise title="Il bancomat" expected={`Ada has 100 euro
+line 4: insufficient funds
+line 5: missing amount
+line 6: the amount must be positive
+line 7: the amount is not a number
+line 8: unknown command
+Ada has 0 euro
+Final balance: 0 euro, 5 errors`}>
+
+Scrivi `atm.c3`. I comandi sono:
+
+- `deposit N`: versa N euro;
+- `withdraw N`: preleva N euro, se ci sono;
+- `balance`: stampa il saldo, come `Ada has 100 euro`;
+- `quit`: termina, ignorando le righe successive. Anche la fine dell'input termina.
+
+Ti servono:
+
+1. quattro fault: `UNKNOWN_COMMAND`, `MISSING_AMOUNT`, `INVALID_AMOUNT` e `INSUFFICIENT_FUNDS`;
+2. una `struct Account` con `owner` (`String`) e `balance` (`int`), con un metodo `deposit` che non può fallire e un metodo `withdraw` che restituisce `INSUFFICIENT_FUNDS` se il saldo non basta;
+3. una funzione `parse_amount` che riceve le parole del comando (ottenute con `tsplit(" ")`) e restituisce l'importo: `MISSING_AMOUNT` se manca la seconda parola, `INVALID_AMOUNT` se non è positivo, e gli errori di `to_int` **rilanciati**;
+4. un metodo `Account.execute(&self, String line)` che non restituisce niente ma può fallire: sceglie il comando con uno `switch` sulla prima parola, e rilancia gli errori di `parse_amount` e di `withdraw`. Un comando sconosciuto è `UNKNOWN_COMMAND`;
+5. una funzione `explain` che riceve un `fault` e restituisce la spiegazione in inglese da stampare (guarda l'output atteso). Il fault di `to_int` per un testo che non è un numero si scrive `string::MALFORMED_INTEGER` in un `case`;
+6. nel `main`: un conto di Ada con 100 euro, il ciclo di lettura con il numero di riga, gli errori contati, e la riga finale con saldo ed errori.
+
+Salva questi comandi in `commands.txt`:
+
+```text title="commands.txt"
+balance
+deposit 50
+withdraw 30
+withdraw 500
+deposit
+deposit -20
+withdraw ten
+transfer 10
+withdraw 120
+balance
+quit
+deposit 1000
+```
+
+e lancia il programma con:
+
+```sh
+c3c compile-run atm.c3 < commands.txt
+```
+
+</Exercise>
+
+<Solution>
+
+```c3 title="atm.c3"
+import std::io;
+
+faultdef UNKNOWN_COMMAND, MISSING_AMOUNT, INVALID_AMOUNT, INSUFFICIENT_FUNDS;
+
+struct Account
+{
+	String owner;
+	int balance;
+}
+
+fn void Account.deposit(&self, int amount)
+{
+	self.balance += amount;
+}
+
+fn void? Account.withdraw(&self, int amount)
+{
+	if (amount > self.balance) return INSUFFICIENT_FUNDS~;
+	self.balance -= amount;
+}
+
+fn int? parse_amount(String[] words)
+{
+	if (words.len < 2) return MISSING_AMOUNT~;
+	int amount = words[1].to_int()!;
+	if (amount <= 0) return INVALID_AMOUNT~;
+	return amount;
+}
+
+fn void? Account.execute(&self, String line)
+{
+	String[] words = line.tsplit(" ");
+	switch (words[0])
+	{
+		case "deposit":
+			self.deposit(parse_amount(words)!);
+		case "withdraw":
+			self.withdraw(parse_amount(words)!)!;
+		case "balance":
+			io::printfn("%s has %d euro", self.owner, self.balance);
+		default:
+			return UNKNOWN_COMMAND~;
+	}
+}
+
+fn String explain(fault err)
+{
+	switch (err)
+	{
+		case UNKNOWN_COMMAND: return "unknown command";
+		case MISSING_AMOUNT: return "missing amount";
+		case INVALID_AMOUNT: return "the amount must be positive";
+		case INSUFFICIENT_FUNDS: return "insufficient funds";
+		case string::MALFORMED_INTEGER: return "the amount is not a number";
+		default: return "unexpected error";
+	}
+}
+
+fn void main()
+{
+	Account account = { "Ada", 100 };
+	int line_number;
+	int errors;
+	while (true)
+	{
+		String? line = io::treadline();
+		if (catch line) break;
+		line_number++;
+		if (line == "quit") break;
+		if (catch err = account.execute(line))
+		{
+			io::printfn("line %d: %s", line_number, explain(err));
+			errors++;
+		}
+	}
+	io::printfn("Final balance: %d euro, %d errors", account.balance, errors);
+}
+```
+
+I punti delicati:
+- **`self.withdraw(parse_amount(words)!)!`:** due `!` sulla stessa riga, con due compiti diversi. Il primo rilancia un importo sbagliato; il secondo rilancia il saldo insufficiente. Se l'importo è sbagliato, `withdraw` non viene nemmeno chiamata.
+- **`self.deposit(parse_amount(words)!)`:** `deposit` non può fallire, quindi dopo la chiamata non serve niente. Ma `parse_amount` sì, e il suo `!` basta.
+- **La separazione dei compiti:** `execute` non stampa mai un errore, lo restituisce. `explain` traduce i fault in frasi, e il `main` decide dove e come mostrarle. Per tradurre il bancomat in italiano cambieresti solo `explain`.
+- **Il `default` di `explain`:** `to_int` può restituire anche `INTEGER_OVERFLOW` (prova `deposit 99999999999`), e non l'abbiamo previsto. Senza `default`, un fault inatteso non avrebbe nessuna spiegazione.
+- **`quit` e la fine dell'input** fanno la stessa cosa, `break`, ma per ragioni diverse: il primo è una scelta dell'utente, il secondo è `io::EOF`. L'ultima riga, `deposit 1000`, non viene mai letta.
+- **Un comando vuoto:** una riga vuota diventa una sola parola vuota, `""`, che finisce nel `default`: `unknown command`. Nessun caso speciale da scrivere.
+
+</Solution>
+
+<Callout type="fun" title="Se ci sei riuscito">
+
+Lancia `c3c compile-run atm.c3` senza file e usa il bancomat a mano, chiudendo con Ctrl+D. Poi aggiungi un comando `history` che stampa tutte le operazioni riuscite (una `List{String}` e `tformat` del modulo 3), e un limite di prelievo di 250 euro per operazione con un nuovo fault, `LIMIT_EXCEEDED`. Infine gestisci più conti: `open Grace`, `use Grace`, e un fault `UNKNOWN_ACCOUNT` quando il nome non esiste, magari ottenuto con `??` da una ricerca che restituisce `NOT_FOUND`.
+
+</Callout>
+
+## Cosa succede nel Modulo 6
+
+Avrai notato che i fault stampati portano un prefisso: `bank::INSUFFICIENT_FUNDS`, `string::MALFORMED_INTEGER`, `builtin::NOT_FOUND`. Quella prima parte è il nome del **modulo** in cui il fault è definito, e ogni `import std::io;` che scrivi dalla prima lezione del corso apre un modulo della libreria standard. Nel prossimo modulo del corso scoprirai cosa sono davvero i moduli: dividere un programma in più file, decidere cosa è visibile da fuori e cosa resta privato, e organizzare il codice quando smette di stare in una pagina sola.
+
+Segna questa lezione come completata. I tuoi programmi adesso sanno dire "non ce l'ho fatta, ed ecco perché", e il compilatore si assicura che qualcuno ascolti.
